@@ -136,7 +136,6 @@ def create_vtiles(objid,sampleNworkers,random_state,tiles="",PRINT=False,SAVE=Fa
     vtiles,overlap_area,total_area=uniqify(BB, overlap_threshold=overlap_threshold, SAVE=False, SAVEPATH=None, PLOT=PLOT)
     if PRINT: print "Overlap ratio:",overlap_area/float(total_area)
     #pkl.dump(vtiles,open("{0}/vtiles{1}.pkl".format(DATA_DIR,objid),'w'))
-<<<<<<< HEAD
     return vtiles, BB
 
 
