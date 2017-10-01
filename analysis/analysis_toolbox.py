@@ -37,11 +37,11 @@ def COCO_convert_png_to_jpg():
 	os.chdir("app/static")
 	for fname in glob.glob("COCO*"):
 		os.system("convert {0} {1}".format(fname, fname.split(".")[0]+".png"))
-from config import path
+from config import DATA_DIR 
 def load_info(eliminate_self_intersection_bb=True):
     from shapely.validation import explain_validity
     old_path = os.getcwd()
-    os.chdir(path)
+    os.chdir(DATA_DIR)
     img_info = pd.read_csv("image.csv",skipfooter=1)
     object_info = pd.read_csv("object.csv",skipfooter=1)
     object_location = pd.read_csv("object_location.csv",skipfooter=1)

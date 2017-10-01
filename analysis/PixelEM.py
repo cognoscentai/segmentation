@@ -1,4 +1,5 @@
 import matplotlib
+from config import * 
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 from PIL import Image, ImageDraw
@@ -11,14 +12,10 @@ import json
 # import math
 import time
 import os
-BASE_DIR = '/home/jlee782/crowd-seg/analysis/TileEM/'
-PIXEL_EM_DIR = BASE_DIR + 'pixel_em/'
-ORIGINAL_IMG_DIR = '../../web-app/app/static/' 
 from sample_worker_seeds import sample_specs 
 
 def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=True):
     img_info, object_tbl, bb_info, hit_info = load_info()
-    print objid
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
     if EXCLUDE_BBG:
@@ -58,7 +55,7 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
             plt.colorbar()
             plt.show()
 
-    my_BB = pd.read_csv('{}my_ground_truth.csv'.format(BASE_DIR))
+    my_BB = pd.read_csv('{}/my_ground_truth.csv'.format(DATA_DIR))
     bb_match = my_BB[my_BB.object_id == objid]
     x_locs, y_locs = process_raw_locs([bb_match['x_locs'].iloc[0], bb_match['y_locs'].iloc[0]])
     img = Image.new('L', (width, height), 0)

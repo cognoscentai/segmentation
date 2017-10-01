@@ -109,15 +109,15 @@ def create_PixTiles(sample,objid,check_edges=False):
         while next_source is not None:
             at_least_one_connection=False
 	    if (check_edges):
-            neighbors = edge_neighbor_widx(wmap,next_source)
+            	neighbors = edge_neighbor_widx(wmap,next_source)
 	    else: 
-            neighbors = neighbor_widx(wmap,next_source)
-            for neighbor in neighbors:
-                if wmap[neighbor] == voted_workers:
-                    tiles[tidx].add(neighbor)
-                    # Remove added neighbor from potential pixels 
-                    pixs_already_tiled.add(neighbor)
-                    potential_sources.add(neighbor)
+            	neighbors = neighbor_widx(wmap,next_source)
+            	for neighbor in neighbors:
+                    if wmap[neighbor] == voted_workers:
+                        tiles[tidx].add(neighbor)
+                        # Remove added neighbor from potential pixels 
+                        pixs_already_tiled.add(neighbor)
+                        potential_sources.add(neighbor)
 
             checked_pixs.add(next_source)
             pixs_already_tiled.add(next_source)
