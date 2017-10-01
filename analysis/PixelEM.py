@@ -162,6 +162,8 @@ def create_MV_mask(sample_name, objid, plot=True,mode=""):
             plt.savefig('{}MV_mask.png'.format(outdir))
     elif mode=="compute_pr_only":
 	MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+    # Computing MV PRJ against Ground Truth
+    gt_est_mask = get_gt_mask(objid)
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     with open('{}MV_prj.json'.format(outdir), 'w') as fp:
         fp.write(json.dumps([p, r,j]))
