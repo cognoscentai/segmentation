@@ -445,7 +445,7 @@ def compute_A_thres(condition,area_mask):
        high_confidence_pixel_area.append(area_mask[passing_xs[i]][passing_ys[i]])
     A_thres = np.median(high_confidence_pixel_area)
     return A_thres	
-def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False):
+def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
@@ -461,9 +461,7 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     gt_est_mask = get_MV_mask(sample_name, objid)
     # In the first step we use 50% MV for initializing T*, A thres is therefore the median area pixel based on votes and noVotes
     mega_mask = get_mega_mask(sample_name, objid)
-    area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
-    tidx_mask = pkl.load(open("{}/tidx_mask.pkl".format(outdir)))
-    t_area_lst = pkl.load(open("{}/tarea.pkl".format(outdir)))
+    tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid) 
@@ -489,9 +487,10 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
             gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
 	    gt_est_mask[gt_est_mask==-1]=0
         # Compute PR mask based on the EM estimate mask from every iteration
-    	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-    	with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
-            fp.write(json.dumps([p, r, j]))
+	if compute_PR_every_iter:
+    	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    	    with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+                fp.write(json.dumps([p, r, j]))
         if dump_output_at_every_iter:
 	    pickle.dump(gt_est_mask,open('{}{}GTLSA_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
     	    pickle.dump(log_probability_in_mask,open('{}{}GTLSA_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
@@ -500,7 +499,9 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
       	    pickle.dump(qn1,open('{}{}GTLSA_qn1_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
     	    pickle.dump(qp2,open('{}{}GTLSA_qp2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
     	    pickle.dump(qn2,open('{}{}GTLSA_qn2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))            
-    
+    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+        fp.write(json.dumps([p, r, j])) 
     pickle.dump(gt_est_mask,open('{}{}GTLSA_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
     pickle.dump(log_probability_in_mask,open('{}{}GTLSA_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}GTLSA_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
@@ -923,75 +924,3 @@ def compile_PR(mode="",ground_truth=False):
     print 'Compiled PR to :'+ fname 
 
 
-if __name__ == '__main__':
-    #for objid in range(1, 48):
-    #    create_all_gt_and_worker_masks(objid)
-    #print sample_specs.keys()
-    # ['25workers_rand0', '5workers_rand8', '5workers_rand9', '5workers_rand6', '5workers_rand7', '5workers_rand4', '5workers_rand5', '5workers_rand2', '5workers_rand3', '5workers_rand0', '5workers_rand1', '20workers_rand1', '20workers_rand2', '20workers_rand3', '20workers_rand0', '10workers_rand1', '10workers_rand0', '10workers_rand3', '10workers_rand2', '10workers_rand5', '10workers_rand4', '10workers_rand7', '10workers_rand6', '30workers_rand0', '25workers_rand1', '15workers_rand2', '15workers_rand3', '15workers_rand0', '15workers_rand1', '15workers_rand4', '15workers_rand5']
-    sample_lst = sample_specs.keys()
-    sample = sys.argv[1]
-    #print sample_lst
-    #sample = '5workers_rand0'
-    from test_sample import test_sample_obj
-    object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-
-    # Debugging Examples
-    #GroundTruth_doM_once('5workers_rand0', 7 ,thresh=2,algo="GTLSA",exclude_isovote=False,rerun_existing=True)
-    #GroundTruth_doM_once('5workers_rand0', 42 ,thresh=2,algo="GTLSA",exclude_isovote=False,rerun_existing=True)
-    #GroundTruth_doM_once('10workers_rand0', 29 ,thresh=-2,algo="GTLSA",exclude_isovote=False,rerun_existing=True)
-    if False:
-    #if True: 
-    #print sample_lst 
-    #for sample in ['5workers_rand0','10workers_rand0','15workers_rand0','20workers_rand0','25workers_rand0','30workers_rand0']: 
-    #for sample in sample_lst:
-    # First 7 objects are bad objects, last 3 are good objects
-    #test_sample_obj = [('10workers_rand5',8),('10workers_rand3',20),('5workers_rand3',20),('5workers_rand3',28),('30workers_rand0',7),\
-    #('25workers_rand1',37),('20workers_rand2',11),('25workers_rand0',27),('5workers_rand0',1),('20workers_rand3',32)]
-    #for test_sample in [('25workers_rand0',27),('20workers_rand3',32)]:
-    #for test_sample in [('10workers_rand5',8),('5workers_rand0',1)] :# test_sample_obj[-2:]: 
-    #for test_sample in [('10workers_rand3',20),('5workers_rand3',20),('5workers_rand3',28),('30workers_rand0',7),\
-    #                    ('25workers_rand1',37),('20workers_rand2',11),('25workers_rand0',27),('20workers_rand3',32)]:
-    #print test_sample_obj[22:-8]
-    #for test_sample in [('25workers_rand0', 16), ('20workers_rand2', 38), ('15workers_rand4', 32)]:# test_sample_obj[22:-8]:
-	#sample = test_sample[0]
-        print '-----------------------------------------------'
-        print 'Starting ', sample
-        sample_start_time = time.time()
-        #for objid in [1]:#object_lst:
-	#obj = test_sample[1]
- 	#for objid in [obj]:
-        for objid in object_lst:
-	    print "Obj: " ,objid 
-            obj_start_time = time.time()
-            create_mega_mask(objid, PLOT=True, sample_name=sample)
-            #create_MV_mask(sample, objid)#,mode="compute_pr_only")
-	    #for thresh in [-1.8,-1.6,-1.4,-1.2,-0.8, -0.6, -0.4, -0.2,  0. ,  0.2,  0.4,  0.6,  0.8, 1.2,1.4,1.6,1.8]:
-	    #for thresh in [-2,-1,0,1,2]:
-            #for thresh in [-4,-2,0,2,4]:
-	    #for thresh in [0]:
-     	    #   print "Working on threshold: ",thresh
-    	        #do_EM_for(sample, objid,thresh=thresh,compute_PR_every_iter=False,exclude_isovote=True)#,load_p_in_mask=True,thresh=thresh)
-		#do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=True, num_iterations=3)
-		#do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=False, num_iterations=3)
-		#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=True,compute_PR_every_iter=True, num_iterations=3)
-		#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True, num_iterations=3)
-		#GroundTruth_doM_once(sample, objid,thresh=thresh,algo="basic",exclude_isovote=False,rerun_existing=False)
-		#GroundTruth_doM_once(sample, objid,thresh=thresh,algo="GT",exclude_isovote=False,rerun_existing=False)
-		#GroundTruth_doM_once(sample, objid,thresh=thresh,algo="GTLSA",exclude_isovote=False,rerun_existing=True)
-		#GroundTruth_doM_once(sample, objid,thresh=thresh,algo="AW",exclude_isovote=False,rerun_existing=True)
-                #GroundTruth_doM_once(sample, objid,thresh=thresh,algo="GT",exclude_isovote=True,rerun_existing=True)
-                #GroundTruth_doM_once(sample, objid,thresh=thresh,algo="GTLSA",exclude_isovote=True,rerun_existing=True)
-		#GT_EM_Qjinit(sample, objid,exclude_isovote=True,thresh=thresh)
-		#GroundTruth_doM_once(sample, objid,thresh=thresh,algo="AW",exclude_isovote=True,rerun_existing=True)
-            obj_end_time = time.time()
-            print '{}: {}s'.format(objid, round(obj_end_time - obj_start_time, 2))
-            sample_end_time = time.time()
-            print 'Total time for {}: {}s'.format(sample, round(sample_end_time - sample_start_time, 2))
-    #compile_PR(mode="AW",ground_truth=True)
-    #compile_PR(mode="isoAW",ground_truth=True)
-    compile_PR(mode="GTLSA",ground_truth=True)
-    compile_PR(mode="isoGTLSA",ground_truth=True)
-    #compile_PR(mode="GT",ground_truth=True)
-    #compile_PR(mode="isoGT",ground_truth=True)
-    #compile_PR(mode="basic",ground_truth=True)
-    #do_GTLSA_EM_for('5workers_rand0', 1,thresh=-2,rerun_existing=True,exclude_isovote=True, num_iterations=5,dump_output_at_every_iter=True)
