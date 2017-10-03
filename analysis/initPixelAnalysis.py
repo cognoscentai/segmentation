@@ -20,34 +20,33 @@ sample_lst = sample_specs.keys()
 #		print sample+":"+str(objid)
 #		create_MV_mask(sample, objid)
 
-#from areaMask import * 
-#print "Creating area mask for all sample-objects"
-#print "This will also take a while (~5hrs)"
-#for sample in tqdm(sample_specs.keys()):
-#        for objid in object_lst:
-#		if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)):
-#			print sample+":"+str(objid)+" already exist"
-#		else:
-#			print sample+":"+str(objid)
-#	        	create_PixTiles(sample,objid,check_edges=True)	
+from areaMask import * 
+print "Creating area mask for all sample-objects"
+print "This will also take a while (~5hrs)"
+for sample in tqdm(sample_specs.keys()):
+        for objid in object_lst:
+		if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)):
+			print sample+":"+str(objid)+" already exist"
+		else:
+			print sample+":"+str(objid)
+	        	create_PixTiles(sample,objid,check_edges=True)	
 
 # Check number of object that have completed their full run by :
 # ls pixel_em/*/obj*/EM_prj_iter2_thresh-4.json |wc -l
 # ls pixel_em/*/obj*/GT_EM_prj_iter2_thresh-4.json |wc -l
-# 
 
-for sample in tqdm(sample_specs.keys()):
-	for objid in object_lst:
-		print sample+":"+str(objid)
+#for sample in tqdm(sample_specs.keys()):
+#	for objid in object_lst:
+#		print sample+":"+str(objid)
 		#if True: 
 		#	thresh=4
-		for thresh in [-4,-2,0,2,4]:
+#		for thresh in [-4,-2,0,2,4]:
 			#do_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False,num_iterations=3)
                 	#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=True,compute_PR_every_iter=True, num_iterations=3)
                 	#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True, num_iterations=3)
 
-	     		do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=True, num_iterations=3)
-                        do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False, num_iterations=3)
+#	     		do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=True, num_iterations=3)
+#                        do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False, num_iterations=3)
 
 
 

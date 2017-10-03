@@ -141,7 +141,7 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid):
     return worker_masks
 
 
-def create_MV_mask(sample_name, objid, plot=True,mode=""):
+def create_MV_mask(sample_name, objid, plot=False,mode=""):
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if mode=="":
