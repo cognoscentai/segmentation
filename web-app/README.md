@@ -14,6 +14,15 @@ The web-app is built with Flask and served on Heroku. The Flask app is inside ``
 To serve the webapp locally, turn on the local [Postgres server](https://www.postgresql.org/) and  run : 
 
 ​		``python run.py``
+- To create the database, use the psql command line interface and enter the following commands: 
+
+```
+$psql 
+CREATE USER segment WITH CREATEDB CREATEROLE;
+ALTER USER segment WITH SUPERUSER;
+CREATE DATABASE segment;
+```
+
 
 ### URL
 
