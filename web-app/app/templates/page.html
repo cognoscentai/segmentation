@@ -156,11 +156,9 @@
     var minVal = 30; // the clicked point should be at least somewhat closeby
     for (var i=0; i<clickX.length;i++){
       var dist = Math.abs(clickX[i]-x) + Math.abs(clickY[i]-y);
-      console.log(dist)
       if (dist<minVal){
           minVal = dist;
           minIdx = i;
-          console.log("here")
       }
     }
     if (minIdx!=-1){
