@@ -2,6 +2,27 @@
 
 Crowsourcing image segmentation project
 
+## Quick Start
+
+1. Install Postgres
+2. Install all python dependencies via: 
+``` pip install -r requirements.txt```
+
+3. Create the ``segment`` database, use the psql command line interface and enter the following commands: 
+
+```
+$psql 
+CREATE USER segment WITH CREATEDB CREATEROLE;
+ALTER USER segment WITH SUPERUSER;
+CREATE DATABASE segment;
+```
+
+4. Run ``db_create.py``, which creates the necessary tables in the database. This creates the tables and schema and populate the table with information about the objects, object locations and images.
+
+5. Run the webapp at ```python run.py```, and access it through the web browser with the url : 
+
+```127.0.0.1:5000/segment/COCO_train2014_000000000307/14/```
+
 ## Web-app 
 
 The web-app is built with Flask and served on Heroku. The Flask app is inside ``app``:
@@ -14,15 +35,6 @@ The web-app is built with Flask and served on Heroku. The Flask app is inside ``
 To serve the webapp locally, turn on the local [Postgres server](https://www.postgresql.org/) and  run : 
 
 ​		``python run.py``
-- To create the database, use the psql command line interface and enter the following commands: 
-
-```
-$psql 
-CREATE USER segment WITH CREATEDB CREATEROLE;
-ALTER USER segment WITH SUPERUSER;
-CREATE DATABASE segment;
-```
-
 
 ### URL
 
