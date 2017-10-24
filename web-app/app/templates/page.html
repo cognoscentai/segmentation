@@ -150,6 +150,24 @@
     clickX.push(x);
     clickY.push(y);
   }
+  function deleteClick(x,y){
+    // Delete the nearest control point from the clicked region based on L1 distance
+    var minIdx = -1;
+    var minVal = 30; // the clicked point should be at least somewhat closeby
+    for (var i=0; i<clickX.length;i++){
+      var dist = Math.abs(clickX[i]-x) + Math.abs(clickY[i]-y);
+      console.log(dist)
+      if (dist<minVal){
+          minVal = dist;
+          minIdx = i;
+          console.log("here")
+      }
+    }
+    if (minIdx!=-1){
+      clickX.splice(minIdx,1)
+      clickY.splice(minIdx,1)  
+    }
+  }
   function renderObjLoc(){ 
     context.fillStyle = 'rgb(255,255,255)';
     context.strokeStyle = 'rgb(255,20,20)';
@@ -208,6 +226,10 @@
       actions.push("addClick");
       times.push(Date.now());
       addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+    }else if (mode =="delete"){
+      actions.push("deleteClick");
+      times.push(Date.now());
+      deleteClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
     }
     // Moving anchors enabled in both modes
     var mouseX = e.pageX - this.offsetLeft;
