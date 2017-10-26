@@ -149,6 +149,8 @@
     // console.log(undoArray);
     clickX.push(x);
     clickY.push(y);
+    // clickX,clickY = realign(clickX,clickY);
+    generateClipping(clickX,clickY);
   }
   function deleteClick(x,y){
     // Delete the nearest control point from the clicked region based on L1 distance
@@ -176,7 +178,61 @@
     context.strokeRect( object_location[0] - 4,  object_location[1] - 4, 8,8);
     document.getElementById("objName").innerHTML=object;
   }
-  
+  function realign(clickX,clickY) {
+    if (clickX!=null && clickX.length>3){
+      const average = arr => arr.reduce((sume, el) => sume + el, 0) / arr.length;
+      var xCenter = average(clickX);
+      var yCenter = average(clickY);
+      var thetas = [];
+      for (var i=0 ; i<clickX.length;i++){
+        var xTrans = clickX[i]-xCenter
+        var yTrans = clickY[i]-yCenter
+        var val =Math.atan(yTrans/xTrans)
+        if (xTrans>0){
+          if (yTrans<0){
+            val = 2*Math.PI-val
+            console.log("Q4")
+          }
+        }else{
+          if (yTrans<0){
+            val = val+Math.PI
+            console.log("Q3")
+          }else{
+            val = Math.PI-val
+            console.log("Q2")
+          }
+        }
+        // if (val<0){
+        //   val = val+2*Math.PI
+        // }
+
+        thetas.push(val)
+      }
+      // var xsort =  clickX.sort(function(a, b){  
+      //   return thetas.indexOf(a) > thetas.indexOf(b) ? 1 : -1;
+      // });
+      // Sort from largest to smallest theta values
+      console.log("Before X :"+clickX)
+      console.log("Before Y :"+clickY)
+      clickX= clickX.map((item, index) => [thetas[index], item]) 
+        .sort(([count1], [count2]) => count2 - count1) 
+        .map(([, item]) => item); 
+      clickY= clickY.map((item, index) => [thetas[index], item]) 
+        .sort(([count1], [count2]) => count2 - count1) 
+        .map(([, item]) => item); 
+      console.log("thetas:"+thetas)
+      console.log("After X :"+clickX)
+      console.log("After Y :"+clickY)
+    }
+
+    // var xsort = clickX.sort(function(a, b) {
+    //   return thetas.indexOf(a) - thetas.indexOf(b);
+    // });
+    // var ysort = clickY.sort(function(a, b) {
+    //   return thetas.indexOf(a) - thetas.indexOf(b);
+    // });
+    return clickX,clickY;
+  }
   function redraw() {
     canvas.width = canvas.width; // Clears the canvas 
     context.drawImage(imageObj, 0, 0);
@@ -212,7 +268,7 @@
     clickX[activePoint] = newX;
     clickY[activePoint] = newY;
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
   };
   $('#canvas').mouseup(function(e) {
     $(this).off('mousemove');
@@ -242,9 +298,9 @@
         }
       }
     redraw();
-    generateClipping();  
+    generateClipping(clickX,clickY);  
   });
-  function generateClipping() {
+  function generateClipping(clickX,clickY) {
     clipCanvas.setAttribute('width', canvas.getAttribute('width')+'px');
     clipCanvas.setAttribute('height',canvas.getAttribute('height')+'px');
     
@@ -275,7 +331,7 @@
       clickY[op[0]] = op[2];
     }
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
     actions.push("undo");
     times.push(Date.now());
   });
@@ -283,7 +339,7 @@
     clickX = [];
     clickY = [];
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
     actions.push("reset");
     times.push(Date.now());
   });
