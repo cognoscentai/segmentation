@@ -23,6 +23,11 @@ CREATE DATABASE segment;
 
 ```127.0.0.1:5000/segment/COCO_train2014_000000000307/14/```
 
+Debugging: 
+db_migrate.py doesn't work currently. If there are any schema changes, please run on psql: 
+```DROP schema public cascade; CREATE schema public;```
+and rerun db_create.py (this is also automatically done on the first line of db_create.py).
+
 ## Web-app 
 
 The web-app is built with Flask and served on Heroku. The Flask app is inside ``app``:
