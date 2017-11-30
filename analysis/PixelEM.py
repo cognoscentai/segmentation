@@ -139,8 +139,6 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid):
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks
-
-
 def create_MV_mask(sample_name, objid, plot=False,mode=""):
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -292,13 +290,13 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
     tarea_lst = np.array(tarea_lst)
     #area_thresh_gt =  np.median(tarea_lst[gt_tiles])
     #area_thresh_ngt = np.median(tarea_lst[ngt_tiles])
-    gt_areas = tarea_lst[gt_tiles]
-    ngt_areas = tarea_lst[ngt_tiles]
+    gt_areas = area_mask[gt_tiles]
+    ngt_areas = area_mask[ngt_tiles]
     area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
     area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
     
-    print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
-    print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
+    #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
+    #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
     large_gt_Ncorrect,large_gt_total,large_ngt_Ncorrect,large_ngt_total = 0,0,0,0
     small_gt_Ncorrect,small_gt_total,small_ngt_Ncorrect,small_ngt_total=0,0,0,0 
@@ -444,7 +442,14 @@ def compute_A_thres(condition,area_mask):
     for i in range(len(passing_xs)):
        high_confidence_pixel_area.append(area_mask[passing_xs[i]][passing_ys[i]])
     A_thres = np.median(high_confidence_pixel_area)
-    return A_thres	
+    return A_thres
+def tiles2AreaMask(tiles,mega_mask,sample,objid):
+    tarea = [len(t) for t in tiles]
+    mask = np.zeros_like(mega_mask)
+    for tidx in range(len(tiles)):
+        for i in list(tiles[tidx]):
+            mask[i]=tarea[tidx]
+    return mask	
 def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
@@ -465,13 +470,14 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid) 
+    area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     for it in range(num_iterations):
         qp1 = dict()
         qn1 = dict()
         qp2 = dict()
         qn2 = dict()
         for wid in worker_masks.keys():
-            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tidx_mask,t_area_lst,exclude_isovote=exclude_isovote)
+            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
         if load_p_in_mask:
             #print "loaded pInT" 
             log_probability_in_mask=pkl.load(open('{}{}GTLSA_p_in_mask_{}.pkl'.format(outdir,mode, it)))
@@ -530,7 +536,7 @@ def do_Area_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thr
     gt_est_mask = get_MV_mask(sample_name, objid)
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     area_lst = pkl.load(open("{}/tarea.pkl".format(outdir)))
-    #area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
+    area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
     tidx_mask = pkl.load(open("{}/tidx_mask.pkl".format(outdir)))
 
     Nworkers= len(worker_masks)
