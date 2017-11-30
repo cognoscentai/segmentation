@@ -15,13 +15,20 @@
   <script src="{{ url_for('static', filename='lib/blowup.js') }}"></script>
   <script src="{{ url_for('static', filename='lib/jquery.panzoom.js') }}"></script>
   <script src="{{ url_for('static', filename='lib/jquery.canvasAreaDraw.js') }}"></script>
- 
+   <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+  <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
 </head>
 
 <body>
   <div id="wrapper" style="padding:0.3cm;display:inline;">
     <h1 style="display:inline; font-size: 32px"><font face="garamond">Draw a bounding box around the <div id="objName"  style="display: inline; color:red">object</div> located at the pointer!</font></h1>
     <div id = "buttonarea" style="padding:0.3cm;float:right;display:inline-block;">
+      <div class="btn-group form-group" data-toggle="buttons" id="mode">
+        <label id="lblfilter-green" class="btn btn-success" >
+            <input type="checkbox" id="filter-green" /><span>insert</span>
+        </label>
+      </div>
       <button id="undo" type="button"> <font face="courier"> Undo [U] </font></button>
       <button id="reset" type="button"> <font face="courier"> Reset [R] </font></button>
       <button id="submitbtn">  <font face="courier">Submit [S]</font></button>
@@ -36,7 +43,7 @@
         <div id="clipped" class="clipParent" style="display: inline-block;padding-top: 20px;float: left;"></div>
       </div>
       
-  <div id="instructions" title="Task Instructions">
+<!--   <div id="instructions" title="Task Instructions">
     <p><h4><font face="garamond">Please segment the image by drawing around the boundaries of the object denoted by the pointer. You can click and drag the points that makes up the bounding box. If you made a mistake, you can use the Undo button to go back to the previous step or Reset to start over again.<br><br>
     Here's an example as a starting point!<br><br>
 
@@ -44,7 +51,7 @@
 
     The bounding box that you draw should be as close to the object boundary as possible but should contain the whole object. Here are some examples of bad bounding boxes. <br></font></h4></p>
     <img src="{{ url_for('static', filename = 'segmentation_bad.png') }}" style="height:250px;"><br><br>
-  </div>
+  </div> -->
 
   <div id="end-dialog-message" title="Ready to submit?"></div>
 
@@ -67,6 +74,21 @@
 </body>
 
 <script>
+  // Button to switch between insert and deletion modes 
+  var mode = 'insert';
+  $('#mode').click(function () {
+    var checked = $('input', this).is(':checked');
+    $('span', this).text(checked ? 'insert' : 'delete');
+    mode = $('span', this).text()
+    if (mode == "delete"){
+      $("#mode").children()[0].style.backgroundColor = "red"  
+      $("#mode").children()[0].style.borderColor="red"
+    }else{
+      $("#mode").children()[0].style.backgroundColor = "green"  
+      $("#mode").children()[0].style.borderColor="green"
+    }
+  });
+  
   var accepted = '{{ accepted|tojson }}';
   var object = JSON.parse('{{ object|tojson }}');
   var object_location = JSON.parse('{{ loc|tojson }}');
@@ -121,12 +143,29 @@
   var paint;
   //Pick a random object to segment (Only done once)
   // var randkey=Object.keys(object)[Math.floor(Math.random()*Object.keys(object).length)];
-  createInstructionsDialog();
+  // createInstructionsDialog();
   function addClick(x, y, dragging) {
     undoArray.push([-1, -1, -1]);
     // console.log(undoArray);
     clickX.push(x);
     clickY.push(y);
+    realign(clickX,clickY);
+  }
+  function deleteClick(x,y){
+    // Delete the nearest control point from the clicked region based on L1 distance
+    var minIdx = -1;
+    var minVal = 30; // the clicked point should be at least somewhat closeby
+    for (var i=0; i<clickX.length;i++){
+      var dist = Math.abs(clickX[i]-x) + Math.abs(clickY[i]-y);
+      if (dist<minVal){
+          minVal = dist;
+          minIdx = i;
+      }
+    }
+    if (minIdx!=-1){
+      clickX.splice(minIdx,1)
+      clickY.splice(minIdx,1)  
+    }
   }
   function renderObjLoc(){ 
     context.fillStyle = 'rgb(255,255,255)';
@@ -138,7 +177,45 @@
     context.strokeRect( object_location[0] - 4,  object_location[1] - 4, 8,8);
     document.getElementById("objName").innerHTML=object;
   }
-  
+  function realign(x,y) {
+    if (x!=null && x.length>3){
+      console.log("Before X :"+x)
+      console.log("Before Y :"+y)
+      const average = arr => arr.reduce((sume, el) => sume + el, 0) / arr.length;
+      var xCenter = average(x);
+      var yCenter = average(y);
+      
+      var thetas = [];
+      console.log("center:"+xCenter+","+yCenter)
+      for (var i=0 ; i<x.length;i++){
+        var xTrans = x[i]-xCenter
+        var yTrans = y[i]-yCenter
+        var val =Math.abs(Math.atan(yTrans/xTrans))
+        if (xTrans>0){
+          if (yTrans<0){
+            val = 2*Math.PI-val
+          }
+        }else{
+          if (yTrans<0){
+            val = val+Math.PI
+          }else{
+            val = Math.PI-val
+          }
+        }
+        thetas.push(val)
+      }
+      // Sort from largest to smallest theta values
+      clickX= x.map((item, index) => [thetas[index], item]) 
+        .sort(([count1], [count2]) => count2 - count1) 
+        .map(([, item]) => item); 
+      clickY= y.map((item, index) => [thetas[index], item]) 
+        .sort(([count1], [count2]) => count2 - count1) 
+        .map(([, item]) => item); 
+      // console.log("thetas:"+thetas)
+      // console.log("After X :"+clickX)
+      // console.log("After Y :"+clickY)
+    }
+  }
   function redraw() {
     canvas.width = canvas.width; // Clears the canvas 
     context.drawImage(imageObj, 0, 0);
@@ -174,7 +251,7 @@
     clickX[activePoint] = newX;
     clickY[activePoint] = newY;
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
   };
   $('#canvas').mouseup(function(e) {
     $(this).off('mousemove');
@@ -182,24 +259,31 @@
     $(this).on('mousemove', handleFreeMouseMove)
   });
   $('#canvas').mousedown(function(e) {
-    actions.push("addClick");
-    times.push(Date.now());
-    var mouseX = e.pageX - this.offsetLeft;
-    var mouseY = e.pageY - this.offsetTop;
-    for (var i = 0; i < clickX.length; i += 1) {
-      dis = Math.sqrt(Math.pow(mouseX - clickX[i], 2) + Math.pow(mouseY - clickY[i], 2));
-      if (dis < 6) {
-        activePoint = i;
-        undoArray.push([activePoint, clickX[i], clickY[i]]);
-        $(this).on('mousemove', move);
-        return false;
-      }
+    if (mode =="insert"){
+      actions.push("addClick");
+      times.push(Date.now());
+      addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+    }else if (mode =="delete"){
+      actions.push("deleteClick");
+      times.push(Date.now());
+      deleteClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
     }
-    addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+    // Moving anchors enabled in both modes
+    var mouseX = e.pageX - this.offsetLeft;
+      var mouseY = e.pageY - this.offsetTop;
+      for (var i = 0; i < clickX.length; i += 1) {
+        dis = Math.sqrt(Math.pow(mouseX - clickX[i], 2) + Math.pow(mouseY - clickY[i], 2));
+        if (dis < 6) {
+          activePoint = i;
+          undoArray.push([activePoint, clickX[i], clickY[i]]);
+          $(this).on('mousemove', move);
+          return false;
+        }
+      }
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);  
   });
-  function generateClipping() {
+  function generateClipping(clickX,clickY) {
     clipCanvas.setAttribute('width', canvas.getAttribute('width')+'px');
     clipCanvas.setAttribute('height',canvas.getAttribute('height')+'px');
     
@@ -230,7 +314,7 @@
       clickY[op[0]] = op[2];
     }
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
     actions.push("undo");
     times.push(Date.now());
   });
@@ -238,7 +322,7 @@
     clickX = [];
     clickY = [];
     redraw();
-    generateClipping();
+    generateClipping(clickX,clickY);
     actions.push("reset");
     times.push(Date.now());
   });
