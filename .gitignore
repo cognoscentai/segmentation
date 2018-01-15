@@ -1,3 +1,4 @@
 *.pyc
 *.out
 analysis/pixel_em/
+ipynb/.ipynb_checkpoints/

@@ -279,19 +279,26 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,exclude_isovote=False): 
     gt_tiles = []
     ngt_tiles = []
-    
-    for tidx in tiles: 
-        if len(tidx)!=0:
-            gt_percentage =  sum(gt_mask[tidx])/float(len(tidx))
-            if gt_percentage>0.6:
-                gt_tiles.append(t)
-            else:
-                ngt_tiles.append(t)
-    tarea_lst = np.array(tarea_lst)
+   
+    for t in tiles:
+    	numerator = 0
+    	for tidx in t:
+        	numerator += gt_mask[tidx]
+    	if len(tidx)!=0:
+        	gt_percentage =  numerator/float(len(tidx))
+    	if gt_percentage>0.6:
+        	gt_tiles.append(t)
+    	else:
+        	ngt_tiles.append(t) 
+    #tarea_lst = np.array(tarea_lst)
     #area_thresh_gt =  np.median(tarea_lst[gt_tiles])
     #area_thresh_ngt = np.median(tarea_lst[ngt_tiles])
-    gt_areas = area_mask[gt_tiles]
-    ngt_areas = area_mask[ngt_tiles]
+    gt_areas=[]
+    for t in gt_tiles:
+        gt_areas.append(area_mask[list(t)[0]])
+    ngt_areas=[]
+    for t in ngt_tiles:
+        ngt_areas.append(area_mask[list(t)[0]])
     area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
     area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
     
@@ -469,7 +476,6 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
     Nworkers=len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid) 
     area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     for it in range(num_iterations):
         qp1 = dict()
