@@ -53,23 +53,29 @@ sample_lst = sample_specs.keys()
 # Check number of object that have completed their full run by :
 # ls pixel_em/*/obj*/EM_prj_iter2_thresh-4.json |wc -l
 # ls pixel_em/*/obj*/GT_EM_prj_iter2_thresh-4.json |wc -l
-for sample in tqdm(sample_specs.keys()):
-	for objid in object_lst:
-		print sample+":"+str(objid)
-		#if True: 
-		#	thresh=-4
-		for thresh in [-4,-2,0,2,4]:
-			#do_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False,num_iterations=3)
-                	#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=True,compute_PR_every_iter=True, num_iterations=3)
-                	#do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True, num_iterations=3)
+#ls pixel_em/*/obj*/GTLSA_EM_prj_iter1_thresh-4.json |wc -l
+# Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
+'''
+sample = sys.argv[1]
+print sample   
+#for sample in tqdm(sample_specs.keys()):
 
-	     		#do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=True, num_iterations=3)
-			
-                        do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False, num_iterations=3)
+for objid in object_lst[::-1]:
+	print sample+":"+str(objid)
+	#if True: 
+	#	thresh=-4
+	for thresh in [-4,-2,0,2,4]:
+		do_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False,num_iterations=3)
+                do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=True,compute_PR_every_iter=True, num_iterations=3)
+                do_GT_EM_for(sample, objid,thresh=thresh,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True, num_iterations=3)
+	     	do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=True, num_iterations=3)	
+                do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False, num_iterations=3)
+'''
 
-
-
-#print "Compiling the output from .json to one single csv file for each algo (shoudl take ~1min)" 
-#algorithms = ["GTLSA","isoGTLSA","GT","isoGT","basic"]
-#for algo in algorithms: 
-#	compile_PR(mode="GTLSA",ground_truth=False)
+'''
+# Compiled PRJ to :/home/jlee782/segmentation/analysis/pixel_em/<algoname>_full_PRJ_table.csv
+print "Compiling the output from .json to one single csv file for each algo (should take ~1min)" 
+algorithms = ["GTLSA","isoGTLSA","GT","isoGT","basic"]
+for algo in algorithms: 
+	compile_PR(mode=algo,ground_truth=False)
+'''
