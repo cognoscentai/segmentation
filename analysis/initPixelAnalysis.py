@@ -72,6 +72,31 @@ for objid in object_lst[::-1]:
                 do_GTLSA_EM_for(sample, objid,thresh=thresh,rerun_existing=False,compute_PR_every_iter=True,exclude_isovote=False, num_iterations=3)
 '''
 
+
+# Running Ground Truth Experiment to generate pInT and pNotInT
+sample = sys.argv[1]
+print sample
+#for sample in tqdm(sample_specs.keys()):
+for objid in object_lst:
+	print sample+":"+str(objid)
+	GroundTruth_doM_once(sample, objid,algo="basic",exclude_isovote=False,rerun_existing=False)
+	GroundTruth_doM_once(sample, objid,algo="GT",exclude_isovote=False,rerun_existing=False)
+	GroundTruth_doM_once(sample, objid,algo="GTLSA",exclude_isovote=False,rerun_existing=False)
+        GroundTruth_doM_once(sample, objid,algo="GT",exclude_isovote=True,rerun_existing=False)
+        GroundTruth_doM_once(sample, objid,algo="GTLSA",exclude_isovote=True,rerun_existing=False)
+
+'''
+# Using different thresholds to get GT of different thresholds 
+for sample in tqdm(sample_specs.keys()):
+	for objid in object_lst:
+		for thresh in [-4,-2,0,2,4]:
+			print sample+":"+str(objid)+"[thres="+str(thresh)+"]"
+			deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh,exclude_isovote=False)
+			deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh,exclude_isovote=False)
+			deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh,exclude_isovote=False)
+			deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh,exclude_isovote=True)
+			deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh,exclude_isovote=True)
+'''
 '''
 # Compiled PRJ to :/home/jlee782/segmentation/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)" 
