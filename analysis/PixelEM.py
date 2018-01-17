@@ -759,31 +759,32 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
 	area_thres.close()
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
-def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,exclude_isovote=False, SAVE_GT_MASK = False):
+def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude_isovote=False, SAVE_GT_MASK = False):
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
-    
     log_probability_in_mask = pkl.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
     log_probability_not_in_mask = pkl.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
-    gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
     if exclude_isovote:
-	Nworkers = int(sample_name.split("workers")[0])
-    	mega_mask = get_mega_mask(sample_name, objid)
-	invariant_mask = np.zeros_like(mega_mask,dtype=bool)
+        Nworkers = int(sample_name.split("workers")[0])
+        mega_mask = get_mega_mask(sample_name, objid)
+        invariant_mask = np.zeros_like(mega_mask,dtype=bool)
         invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
-	invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
-	gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
-    	gt_est_mask[gt_est_mask<0]=False
-    	gt_est_mask[gt_est_mask>1]=True
-        #gt_est_mask = gt_est_mask+invariant_mask_yes
-    if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
-    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
-    print "p,r,j:",p,r,j
-    with open('{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh), 'w') as fp:
-    	fp.write(json.dumps([p, r, j]))
+        invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
+    for thresh in thresh_lst:
+    	gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+    	if exclude_isovote:
+	    gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
+    	    gt_est_mask[gt_est_mask<0]=False
+    	    gt_est_mask[gt_est_mask>1]=True
+            #gt_est_mask = gt_est_mask+invariant_mask_yes
+        if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
+        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
+    	print "p,r,j:",p,r,j
+    	with open('{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh), 'w') as fp:
+    	    fp.write(json.dumps([p, r, j]))
     
 def do_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
     if exclude_isovote:
