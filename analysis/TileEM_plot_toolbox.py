@@ -2,7 +2,7 @@
 # from greedy import *
 # from data import *
 # from experiment import *
-from BB2TileExact import *
+#from BB2TileExact import *
 import pandas as pd
 import pickle as pkl
 import shapely

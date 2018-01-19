@@ -85,7 +85,7 @@ for objid in object_lst:
         GroundTruth_doM_once(sample, objid,algo="GT",exclude_isovote=True,rerun_existing=False)
         GroundTruth_doM_once(sample, objid,algo="GTLSA",exclude_isovote=True,rerun_existing=False)
 '''
-
+'''
 # Using different thresholds to get GT of different thresholds 
 thresh_lst = [-4,-2,0,2,4]
 for sample in tqdm(sample_specs.keys()):
@@ -97,9 +97,11 @@ for sample in tqdm(sample_specs.keys()):
 		deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,exclude_isovote=True)
 		deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,exclude_isovote=True)
 '''
+
 # Compiled PRJ to :/home/jlee782/segmentation/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)" 
 algorithms = ["GTLSA","isoGTLSA","GT","isoGT","basic"]
 for algo in algorithms: 
-	compile_PR(mode=algo,ground_truth=False)
-'''
+	#compile_PR(mode=algo,ground_truth=False)
+	compile_PR(mode=algo,ground_truth=True)
+

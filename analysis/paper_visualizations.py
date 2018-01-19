@@ -1,5 +1,5 @@
 # Visualization for paper and debugging 
-from TileEM_plot_toolbox import *
+#from TileEM_plot_toolbox import *
 from TileEM import * 
 from qualityBaseline import *
 worker_Nbatches={5:10,10:8,15:6,20:4,25:2,30:1}
