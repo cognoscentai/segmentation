@@ -1,5 +1,5 @@
 import pickle as pkl
-from PixelEM import * 
+from PixelEM import *
 def greedy(sample,objid,algo,est_type=""):
     tiles = pkl.load(open("../analysis/pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)))
     gt = get_gt_mask(objid)
@@ -7,33 +7,33 @@ def greedy(sample,objid,algo,est_type=""):
         #using ground truth ia for testing purposes
         gt_idxs = set(zip(*np.where(gt)))
     else:
-	log_probability_in_mask=pkl.load(open("../analysis/pixel_em/{}/obj{}/{}_p_in_mask_ground_truth.pkl".format(sample,objid,algo)))
+        log_probability_in_mask=pkl.load(open("../analysis/pixel_em/{}/obj{}/{}_p_in_mask_ground_truth.pkl".format(sample,objid,algo)))
         log_probability_not_in_mask =pkl.load(open("../analysis/pixel_em/{}/obj{}/{}_p_not_in_ground_truth.pkl".format(sample,objid,algo)))
     candidate_tiles_lst = []
     metric_lst = []
-    ia_lst = [] 
+    ia_lst = []
     picked_tiles = []
-    total_area = 0. #new ground truth area
-    ia_cum = 0. #cumulative intersection area
+    GT_area  = 0. #sum of intersection areas of all tiles
+    total_intersection_area = 0. 
+    total_outside_area = 0. 
 
     # compute I/O metric for all tiles
     #for tile in tiles[1:]:#ignore the large outside tile
     for tile in tiles[1:]:
-	if est_type=="ground_truth":
-	    GTintersection_area = float(len(gt_idxs.intersection(set(tile)))) # exact intersection areas
-            #print intersection_area,GTintersection_area,norm_pInT,len(tile)
-            intersection_area = GTintersection_area# for testing purposes only
-	else:
+        if est_type=="ground_truth":
+            intersection_area = float(len(gt_idxs.intersection(set(tile)))) # exact intersection areas
+        else:
             pInT = np.exp(log_probability_in_mask[list(tile)[0]]) # all pixels in same tile should have the same pInT
             pNotInT = np.exp(log_probability_not_in_mask[list(tile)[0]])
-	    if pInT+pNotInT!=0:
-                norm_pInT = pInT/(pNotInT+pInT) #normalized pInT 
-	    else: #weird bug for object 18 isoGT case
-	        norm_pInT = 1.
+            if pInT+pNotInT!=0:
+                norm_pInT = pInT/(pNotInT+pInT) #normalized pInT
+            else: #weird bug for object 18 isoGT case
+                norm_pInT = 1.
             assert norm_pInT<=1 and norm_pInT>=0
-	    intersection_area = float(len(tile) * norm_pInT) #estimated intersection area
+            intersection_area = float(len(tile) * norm_pInT) #estimated intersection area
         outside_area = float(len(tile) - intersection_area)
-        if outside_area!=0: 
+        GT_area+= intersection_area
+        if outside_area!=0:
             metric = intersection_area/outside_area
             metric_lst.append(metric)
             candidate_tiles_lst.append(tile)
@@ -41,33 +41,39 @@ def greedy(sample,objid,algo,est_type=""):
         else:# if outside area =0, then tile completely encapsulated by GT, it must be included in picked tiles
             #print "here"
             picked_tiles.append(tile)
-            total_area+= len(tile)
-            ia_cum += intersection_area
+            total_intersection_area += intersection_area
+            total_outside_area += outside_area
 
     assert len(metric_lst)==len(candidate_tiles_lst)==len(ia_lst)
     srt_decr_idx = np.argsort(metric_lst)[::-1] # sorting from largest to smallest metric_lst
+    #print np.array(metric_lst)[srt_decr_idx]
     jaccard_lst = []
-    if total_area!=0:
-        prev_jac = ia_cum / total_area
-    else:
-	prev_jac = -10000.
+#     if total_area!=0:
+#         print "here"
+#         prev_jac = ia_cum / total_area
+#     else:
+#         prev_jac = -10000.
+    prev_jacc = total_intersection_area/(total_outside_area+GT_area)
+#     prev_jac = -10000.
+#    print ia_cum,total_area
+#    print prev_jac
     for tidx  in srt_decr_idx:
         tile = candidate_tiles_lst[tidx]
         ia = ia_lst[tidx]
-        jaccard = (ia_cum+ia)/float(total_area+len(tile)) # the new jaccard if that tile is actually added
-        jaccard_lst.append(jaccard)
-        if jaccard >= prev_jac: 
-            picked_tiles.append(tile)
-            # if tile picked, update new ia and area
-            prev_jac=jaccard
-            ia_cum +=ia
-            total_area += len(tile)
-        else: # stop when jaccard starts decreasing after the addition of a tile
-            #break
-            continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
+        if ia!=0:
+            temp_new_out_area = total_outside_area + ia
+            temp_new_in_area = total_intersection_area + len(tile)
+            jaccard = (temp_new_in_area) / (temp_new_out_area + GT_area)
+            if jaccard >= prev_jacc:
+                prev_jacc = jaccard
+                total_outside_area = temp_new_out_area
+                total_intersection_area = temp_new_in_area
+                picked_tiles.append(tile)
+            else: # stop when jaccard starts decreasing after the addition of a tile
+                break
+                #continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
 
     #populate final img with tiles in picked tiles
-    
     gt_est_mask = np.zeros_like(gt)
     for t in picked_tiles:
         for tidx in t:
