@@ -6,9 +6,13 @@ def greedy(sample,objid,algo,est_type=""):
     if est_type=="ground_truth":
         #using ground truth ia for testing purposes
         gt_idxs = set(zip(*np.where(gt)))
+    elif est_type=="worker_fraction":
+        worker_mask = pkl.load(open("../analysis/pixel_em/{}/obj{}/voted_workers_mask.pkl".format(sample,objid,algo)))	
+	Nworkers = float(sample.split("workers")[0])
     else:
         log_probability_in_mask=pkl.load(open("../analysis/pixel_em/{}/obj{}/{}_p_in_mask_ground_truth.pkl".format(sample,objid,algo)))
         log_probability_not_in_mask =pkl.load(open("../analysis/pixel_em/{}/obj{}/{}_p_not_in_ground_truth.pkl".format(sample,objid,algo)))
+
     candidate_tiles_lst = []
     metric_lst = []
     ia_lst = []
@@ -23,12 +27,15 @@ def greedy(sample,objid,algo,est_type=""):
         if est_type=="ground_truth":
             intersection_area = float(len(gt_idxs.intersection(set(tile)))) # exact intersection areas
         else:
-            pInT = np.exp(log_probability_in_mask[list(tile)[0]]) # all pixels in same tile should have the same pInT
-            pNotInT = np.exp(log_probability_not_in_mask[list(tile)[0]])
-            if pInT+pNotInT!=0:
-                norm_pInT = pInT/(pNotInT+pInT) #normalized pInT
-            else: #weird bug for object 18 isoGT case
-                norm_pInT = 1.
+	    if est_type =="worker_fraction":
+		norm_pInT = len(worker_mask[list(tile)[0]])/Nworkers
+            else:
+	        pInT = np.exp(log_probability_in_mask[list(tile)[0]]) # all pixels in same tile should have the same pInT
+   	        pNotInT = np.exp(log_probability_not_in_mask[list(tile)[0]])
+                if pInT+pNotInT!=0:
+                    norm_pInT = pInT/(pNotInT+pInT) #normalized pInT
+                else: #weird bug for object 18 isoGT case
+                    norm_pInT = 1.
             assert norm_pInT<=1 and norm_pInT>=0
             intersection_area = float(len(tile) * norm_pInT) #estimated intersection area
         outside_area = float(len(tile) - intersection_area)
@@ -60,18 +67,18 @@ def greedy(sample,objid,algo,est_type=""):
     for tidx  in srt_decr_idx:
         tile = candidate_tiles_lst[tidx]
         ia = ia_lst[tidx]
-        if ia!=0:
-            temp_new_out_area = total_outside_area + ia
-            temp_new_in_area = total_intersection_area + len(tile)
-            jaccard = (temp_new_in_area) / (temp_new_out_area + GT_area)
-            if jaccard >= prev_jacc:
-                prev_jacc = jaccard
-                total_outside_area = temp_new_out_area
-                total_intersection_area = temp_new_in_area
-                picked_tiles.append(tile)
-            else: # stop when jaccard starts decreasing after the addition of a tile
-                break
-                #continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
+        #if ia!=0:
+        temp_new_out_area = total_outside_area + len(tile) - ia
+        temp_new_in_area = total_intersection_area + ia 
+        jaccard = (temp_new_in_area) / (temp_new_out_area + GT_area)
+        if jaccard >= prev_jacc:
+            prev_jacc = jaccard
+            total_outside_area = temp_new_out_area
+            total_intersection_area = temp_new_in_area
+            picked_tiles.append(tile)
+        else: # stop when jaccard starts decreasing after the addition of a tile
+            break
+            #continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
 
     #populate final img with tiles in picked tiles
     gt_est_mask = np.zeros_like(gt)
@@ -86,6 +93,8 @@ from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
 
 import pandas as pd 
+
+'''
 df_data = []
 for sample in tqdm(sample_specs.keys()):
     for objid in object_lst:
@@ -93,9 +102,19 @@ for sample in tqdm(sample_specs.keys()):
         df_data.append([sample,objid,"ground truth",p,r,j])
         print sample,objid,p,r,j
 df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-df.to_csv("greedy_result_ground_truth.csv")
-
+df.to_csv("greedy_result_ground_truth.csv",index=None)
 '''
+df_data = []
+for sample in tqdm(sample_specs.keys()):
+    for objid in object_lst:
+        p,r,j = greedy(sample,objid,"","worker_fraction")
+        df_data.append([sample,objid,"worker fraction",p,r,j])
+        print sample,objid,p,r,j
+df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
+df.to_csv("greedy_result_worker_fraction.csv",index=None)
+'''
+
+
 df_data = []
 #for sample in tqdm(sample_specs.keys()[::-1]):
 import sys
@@ -107,5 +126,5 @@ for objid in object_lst:
 	df_data.append([sample,objid,algo,p,r,j])
 	print sample,objid,algo,p,r,j
 df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-df.to_csv("greedy_result_{}.csv".format(idx))
-'''	
+df.to_csv("greedy_result_{}.csv".format(idx))	
+'''
