@@ -1,6 +1,6 @@
 import pickle as pkl
 from PixelEM import *
-def greedy(sample,objid,algo,est_type=""):
+def greedy(sample,objid,algo,est_type="",output="prj"):
     tiles = pkl.load(open("../analysis/pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)))
     gt = get_gt_mask(objid)
     if est_type=="ground_truth":
@@ -81,50 +81,56 @@ def greedy(sample,objid,algo,est_type=""):
             #continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
 
     #populate final img with tiles in picked tiles
+    
     gt_est_mask = np.zeros_like(gt)
     for t in picked_tiles:
         for tidx in t:
             gt_est_mask[tidx]=1
-    [p, r, j] = faster_compute_prj(gt_est_mask, gt)
-    return p,r,j
+    if output=="mask":
+	return gt_est_mask
+    elif output == "prj":
+        [p, r, j] = faster_compute_prj(gt_est_mask, gt)
+        return p,r,j
 
-object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-from sample_worker_seeds import sample_specs
-sample_lst = sample_specs.keys()
 
-import pandas as pd 
 
-'''
-df_data = []
-for sample in tqdm(sample_specs.keys()):
+if __name__ == '__main__':
+    object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
+    from sample_worker_seeds import sample_specs
+    sample_lst = sample_specs.keys()
+
+    import pandas as pd 
+
+
+    '''
+    df_data = []
+    for sample in tqdm(sample_specs.keys()):
+        for objid in object_lst:
+            p,r,j = greedy(sample,objid,"","ground_truth")
+            df_data.append([sample,objid,"ground truth",p,r,j])
+            print sample,objid,p,r,j
+    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
+    df.to_csv("greedy_result_ground_truth.csv",index=None)
+    '''
+    df_data = []
+    for sample in tqdm(sample_specs.keys()):
+        for objid in object_lst:
+            p,r,j = greedy(sample,objid,"","worker_fraction")
+            df_data.append([sample,objid,"worker fraction",p,r,j])
+            print sample,objid,p,r,j
+    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
+    df.to_csv("greedy_result_worker_fraction.csv",index=None)
+    '''
+    df_data = []
+    #for sample in tqdm(sample_specs.keys()[::-1]):
+    import sys
+    idx = int(sys.argv[1])
+    sample = sample_specs.keys()[idx]
     for objid in object_lst:
-        p,r,j = greedy(sample,objid,"","ground_truth")
-        df_data.append([sample,objid,"ground truth",p,r,j])
-        print sample,objid,p,r,j
-df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-df.to_csv("greedy_result_ground_truth.csv",index=None)
-'''
-df_data = []
-for sample in tqdm(sample_specs.keys()):
-    for objid in object_lst:
-        p,r,j = greedy(sample,objid,"","worker_fraction")
-        df_data.append([sample,objid,"worker fraction",p,r,j])
-        print sample,objid,p,r,j
-df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-df.to_csv("greedy_result_worker_fraction.csv",index=None)
-'''
-
-
-df_data = []
-#for sample in tqdm(sample_specs.keys()[::-1]):
-import sys
-idx = int(sys.argv[1])
-sample = sample_specs.keys()[idx]
-for objid in object_lst:
-    for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
-	p,r,j = greedy(sample,objid,algo)
-	df_data.append([sample,objid,algo,p,r,j])
-	print sample,objid,algo,p,r,j
-df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-df.to_csv("greedy_result_{}.csv".format(idx))	
-'''
+        for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
+	    p,r,j = greedy(sample,objid,algo)
+	    df_data.append([sample,objid,algo,p,r,j])
+	    print sample,objid,algo,p,r,j
+    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
+    df.to_csv("greedy_result_{}.csv".format(idx))	
+    '''
