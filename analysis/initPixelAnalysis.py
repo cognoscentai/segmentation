@@ -1,15 +1,16 @@
 from PixelEM import *
 import os 
-object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-#print "1. if directory does not exist, create pixel_em/"
+# object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
+object_lst = [1]
+print "1. if directory does not exist, create pixel_em/"
 if not os.path.exists("pixel_em"):
     os.makedirs("pixel_em")
-#print "2. Creating all worker and GT pixel masks (2-3 min)"
-#for objid in object_lst:
-#    create_all_gt_and_worker_masks(objid)
+print "2. Creating all worker and GT pixel masks (2-3 min)"
+for objid in object_lst:
+   create_all_gt_and_worker_masks(objid)
 
-from sample_worker_seeds import sample_specs
-sample_lst = sample_specs.keys()
+# from sample_worker_seeds import sample_specs
+# sample_lst = sample_specs.keys()
 #print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 #print "This might take a while (~2hrs)"
 #for sample in sample_lst:
@@ -102,9 +103,9 @@ for sample in tqdm(sample_specs.keys()):
 '''
 
 # Compiled PRJ to :/home/jlee782/segmentation/analysis/pixel_em/<algoname>_full_PRJ_table.csv
-print "Compiling the output from .json to one single csv file for each algo (should take ~1min)" 
-algorithms = ["GTLSA","isoGTLSA","GT","isoGT","basic"]
-for algo in algorithms: 
-	#compile_PR(mode=algo,ground_truth=False)
-	compile_PR(mode=algo,ground_truth=True)
+# print "Compiling the output from .json to one single csv file for each algo (should take ~1min)" 
+# algorithms = ["GTLSA","isoGTLSA","GT","isoGT","basic"]
+# for algo in algorithms: 
+# 	#compile_PR(mode=algo,ground_truth=False)
+# 	compile_PR(mode=algo,ground_truth=True)
 
