@@ -94,9 +94,17 @@ def index_item(pix_lst,item):
     for i,pix in enumerate(pix_lst):
         if str(list(pix))==str(list(item)):
              return i 
-
-def create_PixTiles(sample,objid,check_edges=False):
-    wmap  = pkl.load(open("pixel_em/{}/obj{}/voted_workers_mask.pkl".format(sample,objid)))
+import os
+def create_PixTiles(sample,objid,cluster_id="",check_edges=False):
+    if cluster_id=="":
+        wmap  = pkl.load(open("pixel_em/{}/obj{}/voted_workers_mask.pkl".format(sample,objid)))
+	output_fname = "pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)
+    else: 
+	wmap  = pkl.load(open("pixel_em/{}/obj{}/clust{}/voted_workers_mask.pkl".format(sample,objid,cluster_id)))
+	output_fname = "pixel_em/{}/obj{}/clust{}/tiles.pkl".format(sample,objid,cluster_id)
+    if os.path.exists(output_fname):
+        print output_fname+" already exist"
+  	return 
     tiles= []
     # Large outside tile 
     x,y = np.where(wmap==0)
@@ -113,7 +121,6 @@ def create_PixTiles(sample,objid,check_edges=False):
     pixs_already_tiled = set()
 
     for source in srt_potential_pix:
-
         source = tuple(source)
         if source in pixs_already_tiled:
             continue
@@ -146,7 +153,7 @@ def create_PixTiles(sample,objid,check_edges=False):
             pidx+=1
 
         tidx+=1 #moving onto the next tile
-    pkl.dump(tiles,open("pixel_em/{}/obj{}/tiles.pkl".format(sample,objid),'w'))
+    pkl.dump(tiles,open(output_fname,'w'))
 
 if __name__=="__main__":
     create_PixTiles("5workers_rand0",1,check_edges=True) 

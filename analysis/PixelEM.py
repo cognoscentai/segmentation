@@ -18,9 +18,6 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
     img_info, object_tbl, bb_info, hit_info = load_info()
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
-    if EXCLUDE_BBG:
-        bb_objects = bb_objects[bb_objects.worker_id != 3]
-
     # Create a masked image for the object
     # where each of the worker BB is considered a mask and overlaid on top of each other
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
@@ -75,25 +72,29 @@ def get_gt_mask(objid):
     return pickle.load(open('{}gt.pkl'.format(indir)))
 
 
-def create_mega_mask(objid, PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
+def create_mega_mask(objid, worker_ids=[],cluster_id="", PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
     img_info, object_tbl, bb_info, hit_info = load_info()
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
+    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if worker_ids !=[]:
+        # if no worker ids given, then create gt and masks for all workers who have annotated that object 
+	# this is for all workers whos annotation lies within that cluster.  
+	bb_objects = bb_info[(bb_info["object_id"] == objid)&(bb_info["worker_id"].isin(worker_ids))]
+	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     if EXCLUDE_BBG:
         bb_objects = bb_objects[bb_objects.worker_id != 3]
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
     # Sampling Data from Ji table
     sampleNworkers = sample_specs[sample_name][0]
     if sampleNworkers > 0 and sampleNworkers < len(bb_objects):
         bb_objects = bb_objects.sample(n=sample_specs[sample_name][0], random_state=sample_specs[sample_name][1])
-
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
     fname = ORIGINAL_IMG_DIR + img_name + ".png"
     width, height = get_size(fname)
     mega_mask = np.zeros((height, width))
     voted_workers_mask = np.zeros((height, width),dtype=object)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir)
 
     worker_ids = list(bb_objects["worker_id"])
     with open('{}worker_ids.json'.format(outdir), 'w') as fp:

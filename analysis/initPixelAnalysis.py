@@ -14,7 +14,7 @@ sample_size = 5
 # print "2. Creating all worker and GT pixel masks (2-3 min)"
 # for objid in object_lst:
 #     create_all_gt_and_worker_masks(objid)
-
+# Changes start here for the preprocessed cluster 
 # sample_lst = sample_lst[:sample_size]
 # print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 # print "This might take a while (~2hrs)"
@@ -23,6 +23,18 @@ sample_size = 5
 #         print sample + ":" + str(objid)
 #         create_mega_mask(objid, PLOT=False, sample_name=sample)
 
+df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+'''
+print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
+print "This might take a while (~2hrs)"
+for sample in sample_lst:
+    for objid in object_lst:
+        cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+            print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
+            create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
+'''
 # print "4.Creating MV mask (should take 5 min)"
 # for sample in sample_lst:
 #     for objid in object_lst:
@@ -40,7 +52,17 @@ sample_size = 5
 #             print sample + ":" + str(objid)
 #             create_PixTiles(sample, objid, check_edges=True)
 
-
+from areaMask import *
+print "5.Creating area mask for all sample-objects"
+print "This will also take a while (~5hrs)"
+for sample in tqdm(sample_lst):
+    for objid in object_lst:
+        cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+	    if len(worker_ids)!=1:
+                print sample + ":" + str(objid)+"clust"+str(cluster_id)
+                create_PixTiles(sample, objid, cluster_id,check_edges=True)
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
 def tiles2AreaMask(sample, objid):
