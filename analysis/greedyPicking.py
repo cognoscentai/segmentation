@@ -1,10 +1,12 @@
 import pickle as pkl
 from PixelEM import *
 def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
+    
     if cluster_id!="":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid,cluster_id)
     else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
+    print outdir
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     gt = get_gt_mask(objid)
     if est_type=="ground_truth":
@@ -14,8 +16,8 @@ def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
         worker_mask = pkl.load(open("{}voted_workers_mask.pkl".format(outdir)))	
 	Nworkers = float(sample.split("workers")[0])
     else:
-        log_probability_in_mask=pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir)))
-        log_probability_not_in_mask =pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir)))
+        log_probability_in_mask=pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir,algo)))
+        log_probability_not_in_mask =pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir,algo)))
 
     candidate_tiles_lst = []
     metric_lst = []
@@ -138,9 +140,10 @@ if __name__ == '__main__':
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
     df.to_csv("greedy_result_{}.csv".format(idx))	
     '''
-    
+        
     # With clusters
     df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+    '''
     df_data = []
     for sample in tqdm(sample_specs.keys()):
         for objid in object_lst:
@@ -149,23 +152,26 @@ if __name__ == '__main__':
                 worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
                 if len(worker_ids)!=1:
                     print sample + ":" + str(objid)+"clust"+str(cluster_id)
-            	    p,r,j = greedy(sample,objid,"","worker_fraction")
-            	    df_data.append([sample,objid,"worker fraction",p,r,j])
-            	    print sample,objid,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-    df.to_csv("withClust_greedy_result_worker_fraction.csv",index=None)
-	
+            	    p,r,j = greedy(sample,objid,"",cluster_id=cluster_id,est_type="worker_fraction")
+            	    df_data.append([sample,objid,"worker fraction",cluster_id,p,r,j])
+            	    print sample,objid,cluster_id,p,r,j
+    df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
+    df.to_csv("withClust_greedy_result_worker_fraction.csv",index=None)	
     '''
+
     df_data = []
     #for sample in tqdm(sample_specs.keys()[::-1]):
     import sys
     idx = int(sys.argv[1])
     sample = sample_specs.keys()[idx]
     for objid in object_lst:
-        for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
-            p,r,j = greedy(sample,objid,algo)
-            df_data.append([sample,objid,algo,p,r,j])
-            print sample,objid,algo,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
+	cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+	    if len(worker_ids)!=1:
+                for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
+            	    p,r,j = greedy(sample,objid,algo)
+            	    df_data.append([sample,objid,algo,'cluster_id',p,r,j])
+            	    print sample,objid,algo,cluster_id,p,r,j
+    df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
     df.to_csv("withClust_greedy_result_{}.csv".format(idx))
-    '''

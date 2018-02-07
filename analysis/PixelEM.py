@@ -910,7 +910,7 @@ def compile_PR(mode="",ground_truth=False):
     import glob
     import csv
     if ground_truth :
-        fname = '{}{}_ground_truth_full_PRJ_table1.csv'.format(PIXEL_EM_DIR,mode)
+        fname = '{}{}_ground_truth_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     else:
         fname  = '{}{}_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     with open(fname, 'w') as csvfile:
