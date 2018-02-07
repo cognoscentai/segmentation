@@ -114,7 +114,7 @@ for objid in object_lst[::-1]:
 '''
 
 ###########################################################
-
+'''
 #With Cluster version 
 # Running Ground Truth Experiment to generate pInT and pNotInT
 sample = sys.argv[1]
@@ -131,7 +131,7 @@ for objid in object_lst:
     	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
     	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=True, rerun_existing=False)
     	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
-
+'''
 ###########################################################
 '''
 # Using different thresholds to get GT of different thresholds
@@ -139,12 +139,12 @@ thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
     for objid in object_lst:
         print sample+":"+str(objid)
-        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
-'''
+        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True)
+
 '''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
@@ -160,7 +160,6 @@ for sample in tqdm(sample_specs.keys()):
 	        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
        	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
         	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
-'''
 
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
