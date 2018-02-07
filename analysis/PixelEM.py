@@ -124,19 +124,25 @@ def create_mega_mask(objid, worker_ids=[],cluster_id="", PLOT=False, sample_name
     with open('{}voted_workers_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(voted_workers_mask))
 
-def get_mega_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def get_mega_mask(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     return pickle.load(open('{}mega_mask.pkl'.format(indir)))
 
 
-def workers_in_sample(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def workers_in_sample(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     return json.load(open('{}worker_ids.json'.format(indir)))
 
 
-def get_all_worker_mega_masks_for_sample(sample_name, objid):
+def get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=""):
     worker_masks = dict()  # key = worker_id, value = worker mask
-    worker_ids = workers_in_sample(sample_name, objid)
+    worker_ids = workers_in_sample(sample_name, objid,cluster_id=cluster_id)
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks
@@ -300,9 +306,16 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
     ngt_areas=[]
     for t in ngt_tiles:
         ngt_areas.append(area_mask[list(t)[0]])
-    area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
-    area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
-    
+    if gt_areas!=[] and ngt_areas!=[]:
+    	area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
+    	area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
+    else: 
+	print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)" 
+	gt_areas.extend(ngt_areas)
+	area_thresh_gt = np.mean(gt_areas)
+	area_thresh_ngt = np.mean(gt_areas)
+	#print gt_areas
+	#print area_thresh_gt,area_thresh_ngt
     #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
     #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
@@ -458,8 +471,11 @@ def tiles2AreaMask(tiles,mega_mask,sample,objid):
         for i in list(tiles[tidx]):
             mask[i]=tarea[tidx]
     return mask	
-def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
+    if cluster_id!="":
+	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else: 
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -473,9 +489,9 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
     # In the first step we use 50% MV for initializing T*, A thres is therefore the median area pixel based on votes and noVotes
-    mega_mask = get_mega_mask(sample_name, objid)
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers=len(worker_masks)
     area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     for it in range(num_iterations):
@@ -527,9 +543,12 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_Area_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,debug=False):
+def do_Area_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,debug=False):
     print "Doing Area-Weighted EM"
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -541,7 +560,7 @@ def do_Area_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thr
 
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     area_lst = pkl.load(open("{}/tarea.pkl".format(outdir)))
     area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
     tidx_mask = pkl.load(open("{}/tidx_mask.pkl".format(outdir)))
@@ -598,7 +617,7 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
         mode =''
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers = len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):
@@ -639,8 +658,11 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if not rerun_existing:
         if os.path.isfile('{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,num_iterations-1,thresh)):
             print "Already ran GT, Skipped"
@@ -652,7 +674,7 @@ def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     print "Doing GT mode=",mode
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):
@@ -690,9 +712,12 @@ def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
+def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
     print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo,exclude_isovote)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -701,6 +726,7 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
         #pixel_em/25workers_rand0/obj47/basic_p_in_mask_ground_truth.pkl
         if os.path.isfile('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)):
             print "Already ran ground truth experiment, Skipped"
+	    print '{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)
             return
     # initialize MV mask
 
@@ -708,7 +734,7 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     gt_est_mask = get_gt_mask(objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     if algo=='basic':
@@ -760,8 +786,11 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
 	area_thres.close()
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
-def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude_isovote=False, SAVE_GT_MASK = False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -787,12 +816,15 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude
     	with open('{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh), 'w') as fp:
     	    fp.write(json.dumps([p, r, j]))
     
-def do_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
+def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if not rerun_existing:
        if os.path.isfile('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,num_iterations-1,thresh)) :
            print "Already ran EM, Skipped"
@@ -804,7 +836,7 @@ def do_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0
             return
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):

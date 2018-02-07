@@ -51,7 +51,7 @@ for sample in sample_lst:
 #         else:
 #             print sample + ":" + str(objid)
 #             create_PixTiles(sample, objid, check_edges=True)
-
+'''
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
@@ -63,8 +63,10 @@ for sample in tqdm(sample_lst):
 	    if len(worker_ids)!=1:
                 print sample + ":" + str(objid)+"clust"+str(cluster_id)
                 create_PixTiles(sample, objid, cluster_id,check_edges=True)
+'''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
+'''
 def tiles2AreaMask(sample, objid):
     tiles = pkl.load(open("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)))
     mega_mask = pkl.load(open("pixel_em/{}/obj{}/mega_mask.pkl".format(sample, objid)))
@@ -84,6 +86,7 @@ plt.title("Tile index map")
 plt.colorbar()
 plt.savefig('testing_tiles2AreaMask.png')
 plt.close()
+'''
 ###########################################################
 
 # Check number of object that have completed their full run by :
@@ -96,7 +99,6 @@ plt.close()
 
 '''
 sample = sys.argv[1]
-print sample
 #for sample in tqdm(sample_specs.keys()):
 
 for objid in object_lst[::-1]:
@@ -113,36 +115,52 @@ for objid in object_lst[::-1]:
 
 ###########################################################
 
-'''
+#With Cluster version 
 # Running Ground Truth Experiment to generate pInT and pNotInT
 sample = sys.argv[1]
 print sample
 #for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
-    print sample + ":" + str(objid)
-    GroundTruth_doM_once(sample, objid, algo="basic", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GT", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GT", exclude_isovote=True, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
-'''
+    cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+    for cluster_id in cluster_ids:
+        worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+        if len(worker_ids)!=1:
+            print sample + ":" + str(objid)+"clust"+str(cluster_id)
+	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id,algo="basic", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=True, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
 
 ###########################################################
-
 '''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
     for objid in object_lst:
         print sample+":"+str(objid)
-        deriveGTinGroundTruthExperiments(sample, objid, "basic", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT", thresh_lst, exclude_isovote=True)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
 '''
-
-###########################################################
+'''
+# Using different thresholds to get GT of different thresholds
+thresh_lst = [-4, -2, 0, 2, 4]
+for sample in tqdm(sample_specs.keys()):
+    for objid in object_lst:
+	cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+	for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+            if len(worker_ids)!=1:
+		print sample + ";" + str(objid)+"; clust"+str(cluster_id)
+	        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+	        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+       	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
+'''
 
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
@@ -152,5 +170,3 @@ for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
 '''
-
-###########################################################
