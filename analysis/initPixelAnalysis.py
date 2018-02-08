@@ -41,6 +41,11 @@ for sample in sample_lst:
 #         print sample + ":" + str(objid)
 #         create_MV_mask(sample, objid)
 
+#for sample in sample_lst:
+#    for objid in object_lst:
+#	print sample + ":" + str(objid)
+#	compute_PRJ_MV(sample,objid)	
+compile_PRJ_MV()
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
 # print "This will also take a while (~5hrs)"
@@ -96,12 +101,11 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-
 '''
 sample = sys.argv[1]
 #for sample in tqdm(sample_specs.keys()):
 
-for objid in object_lst[::-1]:
+for objid in object_lst:
     print sample+":"+str(objid)
     # if True:
     #   thresh = -4
@@ -112,11 +116,10 @@ for objid in object_lst[::-1]:
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=3)
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
 '''
-
 ###########################################################
 '''
-#With Cluster version 
-# Running Ground Truth Experiment to generate pInT and pNotInT
+print "With Cluster version" 
+print "Running Ground Truth Experiment to generate pInT and pNotInT"
 sample = sys.argv[1]
 print sample
 #for sample in tqdm(sample_specs.keys()):
@@ -144,7 +147,7 @@ for sample in tqdm(sample_specs.keys()):
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False)
         deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True)
-
+'''
 '''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
@@ -168,4 +171,4 @@ algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
-'''
+

@@ -171,7 +171,7 @@ if __name__ == '__main__':
 	    if len(worker_ids)!=1:
                 for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
             	    p,r,j = greedy(sample,objid,algo)
-            	    df_data.append([sample,objid,algo,'cluster_id',p,r,j])
+            	    df_data.append([sample,objid,algo,cluster_id,p,r,j])
             	    print sample,objid,algo,cluster_id,p,r,j
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
     df.to_csv("withClust_greedy_result_{}.csv".format(idx))
