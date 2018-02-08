@@ -158,7 +158,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
     df.to_csv("withClust_greedy_result_worker_fraction.csv",index=None)	
     '''
-
+    # Takes about 2.5~3hrs to run
     df_data = []
     #for sample in tqdm(sample_specs.keys()[::-1]):
     import sys
@@ -170,7 +170,7 @@ if __name__ == '__main__':
             worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
 	    if len(worker_ids)!=1:
                 for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
-            	    p,r,j = greedy(sample,objid,algo)
+            	    p,r,j = greedy(sample,objid,algo,cluster_id)
             	    df_data.append([sample,objid,algo,cluster_id,p,r,j])
             	    print sample,objid,algo,cluster_id,p,r,j
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])

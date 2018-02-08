@@ -45,7 +45,7 @@ for sample in sample_lst:
 #    for objid in object_lst:
 #	print sample + ":" + str(objid)
 #	compute_PRJ_MV(sample,objid)	
-compile_PRJ_MV()
+#compile_PRJ_MV()
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
 # print "This will also take a while (~5hrs)"
