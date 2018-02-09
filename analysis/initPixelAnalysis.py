@@ -14,7 +14,7 @@ sample_size = 5
 # print "2. Creating all worker and GT pixel masks (2-3 min)"
 # for objid in object_lst:
 #     create_all_gt_and_worker_masks(objid)
-
+# Changes start here for the preprocessed cluster 
 # sample_lst = sample_lst[:sample_size]
 # print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 # print "This might take a while (~2hrs)"
@@ -23,12 +23,29 @@ sample_size = 5
 #         print sample + ":" + str(objid)
 #         create_mega_mask(objid, PLOT=False, sample_name=sample)
 
+df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+'''
+print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
+print "This might take a while (~2hrs)"
+for sample in sample_lst:
+    for objid in object_lst:
+        cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+            print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
+            create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
+'''
 # print "4.Creating MV mask (should take 5 min)"
 # for sample in sample_lst:
 #     for objid in object_lst:
 #         print sample + ":" + str(objid)
 #         create_MV_mask(sample, objid)
 
+#for sample in sample_lst:
+#    for objid in object_lst:
+#	print sample + ":" + str(objid)
+#	compute_PRJ_MV(sample,objid)	
+#compile_PRJ_MV()
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
 # print "This will also take a while (~5hrs)"
@@ -39,10 +56,22 @@ sample_size = 5
 #         else:
 #             print sample + ":" + str(objid)
 #             create_PixTiles(sample, objid, check_edges=True)
-
-
+'''
+from areaMask import *
+print "5.Creating area mask for all sample-objects"
+print "This will also take a while (~5hrs)"
+for sample in tqdm(sample_lst):
+    for objid in object_lst:
+        cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+	    if len(worker_ids)!=1:
+                print sample + ":" + str(objid)+"clust"+str(cluster_id)
+                create_PixTiles(sample, objid, cluster_id,check_edges=True)
+'''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
+'''
 def tiles2AreaMask(sample, objid):
     tiles = pkl.load(open("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)))
     mega_mask = pkl.load(open("pixel_em/{}/obj{}/mega_mask.pkl".format(sample, objid)))
@@ -62,6 +91,7 @@ plt.title("Tile area map")
 plt.colorbar()
 plt.savefig('testing_tiles2AreaMask.png')
 plt.close()
+'''
 ###########################################################
 
 # Check number of object that have completed their full run by :
@@ -71,13 +101,11 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-
 '''
 sample = sys.argv[1]
-print sample
 #for sample in tqdm(sample_specs.keys()):
 
-for objid in object_lst[::-1]:
+for objid in object_lst:
     print sample+":"+str(objid)
     # if True:
     #   thresh = -4
@@ -88,39 +116,53 @@ for objid in object_lst[::-1]:
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=3)
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
 '''
-
 ###########################################################
-
 '''
-# Running Ground Truth Experiment to generate pInT and pNotInT
+print "With Cluster version" 
+print "Running Ground Truth Experiment to generate pInT and pNotInT"
 sample = sys.argv[1]
 print sample
 #for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
-    print sample + ":" + str(objid)
-    GroundTruth_doM_once(sample, objid, algo="basic", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GT", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GT", exclude_isovote=True, rerun_existing=False)
-    GroundTruth_doM_once(sample, objid, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
+    cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+    for cluster_id in cluster_ids:
+        worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+        if len(worker_ids)!=1:
+            print sample + ":" + str(objid)+"clust"+str(cluster_id)
+	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id,algo="basic", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=True, rerun_existing=False)
+    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
 '''
-
 ###########################################################
-
 '''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
     for objid in object_lst:
         print sample+":"+str(objid)
-        deriveGTinGroundTruthExperiments(sample, objid, "basic", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT", thresh_lst, exclude_isovote=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True)
 '''
-
-###########################################################
+'''
+# Using different thresholds to get GT of different thresholds
+thresh_lst = [-4, -2, 0, 2, 4]
+for sample in tqdm(sample_specs.keys()):
+    for objid in object_lst:
+	cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+	for cluster_id in cluster_ids:
+            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+            if len(worker_ids)!=1:
+		print sample + ";" + str(objid)+"; clust"+str(cluster_id)
+	        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+	        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
+       	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
 
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
@@ -129,6 +171,4 @@ algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
-'''
 
-###########################################################

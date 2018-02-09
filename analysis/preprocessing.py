@@ -16,7 +16,7 @@ def worker_polygon(bb_objects,worker_idx):
     xloc,yloc =  process_raw_locs([bb["x_locs"].iloc[0],bb["y_locs"].iloc[0]])    
     return Polygon(zip(xloc,yloc))
 def compute_prjs(object_id,exclude_lst=[]):
-    PDF('../bb_object_pdfs/bb_object_{}.pdf'.format(object_id),size=(500,300))
+    #PDF('../bb_object_pdfs/bb_object_{}.pdf'.format(object_id),size=(500,300))
     bb_objects = bb_info[bb_info["object_id"]==object_id]
     worker_lst =  bb_objects.worker_id.unique()
     worker_lst = [w for w in worker_lst if w not in exclude_lst]

@@ -18,9 +18,6 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
     img_info, object_tbl, bb_info, hit_info = load_info()
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
-    if EXCLUDE_BBG:
-        bb_objects = bb_objects[bb_objects.worker_id != 3]
-
     # Create a masked image for the object
     # where each of the worker BB is considered a mask and overlaid on top of each other
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
@@ -75,25 +72,29 @@ def get_gt_mask(objid):
     return pickle.load(open('{}gt.pkl'.format(indir)))
 
 
-def create_mega_mask(objid, PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
+def create_mega_mask(objid, worker_ids=[],cluster_id="", PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
     img_info, object_tbl, bb_info, hit_info = load_info()
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
+    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if worker_ids !=[]:
+        # if no worker ids given, then create gt and masks for all workers who have annotated that object 
+	# this is for all workers whos annotation lies within that cluster.  
+	bb_objects = bb_info[(bb_info["object_id"] == objid)&(bb_info["worker_id"].isin(worker_ids))]
+	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     if EXCLUDE_BBG:
         bb_objects = bb_objects[bb_objects.worker_id != 3]
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
     # Sampling Data from Ji table
     sampleNworkers = sample_specs[sample_name][0]
     if sampleNworkers > 0 and sampleNworkers < len(bb_objects):
         bb_objects = bb_objects.sample(n=sample_specs[sample_name][0], random_state=sample_specs[sample_name][1])
-
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
     fname = ORIGINAL_IMG_DIR + img_name + ".png"
     width, height = get_size(fname)
     mega_mask = np.zeros((height, width))
     voted_workers_mask = np.zeros((height, width),dtype=object)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir)
 
     worker_ids = list(bb_objects["worker_id"])
     with open('{}worker_ids.json'.format(outdir), 'w') as fp:
@@ -123,19 +124,25 @@ def create_mega_mask(objid, PLOT=False, sample_name='5workers_rand0', PRINT=Fals
     with open('{}voted_workers_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(voted_workers_mask))
 
-def get_mega_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def get_mega_mask(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     return pickle.load(open('{}mega_mask.pkl'.format(indir)))
 
 
-def workers_in_sample(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def workers_in_sample(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     return json.load(open('{}worker_ids.json'.format(indir)))
 
 
-def get_all_worker_mega_masks_for_sample(sample_name, objid):
+def get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=""):
     worker_masks = dict()  # key = worker_id, value = worker mask
-    worker_ids = workers_in_sample(sample_name, objid)
+    worker_ids = workers_in_sample(sample_name, objid,cluster_id=cluster_id)
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks
@@ -160,12 +167,16 @@ def create_MV_mask(sample_name, objid, plot=False,mode=""):
             plt.savefig('{}MV_mask.png'.format(outdir))
     elif mode=="compute_pr_only":
 	MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+    return MV_mask 
+def compute_PRJ_MV(sample_name, objid, mode=""):
+    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
     # Computing MV PRJ against Ground Truth
-    gt_est_mask = get_gt_mask(objid)
-    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    gt = get_gt_mask(objid)
+    [p, r, j] = faster_compute_prj(MV_mask,gt)
     with open('{}MV_prj.json'.format(outdir), 'w') as fp:
         fp.write(json.dumps([p, r,j]))
-
+    return p,r,j
 
 def get_MV_mask(sample_name, objid):
     indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -299,9 +310,16 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
     ngt_areas=[]
     for t in ngt_tiles:
         ngt_areas.append(area_mask[list(t)[0]])
-    area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
-    area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
-    
+    if gt_areas!=[] and ngt_areas!=[]:
+    	area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
+    	area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
+    else: 
+	print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)" 
+	gt_areas.extend(ngt_areas)
+	area_thresh_gt = np.mean(gt_areas)
+	area_thresh_ngt = np.mean(gt_areas)
+	#print gt_areas
+	#print area_thresh_gt,area_thresh_ngt
     #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
     #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
@@ -457,8 +475,11 @@ def tiles2AreaMask(tiles,mega_mask,sample,objid):
         for i in list(tiles[tidx]):
             mask[i]=tarea[tidx]
     return mask	
-def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
+    if cluster_id!="":
+	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else: 
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -472,9 +493,9 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
     # In the first step we use 50% MV for initializing T*, A thres is therefore the median area pixel based on votes and noVotes
-    mega_mask = get_mega_mask(sample_name, objid)
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers=len(worker_masks)
     area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     for it in range(num_iterations):
@@ -526,9 +547,12 @@ def do_GTLSA_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,th
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_Area_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,debug=False):
+def do_Area_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,debug=False):
     print "Doing Area-Weighted EM"
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -540,7 +564,7 @@ def do_Area_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thr
 
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     area_lst = pkl.load(open("{}/tarea.pkl".format(outdir)))
     area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
     tidx_mask = pkl.load(open("{}/tidx_mask.pkl".format(outdir)))
@@ -597,7 +621,7 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
         mode =''
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers = len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):
@@ -638,8 +662,11 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if not rerun_existing:
         if os.path.isfile('{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,num_iterations-1,thresh)):
             print "Already ran GT, Skipped"
@@ -651,7 +678,7 @@ def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     print "Doing GT mode=",mode
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):
@@ -689,9 +716,12 @@ def do_GT_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
+def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
     print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo,exclude_isovote)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
@@ -700,6 +730,7 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
         #pixel_em/25workers_rand0/obj47/basic_p_in_mask_ground_truth.pkl
         if os.path.isfile('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)):
             print "Already ran ground truth experiment, Skipped"
+	    print '{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)
             return
     # initialize MV mask
 
@@ -707,7 +738,7 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
     gt_est_mask = get_gt_mask(objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     if algo=='basic':
@@ -759,12 +790,18 @@ def GroundTruth_doM_once(sample_name, objid, algo, num_iterations=5,load_p_in_ma
 	area_thres.close()
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
-def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude_isovote=False, SAVE_GT_MASK = False):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
+    if os.path.exists('{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)):
+        print '{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)+" already exist"
+	return
     log_probability_in_mask = pkl.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
     log_probability_not_in_mask = pkl.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
     if exclude_isovote:
@@ -774,6 +811,7 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude
         invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
         invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
     for thresh in thresh_lst:
+	outfile = '{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh)
     	gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
     	if exclude_isovote:
 	    gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
@@ -783,15 +821,18 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,exclude
         if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
         [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
     	print "p,r,j:",p,r,j
-    	with open('{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh), 'w') as fp:
+    	with open(outfile, 'w') as fp:
     	    fp.write(json.dumps([p, r, j]))
     
-def do_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
+def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if not rerun_existing:
        if os.path.isfile('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,num_iterations-1,thresh)) :
            print "Already ran EM, Skipped"
@@ -803,7 +844,7 @@ def do_EM_for(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0
             return
     # initialize MV mask
     gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid)
     for it in range(num_iterations):
@@ -873,79 +914,83 @@ def compile_PR(mode="",ground_truth=False):
     import glob
     import csv
     if ground_truth :
-    	fname = '{}{}_ground_truth_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
+        fname = '{}{}_ground_truth_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     else:
         fname  = '{}{}_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     with open(fname, 'w') as csvfile:
-	if mode=="":
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'MV_precision', 'MV_recall','MV_jaccard', 'EM_precision', 'EM_recall','EM_jaccard']
-	else: # no MV columns 
-	    fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'EM_precision', 'EM_recall','EM_jaccard']
+        if mode=="":
+            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'clust','MV_precision', 'MV_recall','MV_jaccard', 'EM_precision', 'EM_recall','EM_jaccard']
+        else: # no MV columns
+            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'EM_precision', 'EM_recall','EM_jaccard']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
             sample_name = sample_path.split('/')[-2]
-	    print "Working on ", sample_path
+            print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
             sample_num = int(sample_name.split('d')[-1])
             for obj_path in glob.glob('{}obj*/'.format(sample_path)):
                 objid = int(obj_path.split('/')[-2].split('j')[1])
-                mv_p = None
-                mv_r = None
-		mv_j = None
-                em_p = None
-                em_r = None
-		em_j = None
-		if ground_truth :
-        	    glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(obj_path,mode))
-    		else:
-        	    glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(obj_path,mode))
-		if mode =="":
-                    mv_pr_file = '{}MV_prj.json'.format(obj_path)
-		    if os.path.isfile(mv_pr_file):
-                        [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-		for thresh_path in glob_path: 
-		    print thresh_path
-		    thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
-		    #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
-		    #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
-		    if thresh.is_integer():
-			thresh = int(thresh)
-		    print thresh
-		    if ground_truth :
-                        em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(obj_path,mode,thresh)
-		    else:
-			em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(obj_path,mode,thresh)
-                    if os.path.isfile(em_pr_file):
-                        [em_p, em_r,em_j] = json.load(open(em_pr_file))
-                    if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
-			if mode =="": 
-			    writer.writerow(
-				  {
-				    'num_workers': num_workers,
-				    'sample_num': sample_num,
-				    'objid': objid,
-				    'thresh':thresh,
-				    'MV_precision': mv_p,
-				    'MV_recall': mv_r,
-				    'MV_jaccard':mv_j,
-				    'EM_precision': em_p,
-				    'EM_recall': em_r,
-				    'EM_jaccard':em_j
-				  }
-			     )
-			else: 
-			    writer.writerow(
-                                  {
-                                    'num_workers': num_workers,
-                                    'sample_num': sample_num,
-                                    'objid': objid,
-                                    'thresh':thresh,
-                                    'EM_precision': em_p,
-                                    'EM_recall': em_r,
-                                    'EM_jaccard':em_j
-                                  }
-                             )
-    print 'Compiled PR to :'+ fname 
-
-
+                for clust_path in glob.glob("{}/clust*/".format(obj_path))+[obj_path]:
+                    # clust_path includes both original obj_path and the paths with clust*/ on it
+                    if clust_path ==obj_path:
+                        cluster_id = -1 #unclustered flag
+                    else:
+                        cluster_id = int(clust_path.split("/clust")[-1][:-1])            
+                    mv_p = None
+                    mv_r = None
+                    mv_j = None
+                    em_p = None
+                    em_r = None
+                    em_j = None
+                    if ground_truth :
+                        glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
+                    else:
+                        glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
+                    if mode =="":
+                        mv_pr_file = '{}MV_prj.json'.format(clust_path)
+                        if os.path.isfile(mv_pr_file):
+                            [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
+                    for thresh_path in glob_path:
+                        thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
+                        #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
+                        #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
+                        if thresh.is_integer():
+                            thresh = int(thresh)
+                        if ground_truth :
+                            em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
+                        else:
+                            em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
+                        if os.path.isfile(em_pr_file):
+                            [em_p, em_r,em_j] = json.load(open(em_pr_file))
+                        if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
+                            if mode =="":
+                                writer.writerow(
+                                      {
+                                        'num_workers': num_workers,
+                                        'sample_num': sample_num,
+                                        'objid': objid,
+                                        'thresh':thresh,
+                                        'clust':cluster_id,
+                                        'MV_precision': mv_p,
+                                        'MV_recall': mv_r,
+                                        'MV_jaccard':mv_j,
+                                        'EM_precision': em_p,
+                                        'EM_recall': em_r,
+                                        'EM_jaccard':em_j
+                                      }
+                                 )
+                            else:
+                                writer.writerow(
+                                      {
+                                        'num_workers': num_workers,
+                                        'sample_num': sample_num,
+                                        'objid': objid,
+                                        'thresh':thresh,
+                                        'clust':cluster_id,
+                                        'EM_precision': em_p,
+                                        'EM_recall': em_r,
+                                        'EM_jaccard':em_j
+                                      }
+                                 )
+    print 'Compiled PR to :'+ fname
