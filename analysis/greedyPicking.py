@@ -9,7 +9,7 @@ def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
     print outdir
     if os.path.exists('{}{}greedy_prj.json'.format(outdir,algo)):
         print '{}{}greedy_prj.json'.format(outdir,algo)+" already exist, read from file"
-        p,r,j = json.load(open(("pixel_em/15workers_rand0/obj1/clust0/isoGTLSAgreedy_prj.json")))	
+        p,r,j = json.load(open('{}{}greedy_prj.json'.format(outdir,algo)))	
         return p,r,j
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     gt = get_gt_mask(objid)
