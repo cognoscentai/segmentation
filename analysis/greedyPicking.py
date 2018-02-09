@@ -7,6 +7,10 @@ def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
     print outdir
+    if os.path.exists('{}{}greedy_prj.json'.format(outdir,algo)):
+        print '{}{}greedy_prj.json'.format(outdir,algo)+" already exist, read from file"
+        p,r,j = json.load(open(("pixel_em/15workers_rand0/obj1/clust0/isoGTLSAgreedy_prj.json")))	
+        return p,r,j
     tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
     gt = get_gt_mask(objid)
     if est_type=="ground_truth":
@@ -66,8 +70,10 @@ def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
 #         prev_jac = ia_cum / total_area
 #     else:
 #         prev_jac = -10000.
-    prev_jacc = total_intersection_area/(total_outside_area+GT_area)
-#     prev_jac = -10000.
+    if (total_outside_area+GT_area)!=0:
+    	prev_jacc = total_intersection_area/(total_outside_area+GT_area)
+    else: 
+	prev_jacc = -10000.
 #    print ia_cum,total_area
 #    print prev_jac
     for tidx  in srt_decr_idx:
@@ -92,10 +98,15 @@ def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
     for t in picked_tiles:
         for tidx in t:
             gt_est_mask[tidx]=1
+    # pkl.dump(open('{}{}gt_est_mask_greedy.pkl'.format(outdir,algo),'w'))
     if output=="mask":
 	return gt_est_mask
     elif output == "prj":
         [p, r, j] = faster_compute_prj(gt_est_mask, gt)
+	with open('{}{}greedy_prj.json'.format(outdir,algo), 'w') as fp:
+            fp.write(json.dumps([p, r, j]))
+	if j<=0.5: # in the case where we are aggregating a semantic error cluster 
+	    pkl.dump(gt_est_mask,open('{}{}gt_est_mask_greedy.pkl'.format(outdir,algo),'w')) 
         return p,r,j
 
 
