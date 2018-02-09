@@ -51,14 +51,14 @@ def tiles2AreaMask(sample, objid):
     for tidx in range(len(tiles)):
         for i in list(tiles[tidx]):
                 mask[i] = tarea[tidx]
-        return mask
+    return mask
 
 test_sample = sample_lst[0]
 print 'Testing tiles2AreaMask for', test_sample
 mask = tiles2AreaMask(test_sample, 1)
 plt.figure()
 plt.imshow(mask)
-plt.title("Tile index map")
+plt.title("Tile area map")
 plt.colorbar()
 plt.savefig('testing_tiles2AreaMask.png')
 plt.close()
