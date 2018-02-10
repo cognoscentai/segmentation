@@ -35,17 +35,20 @@ for sample in sample_lst:
             print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
             create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
 '''
-# print "4.Creating MV mask (should take 5 min)"
-# for sample in sample_lst:
-#     for objid in object_lst:
-#         print sample + ":" + str(objid)
-#         create_MV_mask(sample, objid)
+print "4.Creating MV mask (should take 5 min)"
+mv_prj_vals=[]
+for sample in sample_lst:
+     for objid in object_lst:
+	 cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+         for cluster_id in cluster_ids:
+             worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+             if len(worker_ids)!=1:
+		 print sample + ":" + str(objid)+";clust"+str(cluster_id)
+         	 p,r,j = compute_PRJ_MV(sample, objid,cluster_id)
+	         mv_prj_vals.append([sample,objid,cluster_id,p,r,j])
+mv_df = pd.DataFrame(mv_prj_vals,columns=["sample","objid","clust","MV_precision","MV_recall","MV_jaccard"])
+mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
 
-#for sample in sample_lst:
-#    for objid in object_lst:
-#	print sample + ":" + str(objid)
-#	compute_PRJ_MV(sample,objid)	
-#compile_PRJ_MV()
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
 # print "This will also take a while (~5hrs)"
@@ -165,10 +168,11 @@ for sample in tqdm(sample_specs.keys()):
         	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
 
 '''
+'''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)"
 algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
-
+'''

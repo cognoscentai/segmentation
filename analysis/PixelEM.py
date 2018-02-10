@@ -146,17 +146,20 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=""):
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks
-def create_MV_mask(sample_name, objid, plot=False,mode=""):
+def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False,mode=""):
+
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if mode=="":
-    	num_workers = len(workers_in_sample(sample_name, objid))
-    	mega_mask = get_mega_mask(sample_name, objid)
+    	num_workers = len(workers_in_sample(sample_name, objid,cluster_id=cluster_id))
+    	mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
     	MV_mask = np.zeros((len(mega_mask), len(mega_mask[0])))
     	[xs, ys] = np.where(mega_mask > (num_workers / 2))
     	for i in range(len(xs)):
             MV_mask[xs[i]][ys[i]] = 1
-    	#outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     	with open('{}MV_mask.pkl'.format(outdir), 'w') as fp:
             fp.write(pickle.dumps(MV_mask))
    
@@ -167,10 +170,6 @@ def create_MV_mask(sample_name, objid, plot=False,mode=""):
             plt.savefig('{}MV_mask.png'.format(outdir))
     elif mode=="compute_pr_only":
 	MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
-    return MV_mask 
-def compute_PRJ_MV(sample_name, objid, mode=""):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
     # Computing MV PRJ against Ground Truth
     gt = get_gt_mask(objid)
     [p, r, j] = faster_compute_prj(MV_mask,gt)
@@ -178,9 +177,12 @@ def compute_PRJ_MV(sample_name, objid, mode=""):
         fp.write(json.dumps([p, r,j]))
     return p,r,j
 
-def get_MV_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return pickle.load(open('{}MV_mask.pkl'.format(indir)))
+def get_MV_mask(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    return pickle.load(open('{}MV_mask.pkl'.format(outdir)))
 
 
 def get_precision_recall_jaccard(test_mask, gt_mask):
