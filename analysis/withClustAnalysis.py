@@ -63,8 +63,33 @@ def compile_all_algo_PRJs():
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     df.to_csv("pixel_em/all_PRJ_table.csv")
     return df
-i#def compile_best_thresh_all_algo_PRJs():
- 
+def compile_best_thresh_all_algo_PRJs():
+    #using base tables create one algo for each row
+    df = pd.read_csv("pixel_em/all_MV_PRJ_table.csv",index_col=0)
+    df["algo"]='MV'
+    df["thresh"]=0 #dummy value
+    df = df.rename(columns={"MV_precision":"p",
+                           "MV_recall":"r",
+                           "MV_jaccard":"j"})
+    for mode in  ["GT","isoGT","GTLSA","isoGTLSA","basic"]:
+        data =  pd.read_csv("pixel_em/{}_ground_truth_full_PRJ_table.csv".format(mode))
+        data["algo"]=mode
+        data = data.rename(columns={"EM_precision":"p",
+                           "EM_recall":"r",
+                           "EM_jaccard":"j"})
+        df = pd.concat([df,data]) 
+    # get entry with the best threshold jaccard
+    df_best_thresh = df.sort("j",ascending=False).groupby(["sample_num","num_workers","objid","clust","algo"], as_index=False).first()
+
+    #df_best_thresh = df.loc[df.groupby(["sample_num","num_workers","objid","clust","algo"])["j"].idxmax()]
+
+    #check that for some sample, the number of best threshold values is the same as the number of objects 
+    assert len(df_best_thresh[(df_best_thresh["num_workers"]==5)&(df_best_thresh["sample_num"]==1)].objid.unique())==len(object_lst)
+    # Check: in the unfiltered case there should be a whole array of thresholds (x5)
+    #df[(df["num_workers"]==25)&(df["sample_num"]==1)&(df["objid"]==1)&(df["clust"]==0)&(df["algo"]=="isoGTLSA")]
+    # visually check that only one best jaccard result gets returned
+    assert len(df_best_thresh[(df_best_thresh["num_workers"]==25)&(df_best_thresh["sample_num"]==1)&(df_best_thresh["objid"]==1)&(df_best_thresh["clust"]==0)&(df_best_thresh["algo"]=="isoGTLSA")])==1
+    return df_best_thresh
 def filter_best_clust(df,best_clust_df):
     # given a df to be filtered with clust_df (list of best clusters), 
     # pick rows based on whether it is in clust_df or not
