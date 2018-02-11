@@ -89,6 +89,13 @@ def compile_best_thresh_all_algo_PRJs():
     #df[(df["num_workers"]==25)&(df["sample_num"]==1)&(df["objid"]==1)&(df["clust"]==0)&(df["algo"]=="isoGTLSA")]
     # visually check that only one best jaccard result gets returned
     assert len(df_best_thresh[(df_best_thresh["num_workers"]==25)&(df_best_thresh["sample_num"]==1)&(df_best_thresh["objid"]==1)&(df_best_thresh["clust"]==0)&(df_best_thresh["algo"]=="isoGTLSA")])==1
+    # removing the -1 clusters for objects that are clustered
+    df_best_thresh = df_best_thresh[(df_best_thresh.objid.isin(noClust_obj))|(df_best_thresh.clust!=-1)]
+    # visually inspect that -1 clusters do not exist for objects that are clustered
+    # df_best_thresh[(df_best_thresh["num_workers"]==30)&(df_best_thresh["objid"]==1)]
+    # df[(df["num_workers"]==30)&(df["objid"]==1)]
+    # best_clust_no_thresh_df[(best_clust_no_thresh_df["num_workers"]==30)&(best_clust_no_thresh_df["objid"]==7)]
+    # best_clust_best_thresh_df[(best_clust_best_thresh_df["num_workers"]==30)&(best_clust_best_thresh_df["objid"]==7)]
     return df_best_thresh
 def filter_best_clust(df,best_clust_df):
     # given a df to be filtered with clust_df (list of best clusters), 
