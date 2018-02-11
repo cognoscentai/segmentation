@@ -62,7 +62,9 @@ def compile_all_algo_PRJs():
         df = df.merge(data)
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     df.to_csv("pixel_em/all_PRJ_table.csv")
-    return df 
+    return df
+i#def compile_best_thresh_all_algo_PRJs():
+ 
 def filter_best_clust(df,best_clust_df):
     # given a df to be filtered with clust_df (list of best clusters), 
     # pick rows based on whether it is in clust_df or not
