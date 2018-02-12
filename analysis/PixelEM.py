@@ -292,17 +292,20 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,exclude_isovote=False): 
     gt_tiles = []
     ngt_tiles = []
-   
+    i=0 
     for t in tiles:
     	numerator = 0
     	for tidx in t:
         	numerator += gt_mask[tidx]
     	if len(tidx)!=0:
-        	gt_percentage =  numerator/float(len(tidx))
+        	gt_percentage =  numerator/float(len(t))
     	if gt_percentage>0.6:
         	gt_tiles.append(t)
     	else:
-        	ngt_tiles.append(t) 
+        	ngt_tiles.append(t)
+	if i==0: 
+		print "gt_percentage of the first tile:",gt_percentage
+	i+=1
     #tarea_lst = np.array(tarea_lst)
     #area_thresh_gt =  np.median(tarea_lst[gt_tiles])
     #area_thresh_ngt = np.median(tarea_lst[ngt_tiles])
@@ -323,6 +326,9 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
 	#print gt_areas
 	#print area_thresh_gt,area_thresh_ngt
     print "inside gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+    gt_tiles= np.array(gt_tiles)
+    print "large tile idx:",np.where(gt_areas>=area_thresh_gt)[0]
+    #print gt_tiles[np.where(gt_areas>=area_thresh_gt)[0]]
     print "inside ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
     print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
     print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
