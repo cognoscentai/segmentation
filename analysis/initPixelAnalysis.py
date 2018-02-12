@@ -122,6 +122,7 @@ for objid in object_lst:
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
 '''
 ###########################################################
+'''
 print "With Cluster version" 
 print "Running Ground Truth Experiment to generate pInT and pNotInT"
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
@@ -135,6 +136,7 @@ for objid in object_lst:
     print sample +":"+ str(objid)
     GroundTruth_doM_once(sample,objid,cluster_id = "", algo="GTLSA", exclude_isovote=False, rerun_existing=False)
     GroundTruth_doM_once(sample,objid,cluster_id = "", algo="GTLSA", exclude_isovote=True, rerun_existing=False)
+'''
 '''
 # then do all the clustered objects
 #for objid in list(clust_df.objid.unique()):
@@ -153,20 +155,20 @@ for objid in object_lst:
 	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
 '''
 ###########################################################
-'''
 # Using different thresholds to get GT of different thresholds
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
-    #for objid in object_lst:
-    for objid in noClust_obj:
+    for objid in object_lst:
+    #for objid in noClust_obj:
         print sample+":"+str(objid)
         deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst, exclude_isovote=False,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=False,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True,rerun_existing=True)
+'''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
