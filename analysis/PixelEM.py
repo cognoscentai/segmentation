@@ -322,8 +322,10 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
 	area_thresh_ngt = np.mean(gt_areas)
 	#print gt_areas
 	#print area_thresh_gt,area_thresh_ngt
-    #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
-    #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
+    print "inside gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+    print "inside ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
+    print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
+    print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
     large_gt_Ncorrect,large_gt_total,large_ngt_Ncorrect,large_ngt_total = 0,0,0,0
     small_gt_Ncorrect,small_gt_total,small_ngt_Ncorrect,small_ngt_total=0,0,0,0 
@@ -765,13 +767,16 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
         qp2 = dict()
         qn2 = dict()
 	for wid in worker_masks.keys():
-            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote) 
-	log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)	
+            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
+	    print "area_thresh_gt,area_thresh_ngt:",area_thresh_gt, area_thresh_ngt 
+	log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
+        mega_mask = get_mega_mask(sample_name, objid)
+	print '{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo)	
 	pickle.dump(qp1,open('{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
-	
-	mega_mask = get_mega_mask(sample_name, objid)
+        pickle.dump(qn1,open('{}{}{}_qn1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))	
 	pickle.dump(qp2,open('{}{}{}_qp2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
 	pickle.dump(qn2,open('{}{}{}_qn2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
+	#return qp1,qn1,qp2,qn2
     '''
     elif algo =="AW":
 	worker_qualities = dict()
@@ -793,7 +798,7 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
 def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False):
-    if cluster_id!="":
+    if cluster_id!="" and cluster_id!=-1:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -804,7 +809,7 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
     if (not rerun_existing) and os.path.exists('{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)):
         print '{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)+" already exist"
 	return
-    print outdir
+    #print outdir
     log_probability_in_mask = pkl.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
     log_probability_not_in_mask = pkl.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
     if exclude_isovote:
@@ -823,9 +828,10 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
             #gt_est_mask = gt_est_mask+invariant_mask_yes
         if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
         [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
-    	print "p,r,j:",p,r,j
+    	#print "p,r,j:",p,r,j
     	with open(outfile, 'w') as fp:
     	    fp.write(json.dumps([p, r, j]))
+    return gt_est_mask
     
 def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
     if exclude_isovote:
