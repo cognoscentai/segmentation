@@ -35,6 +35,7 @@ for sample in sample_lst:
             print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
             create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
 '''
+'''
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals=[]
 for sample in sample_lst:
@@ -48,6 +49,7 @@ for sample in sample_lst:
 	         mv_prj_vals.append([sample,objid,cluster_id,p,r,j])
 mv_df = pd.DataFrame(mv_prj_vals,columns=["sample","objid","clust","MV_precision","MV_recall","MV_jaccard"])
 mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
+'''
 
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
@@ -120,38 +122,51 @@ for objid in object_lst:
         do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
 '''
 ###########################################################
-'''
 print "With Cluster version" 
 print "Running Ground Truth Experiment to generate pInT and pNotInT"
+clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
 sample = sys.argv[1]
 print sample
 #for sample in tqdm(sample_specs.keys()):
+for objid in object_lst:
+# first do all the unclustered objects 
+#for objid in noClust_obj: 
+    print sample +":"+ str(objid)
+    GroundTruth_doM_once(sample,objid,cluster_id = "", algo="GTLSA", exclude_isovote=False, rerun_existing=False)
+    GroundTruth_doM_once(sample,objid,cluster_id = "", algo="GTLSA", exclude_isovote=True, rerun_existing=False)
+'''
+# then do all the clustered objects
+#for objid in list(clust_df.objid.unique()):
 for objid in object_lst:
     cluster_ids = df[(df["objid"]==objid)].cluster.unique()
     for cluster_id in cluster_ids:
         worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
         if len(worker_ids)!=1:
             print sample + ":" + str(objid)+"clust"+str(cluster_id)
-	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id,algo="basic", exclude_isovote=False, rerun_existing=False)
-    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=False, rerun_existing=False)
-    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
-    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=True, rerun_existing=False)
-    	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
+	    #GroundTruth_doM_once(sample,objid,cluster_id = cluster_id,algo="basic", exclude_isovote=False, rerun_existing=False)
+    	    #GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=False, rerun_existing=False)
+    	    #GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
+    	    #GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GT", exclude_isovote=True, rerun_existing=False)
+    	    #GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
+	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=False, rerun_existing=False)
+	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
 '''
 ###########################################################
 '''
 # Using different thresholds to get GT of different thresholds
+clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
-    for objid in object_lst:
+    #for objid in object_lst:
+    for objid in noClust_obj:
         print sample+":"+str(objid)
-        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False)
-        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True)
-        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True)
-'''
-'''
+        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst, exclude_isovote=False,rerun_existing=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=False,rerun_existing=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False,rerun_existing=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True,rerun_existing=True)
+        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True,rerun_existing=True)
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
 for sample in tqdm(sample_specs.keys()):
@@ -161,12 +176,11 @@ for sample in tqdm(sample_specs.keys()):
             worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
             if len(worker_ids)!=1:
 		print sample + ";" + str(objid)+"; clust"+str(cluster_id)
-	        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-        	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-	        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False)
-       	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
-        	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True)
-
+	        deriveGTinGroundTruthExperiments(sample, objid, "basic",thresh_lst,cluster_id = cluster_id, exclude_isovote=False,rerun_existing=True)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=False,rerun_existing=True)
+	        deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst,cluster_id = cluster_id, exclude_isovote=False,rerun_existing=True)
+       	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True,rerun_existing=True)
+        	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True,rerun_existing=True)
 '''
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv

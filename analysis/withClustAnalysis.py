@@ -157,7 +157,7 @@ def compile_withClust_greedy_algos_to_csv():
     globfnames = glob("withClust_greedy_result_*.csv")
     globfnames.remove('withClust_greedy_result_worker_fraction.csv')
     greedy_df = pd.read_csv(globfnames[0],index_col=0)
-    for fname in globfnames[1:]: 
+    for fname in globfnames: 
         greedy_df = greedy_df.append(pd.read_csv(fname,index_col=0))
     # adding the rest of the baselines (ground truth, worker fraction) into compiled greedy csv
     # ground truth greedy result is independent of clustering 
@@ -174,17 +174,20 @@ def compile_withClust_greedy_algos_to_csv():
     assert len(object_lst) == len(np.concatenate([worker_frac_greedy_df.objid.unique(),noClust_worker_frac_greedy_df.objid.unique()]))
 
     greedy_df=pd.concat([greedy_df,ground_truth_greedy_df,worker_frac_greedy_df,noClust_worker_frac_greedy_df])
-    greedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
-
+    #greedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
+    #greedy_df["sample_num"] = greedy_df["sample"].apply(lambda x: int(x.split("rand")[-1]))
     # remaining greedy results from no cluster case for algo [basic,GT,isoGT,isoGTLSA]
     noClust_greedy = pd.read_csv("greedy_old_results/all_greedy_result.csv",index_col=0)
     noClust_greedy["cluster_id"]=-1
     noClust_greedy = noClust_greedy[noClust_greedy.objid.isin(noClust_obj)] #take only objects who is not clustered
-    noClust_greedy["num_workers"] = noClust_greedy["sample"].apply(lambda x: int(x.split("workers")[0]))
-    noClust_greedy["sample_num"] = noClust_greedy["sample"].apply(lambda x: int(x.split("rand")[-1]))
+    #noClust_greedy["num_workers"] = noClust_greedy["sample"].apply(lambda x: int(x.split("workers")[0]))
+    #noClust_greedy["sample_num"] = noClust_greedy["sample"].apply(lambda x: int(x.split("rand")[-1]))
     # ensure that all objects are inside either noClust or clustered greedy, not both or neither
     assert len(object_lst) == len(np.concatenate([greedy_df[greedy_df["algo"]=="basic"].objid.unique(),noClust_greedy.objid.unique()]))
     greedy_df = pd.concat([greedy_df,noClust_greedy])
     greedy_df = greedy_df.rename(columns={"cluster_id":"clust"})
+
+    greedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
+    greedy_df["sample_num"] = greedy_df["sample"].apply(lambda x: int(x.split("rand")[-1]))
     greedy_df.to_csv("withClust_all_greedy_result.csv")
     return greedy_df

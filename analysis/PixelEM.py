@@ -292,7 +292,6 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,exclude_isovote=False): 
     gt_tiles = []
     ngt_tiles = []
-    i=0 
     for t in tiles:
     	numerator = 0
     	for tidx in t:
@@ -303,9 +302,6 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
         	gt_tiles.append(t)
     	else:
         	ngt_tiles.append(t)
-	if i==0: 
-		print "gt_percentage of the first tile:",gt_percentage
-	i+=1
     #tarea_lst = np.array(tarea_lst)
     #area_thresh_gt =  np.median(tarea_lst[gt_tiles])
     #area_thresh_ngt = np.median(tarea_lst[ngt_tiles])
@@ -325,13 +321,13 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
 	area_thresh_ngt = np.mean(gt_areas)
 	#print gt_areas
 	#print area_thresh_gt,area_thresh_ngt
-    print "inside gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
-    gt_tiles= np.array(gt_tiles)
-    print "large tile idx:",np.where(gt_areas>=area_thresh_gt)[0]
+    #print "inside gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+    #gt_tiles= np.array(gt_tiles)
+    #print "large tile idx:",np.where(gt_areas>=area_thresh_gt)[0]
     #print gt_tiles[np.where(gt_areas>=area_thresh_gt)[0]]
-    print "inside ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
-    print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
-    print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
+    #print "inside ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
+    #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
+    #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
     large_gt_Ncorrect,large_gt_total,large_ngt_Ncorrect,large_ngt_total = 0,0,0,0
     small_gt_Ncorrect,small_gt_total,small_ngt_Ncorrect,small_ngt_total=0,0,0,0 
@@ -774,15 +770,13 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
         qn2 = dict()
 	for wid in worker_masks.keys():
             qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
-	    print "area_thresh_gt,area_thresh_ngt:",area_thresh_gt, area_thresh_ngt 
+	    #print "area_thresh_gt,area_thresh_ngt:",area_thresh_gt, area_thresh_ngt 
 	log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
         mega_mask = get_mega_mask(sample_name, objid)
-	print '{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo)	
 	pickle.dump(qp1,open('{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
         pickle.dump(qn1,open('{}{}{}_qn1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))	
 	pickle.dump(qp2,open('{}{}{}_qp2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
 	pickle.dump(qn2,open('{}{}{}_qn2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
-	#return qp1,qn1,qp2,qn2
     '''
     elif algo =="AW":
 	worker_qualities = dict()
@@ -796,9 +790,9 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
     # Testing:
 	area_thres = open("area_thres.txt",'a')
         gt_areas= area_mask[gt_est_mask==True]
-        print "gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+        #print "gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
         ngt_areas= area_mask[gt_est_mask==False]
-        print "ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
+        #print "ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
 	area_thres.write("{},{},{},{},{}\n".format(sample_name, objid, algo,area_thresh_gt,area_thresh_ngt))
 	area_thres.close()
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
