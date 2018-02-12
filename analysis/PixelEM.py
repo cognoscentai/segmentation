@@ -798,6 +798,7 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
 def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False):
+    all_prjs=[]
     if cluster_id!="" and cluster_id!=-1:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
@@ -829,9 +830,11 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
         if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
         [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
     	#print "p,r,j:",p,r,j
+	all_prjs.append([thresh,p, r, j])
     	with open(outfile, 'w') as fp:
     	    fp.write(json.dumps([p, r, j]))
-    return gt_est_mask
+    #return gt_est_mask
+    return all_prjs
     
 def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
     if exclude_isovote:

@@ -137,10 +137,10 @@ def compile_noClust_greedy_algos_to_csv():
     globfnames = glob("greedy_old_results/greedy_result_*.csv")
     globfnames.remove("greedy_old_results/greedy_result_worker_fraction.csv")
     greedy_df = pd.read_csv(globfnames[0],index_col=0)
-    for fname in globfnames[1:]: 
+    for fname in globfnames: 
         greedy_df = greedy_df.append(pd.read_csv(fname,index_col=0))
 
-    assert len(greedy_df)==31*44*5
+    #assert len(greedy_df)==31*44*5
 
     greedy_df.to_csv("greedy_old_results/all_greedy_result.csv")
 
