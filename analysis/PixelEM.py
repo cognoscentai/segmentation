@@ -985,30 +985,33 @@ def compile_PR(mode="",ground_truth=False):
                     em_p = None
                     em_r = None
                     em_j = None
-                    if ground_truth :
-                        glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
-                    else:
-                        glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
+                    #if ground_truth :
+		    #	glob_path =glob.glob('{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode))
+                        #glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
+                    #else:
+                    #    glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
                     if mode =="":
                         mv_pr_file = '{}MV_prj.json'.format(clust_path)
                         if os.path.isfile(mv_pr_file):
                             [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                    for thresh_path in glob_path:
-                        thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
+                    #for thresh_path in glob_path:
+                    	#thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
                         #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
                         #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
-                        if thresh.is_integer():
-                            thresh = int(thresh)
-                        if ground_truth :
-                            em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
-                        else:
-                            em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
-                        if os.path.isfile(em_pr_file):
-                            [em_p, em_r,em_j] = json.load(open(em_pr_file))
-                        if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
-                            if mode =="":
-                                writer.writerow(
-                                      {
+                        #if thresh.is_integer():
+                        #    thresh = int(thresh)
+		    thresh ="best"
+                    if ground_truth :
+			em_pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        #em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
+                    else:
+			em_pr_file = '{}{}_EM_prj_iter4_best_thresh.json'.format(clust_path,mode)
+                        #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
+                    if os.path.isfile(em_pr_file):
+                        [em_p, em_r,em_j] = json.load(open(em_pr_file))
+                    if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
+                        if mode =="":
+                            writer.writerow({
                                         'num_workers': num_workers,
                                         'sample_num': sample_num,
                                         'objid': objid,
@@ -1020,11 +1023,9 @@ def compile_PR(mode="",ground_truth=False):
                                         'EM_precision': em_p,
                                         'EM_recall': em_r,
                                         'EM_jaccard':em_j
-                                      }
-                                 )
-                            else:
-                                writer.writerow(
-                                      {
+                                      })
+                        else:
+                            writer.writerow({
                                         'num_workers': num_workers,
                                         'sample_num': sample_num,
                                         'objid': objid,
@@ -1033,8 +1034,7 @@ def compile_PR(mode="",ground_truth=False):
                                         'EM_precision': em_p,
                                         'EM_recall': em_r,
                                         'EM_jaccard':em_j
-                                      }
-                                 )
+                                      })
     print 'Compiled PR to :'+ fname
 def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
     thresh_min = -200
