@@ -670,8 +670,8 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
-    if cluster_id!="":
+def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
+    if cluster_id!="" and cluster_id!=-1  :
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -685,12 +685,12 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in
         mode =''
     print "Doing GT mode=",mode
     # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid,cluster_id)
+    MV = get_MV_mask(sample_name, objid,cluster_id)
+    gt_est_mask = MV
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid,cluster_id)
     for it in range(num_iterations):
-        print "Iteration #",it
         qp = dict()
         qn = dict()
         for wid in worker_masks.keys():
@@ -702,28 +702,31 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in
         else: 
             #Compute pInMask and pNotInMask 
             log_probability_in_mask, log_probability_not_in_mask = GTmask_log_probabilities(worker_masks,qp,qn)
-        gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         if compute_PR_every_iter:
             # Compute PR mask based on the EM estimate mask from every iteration
-	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             with open('{}{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
+        print qp,qn
+        print "-->"+str([p,r,j])
     # Save only during the last iteration
-    with open('{}{}GT_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w') as fp:
-	fp.write(pickle.dumps(gt_est_mask))
+    pickle.dump(gt_est_mask,open('{}{}GT_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
     pickle.dump(log_probability_in_mask,open('{}{}GT_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}GT_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
     pickle.dump(qp,open('{}{}GT_qp_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
     pickle.dump(qn,open('{}{}GT_qn_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
     if not compute_PR_every_iter:
         # Compute PR mask based on the EM estimate mask from the last iteration
-	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
         with open('{}{}GT_EM_prj_thresh{}.json'.format(outdir,mode,thresh), 'w') as fp:
             fp.write(json.dumps([p, r, j]))
-    plt.figure()
-    plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-    plt.colorbar()
-    plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
+    if PLOT:
+        plt.figure()
+        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
+        plt.colorbar()
+        plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
 def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
     print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo,exclude_isovote)
     if cluster_id!="":
@@ -901,8 +904,8 @@ def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask
         else: 
             #Compute pInMask and pNotInMask 
             log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
-            p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=False,rerun_existing=False)
-            #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
 
         # Compute PR mask based on the EM estimate mask from the last iteration
         if compute_PR_every_iter:
@@ -912,21 +915,20 @@ def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask
         print worker_qualities 
         print "-->"+str([p,r,j])
     #Only writing output at the end of all iterations: 
+    pickle.dump(gt_est_mask,open('{}{}gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
     pickle.dump(log_probability_in_mask,open('{}{}p_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
-    pickle.dump(gt_est_mask,open('{}{}gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(worker_qualities,open('{}{}Qj_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
-    if PLOT:
-        plt.figure()
-        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-        plt.colorbar()
-        plt.savefig('{}{}EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-    
+    pickle.dump(worker_qualities,open('{}{}Qj_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))    
     if not compute_PR_every_iter:
         # Compute PR mask based on the EM estimate mask from the last iteration
         [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
         with open('{}{}EM_prj_thresh{}.json'.format(outdir,mode,thresh), 'w') as fp:
             fp.write(json.dumps([p, r, j]))
+    if PLOT:
+        plt.figure()
+        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
+        plt.colorbar()
+        plt.savefig('{}{}EM_mask_thresh{}.png'.format(outdir,mode,thresh))
 def compile_PRJ_MV():
     import glob
     import csv
@@ -1092,6 +1094,7 @@ def estimate_gt_compute_PRJ_against_MV(log_probability_in_mask,log_probability_n
         gt_est_mask[gt_est_mask<0]=False
         gt_est_mask[gt_est_mask>1]=True
         #gt_est_mask = gt_est_mask+invariant_mask_yes
+    # PRJ values against MV 
     [p, r, j] = faster_compute_prj(gt_est_mask, MV)
     return [p,r,j],gt_est_mask
 
