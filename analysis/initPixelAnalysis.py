@@ -155,6 +155,7 @@ for objid in object_lst:
 	    GroundTruth_doM_once(sample,objid,cluster_id = cluster_id, algo="GTLSA", exclude_isovote=True, rerun_existing=False)
 '''
 ###########################################################
+'''
 # Using different thresholds to get GT of different thresholds
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
@@ -168,6 +169,7 @@ for sample in tqdm(sample_specs.keys()):
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA",thresh_lst, exclude_isovote=False,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst, exclude_isovote=True,rerun_existing=True)
         deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, exclude_isovote=True,rerun_existing=True)
+'''
 '''
 # Using different thresholds to get GT of different thresholds
 thresh_lst = [-4, -2, 0, 2, 4]
@@ -184,6 +186,26 @@ for sample in tqdm(sample_specs.keys()):
        	 	deriveGTinGroundTruthExperiments(sample, objid, "GT",thresh_lst,cluster_id = cluster_id, exclude_isovote=True,rerun_existing=True)
         	deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst,cluster_id = cluster_id, exclude_isovote=True,rerun_existing=True)
 '''
+sample = sys.argv[1]
+for objid in object_lst:
+    print sample+":"+str(objid)
+    binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "basic",exclude_isovote=False,rerun_existing=True)
+    binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GT",exclude_isovote=False,rerun_existing=True)
+    binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=False,rerun_existing=True)
+    binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GT",exclude_isovote=True,rerun_existing=True)
+    binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=True,rerun_existing=True)
+
+for objid in object_lst:
+    cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+    for cluster_id in cluster_ids:
+        worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+        if len(worker_ids)!=1:
+            print sample + ";" + str(objid)+"; clust"+str(cluster_id)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "basic",exclude_isovote=False,rerun_existing=True)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GT",exclude_isovote=False,rerun_existing=True)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=False,rerun_existing=True)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GT",exclude_isovote=True,rerun_existing=True)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=True,rerun_existing=True)
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)"

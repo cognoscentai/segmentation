@@ -1036,3 +1036,40 @@ def compile_PR(mode="",ground_truth=False):
                                       }
                                  )
     print 'Compiled PR to :'+ fname
+def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
+    thresh_min = -200
+    thresh_max = 200
+    if cluster_id!="" and cluster_id!=-1:
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
+    if exclude_isovote:
+        mode ='iso'
+    else:
+        mode =''
+    if (not rerun_existing) and os.path.exists('{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)):
+        print '{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)+" already exist"
+        return
+    delta = np.abs(thresh_max -thresh_min)
+    thresh = (thresh_min+thresh_max)/2.
+    p,r=0,0
+    while (p==-1 or delta>1):
+        p,r,j = onlineDeriveGTinGroundTruthExperiments(sample, objid, algo,thresh,cluster_id=cluster_id,exclude_isovote=exclude_isovote,rerun_existing=True)        
+        delta = np.abs(thresh_max -thresh_min)
+        if p>r:
+            right = thresh_min + 0.75*delta  
+            thresh_max = right
+        else: 
+            left = thresh_min + 0.25*delta  
+            thresh_min = left
+        if p==-1:
+            #if p =-1 then it is because the result area is zero, which means nothing was selected for gt
+            # this meant that the threshold has overshot
+            thresh_max = thresh_min+0.2*delta
+        thresh = (thresh_min+thresh_max)/2.
+    
+    outfile = '{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)
+    with open(outfile, 'w') as fp:
+        fp.write(json.dumps([p, r, j]))
+    return p,r,j
+

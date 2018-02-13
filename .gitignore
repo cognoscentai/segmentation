@@ -4,3 +4,4 @@ analysis/pixel_em/
 ipynb/.ipynb_checkpoints/
 *.txt
 *.csv
+analysis/sendmail.py
