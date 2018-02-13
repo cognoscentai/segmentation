@@ -5,3 +5,4 @@ ipynb/.ipynb_checkpoints/
 *.txt
 *.csv
 analysis/sendmail.py
+analysis/cluster_img/
