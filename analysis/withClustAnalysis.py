@@ -54,13 +54,14 @@ def compile_all_algo_PRJs():
     df = df.rename(columns={"MV_precision":"P [MV]",
                            "MV_recall":"R [MV]",
                            "MV_jaccard":"J [MV]"})
-    for mode in  ["GT","isoGT","GTLSA","isoGTLSA","basic"]:
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+    for mode in  ["basic","GT","isoGT","GTLSA","isoGTLSA"]:
         data =  pd.read_csv("pixel_em/{}_ground_truth_full_PRJ_table.csv".format(mode))
         data = data.rename(columns={"EM_precision":"P [{}]".format(mode),
                            "EM_recall":"R [{}]".format(mode),
                            "EM_jaccard":"J [{}]".format(mode),})
-        df = df.merge(data)
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        data = data.drop("thresh",1)
+        df = df.merge(data,on=['clust', 'num_workers', 'objid','sample_num'],how="right")
     df.to_csv("pixel_em/all_PRJ_table.csv")
     return df
 def compile_best_thresh_all_algo_PRJs():
