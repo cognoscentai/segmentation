@@ -5,26 +5,30 @@ from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
 # sample_size = len(sample_lst)   # if all worker sets
 sample_size = 5
+'''
+print "1. if directory does not exist, create pixel_em/"
+import os.path
+if not os.path.exists("pixel_em"):
+    os.makedirs("pixel_em")
 
-# print "1. if directory does not exist, create pixel_em/"
-# import os.path
-# if not os.path.exists("pixel_em"):
-#     os.makedirs("pixel_em")
-
-# print "2. Creating all worker and GT pixel masks (2-3 min)"
-# for objid in object_lst:
-#     create_all_gt_and_worker_masks(objid)
-# Changes start here for the preprocessed cluster 
-# sample_lst = sample_lst[:sample_size]
-# print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
-# print "This might take a while (~2hrs)"
-# for sample in sample_lst:
-#     for objid in object_lst:
-#         print sample + ":" + str(objid)
-#         create_mega_mask(objid, PLOT=False, sample_name=sample)
-
+print "2. Creating all worker and GT pixel masks (2-3 min)"
+for objid in object_lst:
+     create_all_gt_and_worker_masks(objid)
+'''
+'''
+print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
+print "This might take a while (~2hrs)"
+for sample in sample_lst:
+    for objid in object_lst:
+        print sample + ":" + str(objid)
+        create_mega_mask(objid, PLOT=False, sample_name=sample)
+# Changes start here for the preprocessed cluster
+print "Running spectral clustering to preprocess (takes 1~2min) "
+os.system("python2.7 -i spectral_clustering.py")
+'''
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 '''
+
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
 for sample in sample_lst:
@@ -35,7 +39,7 @@ for sample in sample_lst:
             print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
             create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
 '''
-'''
+
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals=[]
 for sample in sample_lst:
@@ -49,7 +53,7 @@ for sample in sample_lst:
 	         mv_prj_vals.append([sample,objid,cluster_id,p,r,j])
 mv_df = pd.DataFrame(mv_prj_vals,columns=["sample","objid","clust","MV_precision","MV_recall","MV_jaccard"])
 mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
-'''
+
 
 # from areaMask import *
 # print "5.Creating area mask for all sample-objects"
