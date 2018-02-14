@@ -40,6 +40,16 @@ for sample in sample_lst:
             create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
 '''
 '''
+mv_prj_vals=[]
+for sample in sample_lst:
+     for objid in object_lst:
+         print sample + ":" + str(objid)
+         p,r,j = compute_PRJ_MV(sample, objid)
+         mv_prj_vals.append([sample,objid,-1,p,r,j])
+mv_df = pd.DataFrame(mv_prj_vals,columns=["sample","objid","clust","MV_precision","MV_recall","MV_jaccard"])
+mv_df.to_csv("pixel_em/MV_PRJ_table.csv")
+'''
+'''
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals=[]
 for sample in sample_lst:
@@ -108,7 +118,7 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-
+'''
 sample = sys.argv[1]
 
 #for sample in tqdm(sample_specs.keys()):
@@ -134,6 +144,7 @@ for objid in object_lst:
     	    do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     	    do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     	    do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
+'''
 ###########################################################
 '''
 print "With Cluster version" 

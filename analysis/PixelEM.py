@@ -155,6 +155,9 @@ def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False,mode=""):
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if os.path.exists('{}MV_prj.json'.format(outdir)):
+        print "MV already exist"
+        return json.load(open('{}MV_prj.json'.format(outdir)))
     if mode=="":
     	num_workers = len(workers_in_sample(sample_name, objid,cluster_id=cluster_id))
     	mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
@@ -1000,7 +1003,10 @@ def compile_PR(mode="",ground_truth=False):
 			em_pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
                         #em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
                     else:
-			em_pr_file = '{}{}_EM_prj_iter4_best_thresh.json'.format(clust_path,mode)
+			# GT_EM_prj_best_thresh.json
+			em_pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
+			if mode =="basic":
+			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
                         #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
                     if os.path.isfile(em_pr_file):
                         [em_p, em_r,em_j] = json.load(open(em_pr_file))

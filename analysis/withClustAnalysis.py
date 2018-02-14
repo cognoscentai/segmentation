@@ -14,7 +14,7 @@ def compile_cluster_MV_prj_into_csv():
     # check result by plotting: plt.plot(MV_df.groupby("num_workers")["MV_jaccard"].mean())
     MV = pd.read_csv("pixel_em/MV_PRJ_table.csv")
     MV["clust"]=-1
-    MV = MV[MV.objid.isin(noClust_obj)]
+    #MV = MV[MV.objid.isin(noClust_obj)]
     # read the MV PRJ for the remaining clustered objects
     MV_clust = pd.read_csv("pixel_em/withClust_MV_PRJ_table.csv",index_col=0)
     MV_clust["num_workers"] = MV_clust["sample"].apply(lambda x: int(x.split("workers")[0]))
@@ -52,14 +52,18 @@ def best_worker_picking():
     assert int(best_clust_df.groupby(["sample","objid"]).count()["clust"].unique())==1 
     best_clust_df.to_csv("best_clust_picking.csv")
     return best_clust_df
-def compile_all_algo_PRJs():
+def compile_all_algo_PRJs(ground_truth=False):
+    if ground_truth:
+	gt = "_ground_truth"
+    else :
+	gt = ""
     df = pd.read_csv("pixel_em/all_MV_PRJ_table.csv")
     df = df.rename(columns={"MV_precision":"P [MV]",
                            "MV_recall":"R [MV]",
                            "MV_jaccard":"J [MV]"})
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     for mode in  ["basic","GT","isoGT","GTLSA","isoGTLSA"]:
-        data =  pd.read_csv("pixel_em/{}_ground_truth_full_PRJ_table.csv".format(mode))
+        data =  pd.read_csv("pixel_em/{}{}_full_PRJ_table.csv".format(gt,mode))
         data = data.rename(columns={"EM_precision":"P [{}]".format(mode),
                            "EM_recall":"R [{}]".format(mode),
                            "EM_jaccard":"J [{}]".format(mode),})
