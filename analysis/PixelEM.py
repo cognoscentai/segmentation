@@ -521,7 +521,7 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_exi
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         # Compute PR mask based on the EM estimate mask from every iteration
     	if compute_PR_every_iter:
             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
@@ -628,7 +628,7 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5, rerun_ex
             qp[wid],qn[wid] = GTworker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
             #Compute pInMask and pNotInMask 
             log_probability_in_mask, log_probability_not_in_mask = GTmask_log_probabilities(worker_masks,qp,qn)
-        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         if compute_PR_every_iter:
             # Compute PR mask based on the EM estimate mask from every iteration
@@ -826,7 +826,7 @@ def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,rerun_existing
             worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
-        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
 
         # Compute PR mask based on the EM estimate mask from the last iteration
@@ -1006,7 +1006,7 @@ def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id=
     return p,r,j
 
 ##############################################
-def estimate_gt_compute_PRJ_against_MV(log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=False):
+def estimate_gt_compute_PRJ_against_MV(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=False):
     if exclude_isovote:
         Nworkers = int(sample_name.split("workers")[0])
         mega_mask = get_mega_mask(sample_name, objid,cluster_id)
@@ -1023,14 +1023,19 @@ def estimate_gt_compute_PRJ_against_MV(log_probability_in_mask,log_probability_n
     [p, r, j] = faster_compute_prj(gt_est_mask, MV)
     return [p,r,j],gt_est_mask
 
-def binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_mask,MV,exclude_isovote=False,rerun_existing=False):
+def binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,exclude_isovote=False,rerun_existing=False):
     thresh_min = -200
     thresh_max = 200
     delta = np.abs(thresh_max -thresh_min)
     thresh = (thresh_min+thresh_max)/2.
-    p,r=0,0
-    while (p==-1 or delta>1):
-        [p,r,j],gt_est_mask = estimate_gt_compute_PRJ_against_MV(log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=False)
+    p,r=0,-1
+    iterations = 0
+    epsilon = 0.125
+    while (iterations<=100 or p==-1): # continue iterations below max iterations or if p=-1
+        # stop if p=r or if delta (range in x) gets below a certain threshold
+        if (p==r) or (thresh_min + epsilon>= thresh_max):
+            break
+        [p,r,j],gt_est_mask = estimate_gt_compute_PRJ_against_MV(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=exclude_isovote)
         delta = np.abs(thresh_max -thresh_min)
         if p>r:
             right = thresh_min + 0.75*delta  
@@ -1043,4 +1048,13 @@ def binarySearchDeriveBestThresh(log_probability_in_mask,log_probability_not_in_
             # this meant that the threshold has overshot
             thresh_max = thresh_min+0.2*delta
         thresh = (thresh_min+thresh_max)/2.
+        iterations+=1
+        if DEBUG:
+            print "----Trying threshold:",thresh,"-----"
+            print p,r,j,thresh_max,thresh_min
+            print "actual prj against GT",faster_compute_prj(gt_est_mask,get_gt_mask(objid))
+            plt.figure()
+            plt.title("Iter #"+str(iterations))
+            plt.imshow(gt_est_mask)
+            plt.colorbar()
     return p,r,j,thresh,gt_est_mask
