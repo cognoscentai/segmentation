@@ -516,7 +516,10 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", rerun_existing=False,exclu
     jaccard_against_prev_gt_est = 0
     it =0
     #for it in range(num_iterations):
+    max_iter=6
     while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	if (it>=max_iter):
+	    break
         print "iteration:",it
         it +=1
         qp1 = dict()
@@ -547,6 +550,7 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", rerun_existing=False,exclu
              print "-->"+str([p,r,j])
 	# compute jaccard between previous and current gt estimation mask
         [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
         prev_gt_est = gt_est_mask
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode), 'w') as fp:
@@ -642,8 +646,11 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  rerun_existing=False,exclu
     prev_gt_est = gt_est_mask
     jaccard_against_prev_gt_est = 0
     it =0
+    max_iter=6
     while (jaccard_against_prev_gt_est < 0.999 or it<=1):
     #for it in range(num_iterations):
+	if (it>=max_iter):
+            break
 	print "iteration:",it
         it +=1
         qp = dict()
@@ -665,6 +672,7 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  rerun_existing=False,exclu
             print "-->"+str([p,r,j])
 	# compute jaccard between previous and current gt estimation mask
     	[p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
     	prev_gt_est = gt_est_mask
     # Save only during the last iteration
     pickle.dump(gt_est_mask,open('{}{}GT_gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
@@ -854,7 +862,10 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_is
     prev_gt_est = gt_est_mask
     jaccard_against_prev_gt_est = 0
     it =0
+    max_iter = 6
     while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	if (it>=max_iter):
+            break
 	print "iteration:",it
 	it +=1
     #for it in range(num_iterations):
@@ -886,7 +897,7 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_is
             print "-->"+str([p,r,j])
 	# compute jaccard between previous and current gt estimation mask
 	[ p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
-	print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
 	prev_gt_est = gt_est_mask
     #Only writing output at the end of all iterations: 
     pickle.dump(gt_est_mask,open('{}{}gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))

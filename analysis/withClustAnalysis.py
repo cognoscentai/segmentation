@@ -28,6 +28,8 @@ def compile_cluster_MV_prj_into_csv():
 
 def best_worker_picking():
     MV_clust = pd.read_csv("pixel_em/withClust_MV_PRJ_table.csv",index_col=0)
+    MV_clust["num_workers"] = MV_clust["sample"].apply(lambda x: int(x.split("workers")[0]))
+    MV_clust["sample_num"] = MV_clust["sample"].apply(lambda x: int(x.split("rand")[-1]))
     clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
     #pick the cluster with the highest count
     # clust_df["count"]=clust_df.groupby(['objid','cluster']).transform("count")
@@ -48,6 +50,7 @@ def best_worker_picking():
     assert len(best_clust_df[best_clust_df["clust"]==-1])==0
     # There can only be one best cluster for every sample objid 
     assert int(best_clust_df.groupby(["sample","objid"]).count()["clust"].unique())==1 
+    best_clust_df.to_csv("best_clust_picking.csv")
     return best_clust_df
 def compile_all_algo_PRJs():
     df = pd.read_csv("pixel_em/all_MV_PRJ_table.csv")
@@ -152,7 +155,7 @@ def compile_noClust_greedy_algos_to_csv():
     worker_frac_greedy_df = pd.read_csv("greedy_old_results/greedy_result_worker_fraction.csv")
     greedy_df = greedy_df.append(worker_frac_greedy_df)
 
-    greedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
+    ereedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
     return greedy_df 
 def compile_withClust_greedy_algos_to_csv():
     globfnames = glob("withClust_greedy_result_*.csv")
