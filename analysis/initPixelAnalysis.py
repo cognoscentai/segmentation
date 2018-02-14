@@ -39,7 +39,7 @@ for sample in sample_lst:
             print sample + ":" + str(objid) +"; clust:" + str(cluster_id)
             create_mega_mask(objid, worker_ids=worker_ids,cluster_id = cluster_id,PLOT=False, sample_name=sample)
 '''
-
+'''
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals=[]
 for sample in sample_lst:
@@ -53,30 +53,28 @@ for sample in sample_lst:
 	         mv_prj_vals.append([sample,objid,cluster_id,p,r,j])
 mv_df = pd.DataFrame(mv_prj_vals,columns=["sample","objid","clust","MV_precision","MV_recall","MV_jaccard"])
 mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
-
-
-# from areaMask import *
-# print "5.Creating area mask for all sample-objects"
-# print "This will also take a while (~5hrs)"
-# for sample in tqdm(sample_lst):
-#         for objid in object_lst:
-#             if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)):
-#                 print sample+":"+str(objid)+" already exist"
-#         else:
-#             print sample + ":" + str(objid)
-#             create_PixTiles(sample, objid, check_edges=True)
+'''
 '''
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
-for sample in tqdm(sample_lst):
-    for objid in object_lst:
-        cluster_ids = df[(df["objid"]==objid)].cluster.unique()
-        for cluster_id in cluster_ids:
-            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
-	    if len(worker_ids)!=1:
-                print sample + ":" + str(objid)+"clust"+str(cluster_id)
-                create_PixTiles(sample, objid, cluster_id,check_edges=True)
+sample = sys.argv[1]
+#for sample in tqdm(sample_lst):
+for objid in object_lst:
+    if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)):
+	print sample+":"+str(objid)+" already exist"
+    else:
+        print sample + ":" + str(objid)
+        create_PixTiles(sample, objid, check_edges=True)
+
+#for sample in tqdm(sample_lst):
+for objid in object_lst:
+   cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+   for cluster_id in cluster_ids:
+        worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+	if len(worker_ids)!=1:
+             print sample + ":" + str(objid)+"clust"+str(cluster_id)
+             create_PixTiles(sample, objid, cluster_id,check_edges=True)
 '''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
@@ -110,21 +108,27 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-'''
 sample = sys.argv[1]
 #for sample in tqdm(sample_specs.keys()):
-
+Niter = 3
 for objid in object_lst:
     print sample+":"+str(objid)
-    # if True:
-    #   thresh = -4
-    for thresh in [-4, -2, 0, 2, 4]:
-        do_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
-        do_GT_EM_for(sample, objid, thresh=thresh, rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True, num_iterations=3)
-        do_GT_EM_for(sample, objid, thresh=thresh, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=3)
-        do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=3)
-        do_GTLSA_EM_for(sample, objid, thresh=thresh, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=3)
-'''
+    do_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True, num_iterations=Niter)
+    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
+    do_GTLSA_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
+    do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+for objid in object_lst:
+    cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+    for cluster_id in cluster_ids:
+        #worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
+        #if len(worker_ids)!=1:
+        #    print sample + ":" + str(objid)+"clust"+str(cluster_id)
+	do_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True, num_iterations=Niter)
+    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
+    	do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
+    	do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
 ###########################################################
 '''
 print "With Cluster version" 
@@ -214,11 +218,11 @@ for objid in object_lst:
             binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GT",cluster_id=cluster_id,exclude_isovote=True,rerun_existing=True)
             binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=True,rerun_existing=True)
 '''
-
+'''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)"
 algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
-
+'''
