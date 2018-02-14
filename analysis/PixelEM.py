@@ -485,7 +485,7 @@ def tiles2AreaMask(tiles,mega_mask):
         for i in list(tiles[tidx]):
             mask[i]=tarea[tidx]
     return mask	
-def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False,PLOT=False):
+def do_GTLSA_EM_for(sample_name, objid,cluster_id="", rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False,PLOT=False):
     if exclude_isovote:
         mode ='iso'
     else:
@@ -500,7 +500,7 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_exi
     
     print "Doing GTLSA mode=",mode
     if not rerun_existing: 
-        if os.path.isfile('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode,num_iterations-1)) :
+        if os.path.isfile('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode)) :
             print "Already ran GTLSA, Skipped"
             return
     # initialize MV mask
@@ -512,20 +512,28 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_exi
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id)
     Nworkers=len(worker_masks)
     area_mask = tiles2AreaMask(tiles,mega_mask)
-    for it in range(num_iterations):
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    #for it in range(num_iterations):
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+        print "iteration:",it
+        it +=1
         qp1 = dict()
         qn1 = dict()
         qp2 = dict()
         qn2 = dict()
-        t0 = time.time()
+        if DEBUG: t0 = time.time()
         for wid in worker_masks.keys():
             qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
-        t1 = time.time()
-        print "Time for worker prob calculation:",t1-t0
+        if DEBUG: 
+	    t1 = time.time()
+            print "Time for worker prob calculation:",t1-t0
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
-        t2 = time.time()
-        print "Time for mask log prob calculation:",t2-t1
+        if DEBUG: 
+	    t2 = time.time()
+            print "Time for mask log prob calculation:",t2-t1
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         # Compute PR mask based on the EM estimate mask from every iteration
@@ -533,9 +541,13 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_exi
             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        print qp1,qn1,qp2,qn2
-        print "-->"+str([p,r,j])
+	if DEBUG:
+             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+             print qp1,qn1,qp2,qn2
+             print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+        [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+        prev_gt_est = gt_est_mask
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode), 'w') as fp:
         fp.write(json.dumps([p, r, j])) 
@@ -604,7 +616,7 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5, rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
+def do_GT_EM_for(sample_name, objid, cluster_id ="",  rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
     if exclude_isovote: 
         mode ='iso'
     else:
@@ -617,7 +629,7 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5, rerun_ex
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if not rerun_existing:
-        if os.path.isfile('{}GT_EM_prj_best_thresh.json'.format(outdir,num_iterations-1)):
+        if os.path.isfile('{}GT_EM_prj_best_thresh.json'.format(outdir)):
             print "Already ran GT, Skipped"
             return
     
@@ -627,7 +639,13 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5, rerun_ex
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id)
     Nworkers=len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid,cluster_id)
-    for it in range(num_iterations):
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+    #for it in range(num_iterations):
+	print "iteration:",it
+        it +=1
         qp = dict()
         qn = dict()
         for wid in worker_masks.keys():
@@ -641,9 +659,13 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5, rerun_ex
             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             with open('{}{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        print qp,qn
-        print "-->"+str([p,r,j])
+        if DEBUG:
+	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            print qp,qn
+            print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+    	[p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+    	prev_gt_est = gt_est_mask
     # Save only during the last iteration
     pickle.dump(gt_est_mask,open('{}{}GT_gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
     pickle.dump(log_probability_in_mask,open('{}{}GT_p_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
@@ -805,7 +827,7 @@ def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,clust
     if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w'))
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     return [p,r,j]    
-def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
+def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
     if DEBUG: start = time.time()
     if exclude_isovote:
         mode ='iso'
@@ -826,31 +848,46 @@ def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,rerun_existing
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid,cluster_id)
-    t_load = time.time()
-    print "Loading time:",t_load-start
-    for it in range(num_iterations):
+    if DEBUG: 
+	t_load = time.time()
+    	print "Loading time:",t_load-start
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	print "iteration:",it
+	it +=1
+    #for it in range(num_iterations):
         worker_qualities = dict()
-        t0 = time.time()
+        if DEBUG:t0 = time.time()
         for wid in worker_masks.keys():
             worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
-        t1 = time.time()
-        print "Time for worker prob calculation:",t1-t0
+        if DEBUG:
+	    t1 = time.time()
+            print "Time for worker prob calculation:",t1-t0
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
-        t2 = time.time()
-        print "Time for mask log prob calculation:",t2-t1
+        if DEBUG:
+	    t2 = time.time()
+            print "Time for mask log prob calculation:",t2-t1
         p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-        t3 = time.time()
-        print "Time for binary search :",t3-t2
+        if DEBUG: 
+	    t3 = time.time()
+            print "Time for binary search :",t3-t2
         # Compute PR mask based on the EM estimate mask from the last iteration
-        if compute_PR_every_iter:
-            #[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-            with open('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
-                fp.write(json.dumps([p, r, j]))
-        print worker_qualities 
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        print "-->"+str([p,r,j])
+        #if compute_PR_every_iter:
+        #    #[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+        #    with open('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+        #        fp.write(json.dumps([p, r, j]))
+        if DEBUG:
+	    print worker_qualities 
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+	[ p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
+	prev_gt_est = gt_est_mask
     #Only writing output at the end of all iterations: 
     pickle.dump(gt_est_mask,open('{}{}gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
     pickle.dump(log_probability_in_mask,open('{}{}p_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
@@ -1067,8 +1104,8 @@ def binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in
             print "----Trying threshold:",thresh,"-----"
             print p,r,j,thresh_max,thresh_min
             print "actual prj against GT",faster_compute_prj(gt_est_mask,get_gt_mask(objid))
-            plt.figure()
-            plt.title("Iter #"+str(iterations))
-            plt.imshow(gt_est_mask)
-            plt.colorbar()
+            #plt.figure()
+            #plt.title("Iter #"+str(iterations))
+            #plt.imshow(gt_est_mask)
+            #plt.colorbar()
     return p,r,j,thresh,gt_est_mask

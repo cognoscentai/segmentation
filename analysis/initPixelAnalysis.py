@@ -26,7 +26,7 @@ for sample in sample_lst:
 print "Running spectral clustering to preprocess (takes 1~2min) "
 os.system("python2.7 -i spectral_clustering.py")
 '''
-#df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 '''
 
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
@@ -108,16 +108,18 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
+
 sample = sys.argv[1]
-#for sample in tqdm(sample_specs.keys()):
 Niter = 3
+'''
+#for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
     print sample+":"+str(objid)
-    do_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
-    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True, num_iterations=Niter)
-    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
-    do_GTLSA_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
-    do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+    do_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
+    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True)
+    do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
+    do_GTLSA_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
+    do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
 '''
 for objid in object_lst:
     cluster_ids = df[(df["objid"]==objid)].cluster.unique()
@@ -125,12 +127,12 @@ for objid in object_lst:
         #worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
         #if len(worker_ids)!=1:
         #    print sample + ":" + str(objid)+"clust"+str(cluster_id)
-	do_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
-    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True, num_iterations=Niter)
-    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
-    	do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
-    	do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
-'''
+	do_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
+    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True)
+    	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
+    	do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
+    	do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
+
 ###########################################################
 '''
 print "With Cluster version" 
