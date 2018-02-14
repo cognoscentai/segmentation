@@ -184,6 +184,8 @@ def get_MV_mask(sample_name, objid,cluster_id=""):
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if not os.path.exists('{}MV_mask.pkl'.format(outdir)): 
+        compute_PRJ_MV(sample_name, objid, cluster_id)
     return pickle.load(open('{}MV_mask.pkl'.format(outdir)))
 
 
@@ -515,11 +517,15 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,rerun_exi
         qn1 = dict()
         qp2 = dict()
         qn2 = dict()
+        t0 = time.time()
         for wid in worker_masks.keys():
             qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
-        
+        t1 = time.time()
+        print "Time for worker prob calculation:",t1-t0
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
+        t2 = time.time()
+        print "Time for mask log prob calculation:",t2-t1
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         # Compute PR mask based on the EM estimate mask from every iteration
@@ -820,15 +826,23 @@ def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,rerun_existing
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+    t_load = time.time()
+    print "Loading time:",t_load-start
     for it in range(num_iterations):
         worker_qualities = dict()
+        t0 = time.time()
         for wid in worker_masks.keys():
             worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
+        t1 = time.time()
+        print "Time for worker prob calculation:",t1-t0
         #Compute pInMask and pNotInMask 
         log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
+        t2 = time.time()
+        print "Time for mask log prob calculation:",t2-t1
         p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-
+        t3 = time.time()
+        print "Time for binary search :",t3-t2
         # Compute PR mask based on the EM estimate mask from the last iteration
         if compute_PR_every_iter:
             #[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))

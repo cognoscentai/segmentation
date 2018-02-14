@@ -1,5 +1,5 @@
 from PixelEM import *
-
+import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
 from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
@@ -26,7 +26,7 @@ for sample in sample_lst:
 print "Running spectral clustering to preprocess (takes 1~2min) "
 os.system("python2.7 -i spectral_clustering.py")
 '''
-df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+#df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 '''
 
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
@@ -118,6 +118,7 @@ for objid in object_lst:
     do_GT_EM_for(sample, objid,rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
     do_GTLSA_EM_for(sample, objid,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+'''
 for objid in object_lst:
     cluster_ids = df[(df["objid"]==objid)].cluster.unique()
     for cluster_id in cluster_ids:
@@ -129,6 +130,7 @@ for objid in object_lst:
     	do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True, num_iterations=Niter)
     	do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True, num_iterations=Niter)
     	do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False, num_iterations=Niter)
+'''
 ###########################################################
 '''
 print "With Cluster version" 
