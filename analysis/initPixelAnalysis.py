@@ -245,7 +245,7 @@ for objid in object_lst:
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)"
-algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
+algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic","MV"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)

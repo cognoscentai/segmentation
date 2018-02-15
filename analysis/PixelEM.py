@@ -931,7 +931,7 @@ def compile_PR(mode="",ground_truth=False):
         fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'precision', 'recall','jaccard','FPR%','FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_DIR)):
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
             sample_name = sample_path.split('/')[-2]
             print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
@@ -943,7 +943,9 @@ def compile_PR(mode="",ground_truth=False):
                     if clust_path ==obj_path:
                         cluster_id = -1 #unclustered flag
                     else:
-                        cluster_id = int(clust_path.split("/clust")[-1][:-1])            
+                        cluster_id = int(clust_path.split("/clust")[-1][:-1])          
+		    print "----clust path:",clust_path 
+		    print cluster_id
                     p = None
                     r = None
                     j = None
@@ -964,13 +966,15 @@ def compile_PR(mode="",ground_truth=False):
                         elif mode =="MV":
                             pr_file = '{}MV_prj.json'.format(clust_path)
                             fpnr_file = '{}MV_fpnr.json'.format(clust_path)
+		    print pr_file
+		    print  fpnr_file
                     if os.path.isfile(pr_file):
                         [p, r,j] = json.load(open(pr_file))
                     if os.path.isfile(fpnr_file):
                         [fpr,fnr] = json.load(open(fpnr_file)) 
                     else:
                         gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path,mode)
-            			if mode =="basic":
+            		if mode =="basic":
                             gt_fname ="{}/gt_est_mask_best_thresh.pkl".format(clust_path)
                         elif mode =="MV":
                             gt_fname ="{}/MV_mask.pkl".format(clust_path)
@@ -980,9 +984,23 @@ def compile_PR(mode="",ground_truth=False):
                             [fpr,fnr] = TFPNR(result,gt)	
                             with open(fpnr_file, 'w') as fp:
                                 fp.write(json.dumps([fpr,fnr]))	
-            			    print fpr,fnr
-                if any([prj is not None for prj in [p, r,j]]):
-                    writer.writerow({
+            		    print fpr,fnr
+		    print p,r,j,fpr,fnr
+		    print clust_path
+		    print {
+                                'num_workers': num_workers,
+                                'sample_num': sample_num,
+                                'objid': objid,
+                                'thresh':thresh,
+                                'clust':cluster_id,
+                                'precision': p,
+                                'recall': r,
+                                'jaccard':j,
+                                'FPR%': fpr,
+                                'FNR%': fnr
+                              }
+                    if any([prj is not None for prj in [p, r,j]]):
+                        writer.writerow({
                                 'num_workers': num_workers,
                                 'sample_num': sample_num,
                                 'objid': objid,
