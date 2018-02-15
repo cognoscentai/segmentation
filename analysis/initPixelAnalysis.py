@@ -5,7 +5,7 @@ from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
 # sample_size = len(sample_lst)   # if all worker sets
 sample_size = 5
-'''
+
 '''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
@@ -16,7 +16,7 @@ print "2. Creating all worker and GT pixel masks (2-3 min)"
 for objid in object_lst:
     create_all_gt_and_worker_masks(objid)
 '''
-'''
+
 
 '''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
@@ -31,7 +31,7 @@ os.system("python2.7 -i spectral_clustering.py")
 '''
 
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-'''
+
 '''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
@@ -152,7 +152,7 @@ for objid in object_lst:
             do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-'''
+
 ###########################################################
 '''
 print "With Cluster version"
@@ -249,3 +249,4 @@ algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
+'''

@@ -234,7 +234,7 @@ def faster_compute_prj(result,gt):
 
 def worker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=False):
     if exclude_isovote:
-	num_agreement= len(np.where((mega_mask==0) | (mega_mask==Nworkers))[0]) # no votes
+	num_agreement= len(np.where((mega_mask==0 and gt_mask == 0) | (mega_mask==Nworkers and gt_mask == 1))[0]) # either fully voted  by all workers or not voted at all
     else:
 	num_agreement = 0
     #print "Num agreement:", num_agreement
@@ -961,7 +961,7 @@ def compile_PR(mode="",ground_truth=False):
         if mode=="":
             fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'clust','MV_precision', 'MV_recall','MV_jaccard', 'EM_precision', 'EM_recall','EM_jaccard']
         else: # no MV columns
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'EM_precision', 'EM_recall','EM_jaccard']
+            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'EM_precision', 'EM_recall','EM_jaccard','EM_FPR%','EM_FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
@@ -983,6 +983,8 @@ def compile_PR(mode="",ground_truth=False):
                     em_p = None
                     em_r = None
                     em_j = None
+		    em_fpr = None
+		    em_fnr = None
                     #if ground_truth :
 		    #	glob_path =glob.glob('{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode))
                         #glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
@@ -1005,12 +1007,27 @@ def compile_PR(mode="",ground_truth=False):
                     else:
 			# GT_EM_prj_best_thresh.json
 			em_pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
+			em_fpnr_file = '{}{}_EM_fpnr_best_thresh.json'.format(clust_path,mode)
 			if mode =="basic":
 			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
+			    em_fpnr_file = '{}EM_fpnr_best_thresh.json'.format(clust_path)
                         #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
-			print em_pr_file
+			#print em_pr_file
                     if os.path.isfile(em_pr_file):
                         [em_p, em_r,em_j] = json.load(open(em_pr_file))
+		    if os.path.isfile(em_fpnr_file):
+			[em_fpr,em_fnr] = json.load(open(em_fpnr_file)) 
+		    else:
+			gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path,mode)
+			if mode =="basic":
+			    gt_fname ="{}/gt_est_mask_best_thresh.pkl".format(clust_path)
+			if os.path.isfile(gt_fname):
+			    result = pickle.load(open(gt_fname))
+			    gt = get_gt_mask(objid)
+			    [em_fpr,em_fnr] = TFPNR(result,gt)	
+			    with open(em_fpnr_file, 'w') as fp:
+			        fp.write(json.dumps([em_fpr,em_fnr]))	
+			    print em_fpr,em_fnr
                     if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
                         if mode =="":
                             writer.writerow({
@@ -1035,7 +1052,9 @@ def compile_PR(mode="",ground_truth=False):
                                         'clust':cluster_id,
                                         'EM_precision': em_p,
                                         'EM_recall': em_r,
-                                        'EM_jaccard':em_j
+                                        'EM_jaccard':em_j,
+					'EM_FPR%': em_fpr,
+					'EM_FNR%': em_fnr
                                       })
     print 'Compiled PR to :'+ fname
 def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
@@ -1127,3 +1146,23 @@ def binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in
             #plt.imshow(gt_est_mask)
             #plt.colorbar()
     return p,r,j,thresh,gt_est_mask
+def TFPNR(result,gt):    
+    # True False Positive Negative Rates
+    # as defined in https://en.wikipedia.org/wiki/Sensitivity_and_specificity#Definitions
+    intersection = len(np.where(((result==1)|(gt==1))&(result==gt))[0])
+    gt_area = float(len(np.where(gt==1)[0]))
+    result_area = float(len(np.where(result==1)[0]))
+
+    TP = intersection
+    FP = result_area - intersection
+    FN = gt_area - intersection
+    TN = np.product(np.shape(result)) - (gt_area+result_area-intersection)
+
+    #TPR = TP/float(TP+FN)
+    FPR = FP/float(FP+TN)
+    FNR = FN/float(TP+FN)
+    #TNR = TN/float(TN+FP)
+    #assert TPR+FNR==1 and TNR+FPR==1
+
+    #return  TPR,TNR#,FNR,TNR,FPR
+    return FPR*100,FNR*100
