@@ -118,7 +118,7 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-'''
+
 sample = sys.argv[1]
 
 #for sample in tqdm(sample_specs.keys()):
@@ -144,7 +144,7 @@ for objid in object_lst:
     	    do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     	    do_GTLSA_EM_for(sample, objid,cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     	    do_GTLSA_EM_for(sample, objid, cluster_id ,rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-'''
+
 ###########################################################
 '''
 print "With Cluster version" 

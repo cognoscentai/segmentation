@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 SHAPELY_OFF=False
 import matplotlib
 import numpy as np
@@ -1008,6 +1008,7 @@ def compile_PR(mode="",ground_truth=False):
 			if mode =="basic":
 			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
                         #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
+			print em_pr_file
                     if os.path.isfile(em_pr_file):
                         [em_p, em_r,em_j] = json.load(open(em_pr_file))
                     if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):

@@ -4,11 +4,11 @@
 #nohup python2.7 initPixelAnalysis.py 5workers_rand2 > 5workers_rand2.out &
 #nohup python2.7 initPixelAnalysis.py 5workers_rand3 > 5workers_rand3.out &
 #nohup python2.7 initPixelAnalysis.py 5workers_rand4 > 5workers_rand4.out &
-nohup python2.7 initPixelAnalysis.py 5workers_rand5 > 5workers_rand5.out &
-nohup python2.7 initPixelAnalysis.py 5workers_rand6 > 5workers_rand6.out &
-nohup python2.7 initPixelAnalysis.py 5workers_rand7 > 5workers_rand7.out &
-nohup python2.7 initPixelAnalysis.py 5workers_rand8 > 5workers_rand8.out &
-nohup python2.7 initPixelAnalysis.py 5workers_rand9 > 5workers_rand9.out &
+#nohup python2.7 initPixelAnalysis.py 5workers_rand5 > 5workers_rand5.out &
+#nohup python2.7 initPixelAnalysis.py 5workers_rand6 > 5workers_rand6.out &
+#nohup python2.7 initPixelAnalysis.py 5workers_rand7 > 5workers_rand7.out &
+#nohup python2.7 initPixelAnalysis.py 5workers_rand8 > 5workers_rand8.out &
+#nohup python2.7 initPixelAnalysis.py 5workers_rand9 > 5workers_rand9.out &
 
 #nohup python2.7 initPixelAnalysis.py 10workers_rand0 > 10workers_rand0.out &
 #nohup python2.7 initPixelAnalysis.py 10workers_rand1 > 10workers_rand1.out &
