@@ -14,7 +14,7 @@ sample_size = 5
 # print "2. Creating all worker and GT pixel masks (2-3 min)"
 # for objid in object_lst:
 #     create_all_gt_and_worker_masks(objid)
-# Changes start here for the preprocessed cluster 
+# # Changes start here for the preprocessed cluster
 # sample_lst = sample_lst[:sample_size]
 # print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 # print "This might take a while (~2hrs)"
