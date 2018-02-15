@@ -1,13 +1,11 @@
 import pickle as pkl
 from PixelEM import *
-def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj"):
-    
+def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj",rerun_existing=False):    
     if cluster_id!="":
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
-    print outdir
-    if os.path.exists('{}{}greedy_prj.json'.format(outdir,algo)):
+    if (not rerun_existing) and  os.path.exists('{}{}greedy_prj.json'.format(outdir,algo)):
         print '{}{}greedy_prj.json'.format(outdir,algo)+" already exist, read from file"
         p,r,j = json.load(open('{}{}greedy_prj.json'.format(outdir,algo)))	
         return p,r,j
@@ -137,20 +135,23 @@ if __name__ == '__main__':
             print sample,objid,p,r,j
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
     df.to_csv("greedy_result_worker_fraction.csv",index=None)
-    
+    ''' 
     df_data = []
     #for sample in tqdm(sample_specs.keys()[::-1]):
     import sys
     idx = int(sys.argv[1])
     sample = sample_specs.keys()[idx]
+    clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+    noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
     for objid in object_lst:
+    #for objid in noClust_obj:
         for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
 	    p,r,j = greedy(sample,objid,algo)
 	    df_data.append([sample,objid,algo,p,r,j])
 	    print sample,objid,algo,p,r,j
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
     df.to_csv("greedy_result_{}.csv".format(idx))	
-    '''
+    
         
     # With clusters
     df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
@@ -169,6 +170,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
     df.to_csv("withClust_greedy_result_worker_fraction.csv",index=None)	
     '''
+    '''
     # Takes about 2.5~3hrs to run
     df_data = []
     #for sample in tqdm(sample_specs.keys()[::-1]):
@@ -186,3 +188,4 @@ if __name__ == '__main__':
             	    print sample,objid,algo,cluster_id,p,r,j
     df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
     df.to_csv("withClust_greedy_result_{}.csv".format(idx))
+    '''

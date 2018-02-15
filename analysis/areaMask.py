@@ -95,14 +95,14 @@ def index_item(pix_lst,item):
         if str(list(pix))==str(list(item)):
              return i 
 import os
-def create_PixTiles(sample,objid,cluster_id="",check_edges=False):
+def create_PixTiles(sample,objid,cluster_id="",check_edges=False,rerun_existing=False):
     if cluster_id=="":
         wmap  = pkl.load(open("pixel_em/{}/obj{}/voted_workers_mask.pkl".format(sample,objid)))
 	output_fname = "pixel_em/{}/obj{}/tiles.pkl".format(sample,objid)
     else: 
 	wmap  = pkl.load(open("pixel_em/{}/obj{}/clust{}/voted_workers_mask.pkl".format(sample,objid,cluster_id)))
 	output_fname = "pixel_em/{}/obj{}/clust{}/tiles.pkl".format(sample,objid,cluster_id)
-    if os.path.exists(output_fname):
+    if not rerun_existing and os.path.exists(output_fname):
         print output_fname+" already exist"
   	return 
     tiles= []

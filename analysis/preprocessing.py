@@ -91,78 +91,132 @@ def plot_coords(obj, color='red', reverse_xy=False, linestyle='-',lw=1, fill_col
             plt.fill_between(x, y, facecolor=fill_color, hatch=hatch, linewidth=lw, alpha=0.5)
     if invert_y:
         plt.gca().invert_yaxis()
-if __name__=="__main__":
-    bad_worker_records =[]
-    for obj in object_lst:
-        type1_error_flag=False
-        # First pass, get rid of type 1 error
-        prj_matrix,worker_ijdxs = compute_prjs(obj)
-        kmeans,ypred = cluster(obj,prj_matrix)
+# if __name__=="__main__":
+#     bad_worker_records =[]
+#     for obj in object_lst:
+#         type1_error_flag=False
+#         # First pass, get rid of type 1 error
+#         prj_matrix,worker_ijdxs = compute_prjs(obj)
+#         kmeans,ypred = cluster(obj,prj_matrix)
+#         bb_objects = bb_info[bb_info["object_id"]==obj]
+#         type1_error_cluster = np.where(kmeans.cluster_centers_[:,2]<0.1)[0]
+#         if len(type1_error_cluster)==0:
+#             print "obj",obj,": Not Type 1 error"
+#         else:
+# 	    type1_error_flag=True
+#             type1_error_wids = np.where(ypred==type1_error_cluster[0])[0]
+#             wids_counts_dict = Counter(worker_ijdxs[type1_error_wids].flatten())
+#             mode = scipy.stats.mode(wids_counts_dict.values()).mode[0]
+#             bad_idx = np.where(wids_counts_dict.values()!=mode)[0]
+#             bad_widx1 = np.array(wids_counts_dict.keys())[bad_idx]
+#             #plt.figure()
+#             #plt.title("Obj {}".format(obj),fontsize=13)
+#             #for widx in bad_widx1:
+#             #    plot_coords(ground_truth_T(obj),color="blue",fill_color="blue",reverse_xy=True)
+#             #    plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
+#             for bwidx in bad_widx1:
+#                 bad_worker_records.append([obj,bwidx,1]) #obj,bad worker id, error type 1
+
+#         # Second pass, get rid of type 2 error
+# 	if type1_error_flag:
+#             prj_matrix,worker_ijdxs = compute_prjs(obj,exclude_lst=bad_widx1)
+# 	else: 
+# 	    prj_matrix,worker_ijdxs = compute_prjs(obj)
+#         kmeans,ypred = cluster(obj,prj_matrix)
+#         bb_objects = bb_info[bb_info["object_id"]==obj]
+#         i = kmeans.cluster_centers_[:,0].argmin() #lowest precision cluster
+#         j = kmeans.cluster_centers_[:,1].argmin() #highest precision cluster
+
+#         idx = np.where(ypred==i)[0]
+#         jdx = np.where(ypred==j)[0]
+#         #plt.figure()
+#         #plt.scatter(prj_matrix[idx,0],prj_matrix[idx,1])
+#         #plt.scatter(prj_matrix[jdx,0],prj_matrix[jdx,1])
+
+#         all_bad_worker_pairs = np.concatenate([worker_ijdxs[idx],worker_ijdxs[jdx]])
+#         wids_counts_dict = Counter(all_bad_worker_pairs.flatten())
+#         # Type 2 object errors where only a few workers make mistake are often in the form of high number of modes with a few mistaken worker having very high count
+#         count_of_voted_pairs = Counter(wids_counts_dict.values()) 
+
+#         total_datapoints_in_bad_clusters = len(all_bad_worker_pairs)*2
+# 	# Two criterions to check for whether it is type 2 error or not
+#         flag1 = len(count_of_voted_pairs)<4 #number of distinct values is less than 4
+#         flag2= max(count_of_voted_pairs.keys())> total_datapoints_in_bad_clusters*0.1 #the large counts must be larger than 10% of the total datapoints in the bad clusters
+
+#         if flag1 and flag2:
+#             mode = scipy.stats.mode(wids_counts_dict.values()).mode[0]
+#             bad_idx = np.where(wids_counts_dict.values()!=mode)[0]
+#             bad_widx2 = np.array(wids_counts_dict.keys())[bad_idx]
+#             #plt.figure()
+#             #plt.title("Obj {}".format(obj),fontsize=13)
+# 	    if type1_error_flag:
+#             	bad_widx = np.concatenate([bad_widx1,bad_widx2])
+# 	    else:
+# 		bad_widx = bad_widx2
+#             good_widx = [wid for wid in bb_objects.worker_id.unique() if wid not in bad_widx ]
+#     #         for widx in bad_widx:
+#     #             plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
+#     #             plot_coords(ground_truth_T(obj),color="blue",fill_color="blue",reverse_xy=True)
+#     #        for widx in good_widx:
+#     #            plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
+#             for bwidx in bad_widx2:
+#                 bad_worker_records.append([obj,bwidx,2]) #obj,bad worker id, error type 1
+#         else:
+#             print "obj",obj,": Not Type 2 error"
+#             print flag1,flag2
+#     df = pd.DataFrame(bad_worker_records,columns=["objid","bad worker id","error type"])
+#     df.to_csv("bad_worker_records.csv")
+from sklearn import cluster
+import sklearn
+
+def compute_jaccard_affinity_matrix(object_id,exclude_lst=[]):
+    bb_objects = bb_info[bb_info["object_id"]==object_id]
+    worker_lst =  bb_objects.worker_id.unique()
+    worker_lst = [w for w in worker_lst if w not in exclude_lst]
+    prj_matrix = []
+    for idx in worker_lst:
+        prj_row =[]
+        for jdx in worker_lst:
+            #if idx!=jdx :
+                worker_BB_polygon = worker_polygon(bb_objects,idx)
+                worker_BB_polygon2 = worker_polygon(bb_objects,jdx)
+                prj = BB_PRJ(worker_BB_polygon,worker_BB_polygon2)
+                prj_row.append(prj[2])
+        prj_matrix.append(prj_row)
+    prj_matrix = np.array(prj_matrix)
+    worker_lst=np.array(worker_lst)
+    return prj_matrix,worker_lst
+def run_spectral_clustering(obj,N,PLOT=True):
+    spectral = cluster.SpectralClustering(
+            n_clusters=N, eigen_solver='arpack',
+            affinity="precomputed")
+    aff_mat,worker_lst = compute_jaccard_affinity_matrix(obj)
+    labels = spectral.fit_predict(aff_mat)
+    obj_worker_cluster =[]
+    if PLOT: 
         bb_objects = bb_info[bb_info["object_id"]==obj]
-        type1_error_cluster = np.where(kmeans.cluster_centers_[:,2]<0.1)[0]
-        if len(type1_error_cluster)==0:
-            print "obj",obj,": Not Type 1 error"
-        else:
-	    type1_error_flag=True
-            type1_error_wids = np.where(ypred==type1_error_cluster[0])[0]
-            wids_counts_dict = Counter(worker_ijdxs[type1_error_wids].flatten())
-            mode = scipy.stats.mode(wids_counts_dict.values()).mode[0]
-            bad_idx = np.where(wids_counts_dict.values()!=mode)[0]
-            bad_widx1 = np.array(wids_counts_dict.keys())[bad_idx]
-            #plt.figure()
-            #plt.title("Obj {}".format(obj),fontsize=13)
-            #for widx in bad_widx1:
-            #    plot_coords(ground_truth_T(obj),color="blue",fill_color="blue",reverse_xy=True)
-            #    plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
-            for bwidx in bad_widx1:
-                bad_worker_records.append([obj,bwidx,1]) #obj,bad worker id, error type 1
-
-        # Second pass, get rid of type 2 error
-	if type1_error_flag:
-            prj_matrix,worker_ijdxs = compute_prjs(obj,exclude_lst=bad_widx1)
-	else: 
-	    prj_matrix,worker_ijdxs = compute_prjs(obj)
-        kmeans,ypred = cluster(obj,prj_matrix)
-        bb_objects = bb_info[bb_info["object_id"]==obj]
-        i = kmeans.cluster_centers_[:,0].argmin() #lowest precision cluster
-        j = kmeans.cluster_centers_[:,1].argmin() #highest precision cluster
-
-        idx = np.where(ypred==i)[0]
-        jdx = np.where(ypred==j)[0]
-        #plt.figure()
-        #plt.scatter(prj_matrix[idx,0],prj_matrix[idx,1])
-        #plt.scatter(prj_matrix[jdx,0],prj_matrix[jdx,1])
-
-        all_bad_worker_pairs = np.concatenate([worker_ijdxs[idx],worker_ijdxs[jdx]])
-        wids_counts_dict = Counter(all_bad_worker_pairs.flatten())
-        # Type 2 object errors where only a few workers make mistake are often in the form of high number of modes with a few mistaken worker having very high count
-        count_of_voted_pairs = Counter(wids_counts_dict.values()) 
-
-        total_datapoints_in_bad_clusters = len(all_bad_worker_pairs)*2
-	# Two criterions to check for whether it is type 2 error or not
-        flag1 = len(count_of_voted_pairs)<4 #number of distinct values is less than 4
-        flag2= max(count_of_voted_pairs.keys())> total_datapoints_in_bad_clusters*0.1 #the large counts must be larger than 10% of the total datapoints in the bad clusters
-
-        if flag1 and flag2:
-            mode = scipy.stats.mode(wids_counts_dict.values()).mode[0]
-            bad_idx = np.where(wids_counts_dict.values()!=mode)[0]
-            bad_widx2 = np.array(wids_counts_dict.keys())[bad_idx]
-            #plt.figure()
-            #plt.title("Obj {}".format(obj),fontsize=13)
-	    if type1_error_flag:
-            	bad_widx = np.concatenate([bad_widx1,bad_widx2])
-	    else:
-		bad_widx = bad_widx2
-            good_widx = [wid for wid in bb_objects.worker_id.unique() if wid not in bad_widx ]
-    #         for widx in bad_widx:
-    #             plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
-    #             plot_coords(ground_truth_T(obj),color="blue",fill_color="blue",reverse_xy=True)
-    #        for widx in good_widx:
-    #            plot_coords(worker_polygon(bb_objects,widx),reverse_xy=True)
-            for bwidx in bad_widx2:
-                bad_worker_records.append([obj,bwidx,2]) #obj,bad worker id, error type 1
-        else:
-            print "obj",obj,": Not Type 2 error"
-            print flag1,flag2
-    df = pd.DataFrame(bad_worker_records,columns=["objid","bad worker id","error type"])
-    df.to_csv("bad_worker_records.csv")
+        plt.figure()
+        plt.title("Obj {}".format(obj))
+#         colors = ["blue","red","green","magenta","orange"]
+#         for i,ylabel in enumerate(list(set(labels))):
+        cmap = plt.cm.rainbow
+        for i,ylabel in enumerate(list(set(labels))):
+            c = cmap(i / float(len(list(set(labels)))))
+            workers_in_cluster = np.where(labels==ylabel)[0]
+            for widx in workers_in_cluster:
+                plot_coords(worker_polygon(bb_objects,worker_lst[widx]),reverse_xy=True,color=c,fill_color="")
+        plot_coords(ground_truth_T(obj),color="black",fill_color="",reverse_xy=True,lw=3,linestyle='--',invert_y=True)
+        plt.savefig("cluster_img/{}.png".format(obj))
+    for i,ylabel in enumerate(list(set(labels))):
+        workers_in_cluster = np.where(labels==ylabel)[0]
+        for widx in workers_in_cluster:
+            obj_worker_cluster.append([obj,worker_lst[widx],ylabel])
+    return obj_worker_cluster
+if __name__ == '__main__':
+    objN_lst = [(1,2),(4,2),(7,2),(8,3),(10,2),(20,5),(15,2),(18,2),(21,2),(22,2),(25,2),(26,2),(27,4),(28,2),(29,3),(30,2),(31,3),(32,2),(33,2),(34,2),(35,2),(37,2),(40,2),(42,2),(47,3)]
+    obj_worker_clusters =[]
+    for objN in objN_lst:
+        obj_worker_cluster = run_spectral_clustering(objN[0],objN[1])
+        obj_worker_clusters.extend(obj_worker_cluster)
+    df = pd.DataFrame(obj_worker_clusters,columns=["objid","wid","cluster"])
+    df.to_csv("spectral_clustering_all_hard_obj.csv",index=None)

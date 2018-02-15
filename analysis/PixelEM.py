@@ -1,11 +1,15 @@
+DEBUG=True
+SHAPELY_OFF=False
 import matplotlib
+import numpy as np
 from config import * 
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 import sys
-#sys.path.append("..")
-from analysis_toolbox import *
+sys.path.append("..")
+if SHAPELY_OFF:from analysis_toolbox import *
 #from poly_utils import *
 import pickle
 import json
@@ -13,7 +17,6 @@ import json
 import time
 import os
 from sample_worker_seeds import sample_specs 
-
 def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=True):
     img_info, object_tbl, bb_info, hit_info = load_info()
     # Ji_tbl (bb_info) is the set of all workers that annotated object i
@@ -146,17 +149,22 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=""):
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks
-def create_MV_mask(sample_name, objid, plot=False,mode=""):
+def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False,mode=""):
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if os.path.exists('{}MV_prj.json'.format(outdir)):
+        print "MV already exist"
+        return json.load(open('{}MV_prj.json'.format(outdir)))
     if mode=="":
-    	num_workers = len(workers_in_sample(sample_name, objid))
-    	mega_mask = get_mega_mask(sample_name, objid)
+    	num_workers = len(workers_in_sample(sample_name, objid,cluster_id=cluster_id))
+    	mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
     	MV_mask = np.zeros((len(mega_mask), len(mega_mask[0])))
     	[xs, ys] = np.where(mega_mask > (num_workers / 2))
     	for i in range(len(xs)):
             MV_mask[xs[i]][ys[i]] = 1
-    	#outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     	with open('{}MV_mask.pkl'.format(outdir), 'w') as fp:
             fp.write(pickle.dumps(MV_mask))
    
@@ -167,10 +175,6 @@ def create_MV_mask(sample_name, objid, plot=False,mode=""):
             plt.savefig('{}MV_mask.png'.format(outdir))
     elif mode=="compute_pr_only":
 	MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
-    return MV_mask 
-def compute_PRJ_MV(sample_name, objid, mode=""):
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
     # Computing MV PRJ against Ground Truth
     gt = get_gt_mask(objid)
     [p, r, j] = faster_compute_prj(MV_mask,gt)
@@ -178,9 +182,14 @@ def compute_PRJ_MV(sample_name, objid, mode=""):
         fp.write(json.dumps([p, r,j]))
     return p,r,j
 
-def get_MV_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return pickle.load(open('{}MV_mask.pkl'.format(indir)))
+def get_MV_mask(sample_name, objid,cluster_id=""):
+    if cluster_id!="":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if not os.path.exists('{}MV_mask.pkl'.format(outdir)): 
+        compute_PRJ_MV(sample_name, objid, cluster_id)
+    return pickle.load(open('{}MV_mask.pkl'.format(outdir)))
 
 
 def get_precision_recall_jaccard(test_mask, gt_mask):
@@ -290,17 +299,16 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,exclude_isovote=False): 
     gt_tiles = []
     ngt_tiles = []
-   
     for t in tiles:
     	numerator = 0
     	for tidx in t:
         	numerator += gt_mask[tidx]
     	if len(tidx)!=0:
-        	gt_percentage =  numerator/float(len(tidx))
+        	gt_percentage =  numerator/float(len(t))
     	if gt_percentage>0.6:
         	gt_tiles.append(t)
     	else:
-        	ngt_tiles.append(t) 
+        	ngt_tiles.append(t)
     #tarea_lst = np.array(tarea_lst)
     #area_thresh_gt =  np.median(tarea_lst[gt_tiles])
     #area_thresh_ngt = np.median(tarea_lst[ngt_tiles])
@@ -320,6 +328,11 @@ def GTLSAworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,area_mask,tiles,
 	area_thresh_ngt = np.mean(gt_areas)
 	#print gt_areas
 	#print area_thresh_gt,area_thresh_ngt
+    #print "inside gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+    #gt_tiles= np.array(gt_tiles)
+    #print "large tile idx:",np.where(gt_areas>=area_thresh_gt)[0]
+    #print gt_tiles[np.where(gt_areas>=area_thresh_gt)[0]]
+    #print "inside ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
     #print min(gt_areas),max(gt_areas), area_thresh_gt,len(gt_areas)
     #print min(ngt_areas),max(ngt_areas),area_thresh_ngt,len(ngt_areas)
 
@@ -468,150 +481,98 @@ def compute_A_thres(condition,area_mask):
        high_confidence_pixel_area.append(area_mask[passing_xs[i]][passing_ys[i]])
     A_thres = np.median(high_confidence_pixel_area)
     return A_thres
-def tiles2AreaMask(tiles,mega_mask,sample,objid):
+def tiles2AreaMask(tiles,mega_mask):
     tarea = [len(t) for t in tiles]
     mask = np.zeros_like(mega_mask)
     for tidx in range(len(tiles)):
         for i in list(tiles[tidx]):
             mask[i]=tarea[tidx]
     return mask	
-def do_GTLSA_EM_for(sample_name, objid,cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0, rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False):
-    if cluster_id!="":
-	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
-    else: 
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def do_GTLSA_EM_for(sample_name, objid,cluster_id="", rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,compute_PR_every_iter=False,PLOT=False):
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
+    if DEBUG : 
+        print "Doing GTLSA mode=",mode
+        start = time.time()
+    if cluster_id!="" and cluster_id!=-1  :
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else: 
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    
     print "Doing GTLSA mode=",mode
     if not rerun_existing: 
-        if os.path.isfile('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,num_iterations-1,thresh)) :
+        if os.path.isfile('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode)) :
             print "Already ran GTLSA, Skipped"
             return
-
     # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid)
+    MV = get_MV_mask(sample_name, objid,cluster_id)
+    gt_est_mask = MV  
     # In the first step we use 50% MV for initializing T*, A thres is therefore the median area pixel based on votes and noVotes
-    mega_mask = get_mega_mask(sample_name, objid,cluster_id=cluster_id)
-    tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
+    mega_mask = get_mega_mask(sample_name, objid, cluster_id)
+    tiles = pickle.load(open("{}tiles.pkl".format(outdir)))
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id)
     Nworkers=len(worker_masks)
-    area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
-    for it in range(num_iterations):
+    area_mask = tiles2AreaMask(tiles,mega_mask)
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    #for it in range(num_iterations):
+    max_iter=6
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	if (it>=max_iter):
+	    break
+        print "iteration:",it
+        it +=1
         qp1 = dict()
         qn1 = dict()
         qp2 = dict()
         qn2 = dict()
+        if DEBUG: t0 = time.time()
         for wid in worker_masks.keys():
             qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
-        if load_p_in_mask:
-            #print "loaded pInT" 
-            log_probability_in_mask=pkl.load(open('{}{}GTLSA_p_in_mask_{}.pkl'.format(outdir,mode, it)))
-            log_probability_not_in_mask =pkl.load(open('{}{}GTLSA_p_not_in_mask_{}.pkl'.format(outdir,mode, it)))    
-        else: 
-            #Compute pInMask and pNotInMask 
-            log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
-        gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-	if exclude_isovote:
-            invariant_mask = np.zeros_like(mega_mask,dtype=bool)
-            invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
-	    invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
-            gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
-	    gt_est_mask[gt_est_mask==-1]=0
+        if DEBUG: 
+	    t1 = time.time()
+            print "Time for worker prob calculation:",t1-t0
+        #Compute pInMask and pNotInMask 
+        log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
+        if DEBUG: 
+	    t2 = time.time()
+            print "Time for mask log prob calculation:",t2-t1
+        #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
         # Compute PR mask based on the EM estimate mask from every iteration
-	if compute_PR_every_iter:
-    	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-    	    with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+    	if compute_PR_every_iter:
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
-        if dump_output_at_every_iter:
-	    pickle.dump(gt_est_mask,open('{}{}GTLSA_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    	    pickle.dump(log_probability_in_mask,open('{}{}GTLSA_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    	    pickle.dump(log_probability_not_in_mask,open('{}{}GTLSA_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    	    pickle.dump(qp1,open('{}{}GTLSA_qp1_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-      	    pickle.dump(qn1,open('{}{}GTLSA_qn1_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    	    pickle.dump(qp2,open('{}{}GTLSA_qp2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    	    pickle.dump(qn2,open('{}{}GTLSA_qn2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))            
+	if DEBUG:
+             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+             print qp1,qn1,qp2,qn2
+             print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+        [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
+        prev_gt_est = gt_est_mask
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-    with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+    with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir,mode), 'w') as fp:
         fp.write(json.dumps([p, r, j])) 
-    pickle.dump(gt_est_mask,open('{}{}GTLSA_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    pickle.dump(log_probability_in_mask,open('{}{}GTLSA_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    pickle.dump(log_probability_not_in_mask,open('{}{}GTLSA_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(qp1,open('{}{}GTLSA_qp1_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(qn1,open('{}{}GTLSA_qn1_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(qp2,open('{}{}GTLSA_qp2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(qn2,open('{}{}GTLSA_qn2_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    
-    plt.figure()
-    plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-    plt.colorbar()
-    plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_Area_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,dump_output_at_every_iter=False,debug=False):
-    print "Doing Area-Weighted EM"
-    if cluster_id!="":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
-    else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if exclude_isovote:
-        mode ='iso'
-    else:
-        mode =''
-    if rerun_existing:
-        if os.path.isfile('{}AW_EM_prj_thresh{}.json'.format(outdir,thresh)):
-            print "Already ran, Skipped"
-            return
-
-    # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
-    area_lst = pkl.load(open("{}/tarea.pkl".format(outdir)))
-    area_mask = pkl.load(open("{}/tarea_mask.pkl".format(outdir)))
-    tidx_mask = pkl.load(open("{}/tidx_mask.pkl".format(outdir)))
-
-    Nworkers= len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid)
-    for it in range(num_iterations):
-        if debug: print "iter #",it
-        worker_qualities = dict()
-        for wid in worker_masks.keys():
-            worker_qualities[wid] = aw_worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,area_lst,Nworkers,exclude_isovote=exclude_isovote)
-        if load_p_in_mask:
-            #print "loaded pInT"
-            log_probability_in_mask=pkl.load(open('{}{}p_in_mask_{}.pkl'.format(outdir,mode, it)))
-            log_probability_not_in_mask =pkl.load(open('{}{}p_not_in_mask_{}.pkl'.format(outdir,mode, it)))
-        else:
-            #Compute pInMask and pNotInMask
-            log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
-            with open('{}{}p_in_mask_{}.pkl'.format(outdir, mode,it), 'w') as fp:
-                fp.write(pickle.dumps(log_probability_in_mask))
-            with open('{}{}p_not_in_mask_{}.pkl'.format(outdir,mode, it), 'w') as fp:
-                fp.write(pickle.dumps(log_probability_not_in_mask))
-        gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-        if debug : 
-            plt.figure()
-            plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-            plt.colorbar()
-            # plt.savefig('{}{}AW_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-        
-        
-        # Compute PR mask based on the EM estimate mask from every iteration
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        with open('{}{}AW_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
-            fp.write(json.dumps([p, r, j]))
-        if debug : print p,r,j
-        if dump_output_at_every_iter:
-            pickle.dump(gt_est_mask,open('{}{}AW_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-            pickle.dump(log_probability_in_mask,open('{}{}AW_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-            pickle.dump(log_probability_not_in_mask,open('{}{}AW_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-            pickle.dump(worker_qualities,open('{}{}AW_qj_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-
-    pickle.dump(gt_est_mask,open('{}{}AW_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    pickle.dump(log_probability_in_mask,open('{}{}AW_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode,it,thresh), 'w'))
-    pickle.dump(log_probability_not_in_mask,open('{}{}AW_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(worker_qualities,open('{}{}AW_qj_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-
-    
+    pickle.dump(gt_est_mask,open('{}{}GTLSA_gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(log_probability_in_mask,open('{}{}GTLSA_p_in_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(log_probability_not_in_mask,open('{}{}GTLSA_p_not_in_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(qp1,open('{}{}GTLSA_qp1_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(qn1,open('{}{}GTLSA_qn1_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(qp2,open('{}{}GTLSA_qp2_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(qn2,open('{}{}GTLSA_qn2_best_thresh.pkl'.format(outdir,mode), 'w'))
+    if PLOT:
+        plt.figure()
+        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
+        plt.colorbar()
+        plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
+    if DEBUG:
+        end = time.time()
+        print "Time:{}".format(end-start)
 def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
     print "Doing GT EM (Qj=0.6 initialization)"
     outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -620,10 +581,10 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     else:
         mode =''
     # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid)
+    gt_est_mask = get_MV_mask(sample_name, objid,cluster_id)
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers = len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid)
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id)
     for it in range(num_iterations):
         print "Iteration #",it
         qp = dict()
@@ -662,60 +623,79 @@ def GT_EM_Qjinit(sample_name, objid, num_iterations=5,load_p_in_mask=False,thres
     plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-def do_GT_EM_for(sample_name, objid, cluster_id ="",  num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False):
-    if cluster_id!="":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
-    else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if not rerun_existing:
-        if os.path.isfile('{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,num_iterations-1,thresh)):
-            print "Already ran GT, Skipped"
-            return
+def do_GT_EM_for(sample_name, objid, cluster_id ="",  rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
     if exclude_isovote: 
         mode ='iso'
     else:
         mode =''
-    print "Doing GT mode=",mode
+    if DEBUG : 
+        print "Doing GT mode=",mode
+        start = time.time()
+    if cluster_id!="" and cluster_id!=-1  :
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if not rerun_existing:
+        if os.path.isfile('{}GT_EM_prj_best_thresh.json'.format(outdir)):
+            print "Already ran GT, Skipped"
+            return
+    
     # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
+    MV = get_MV_mask(sample_name, objid,cluster_id)
+    gt_est_mask = MV
+    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id)
     Nworkers=len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid)
-    for it in range(num_iterations):
-        print "Iteration #",it
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    max_iter=6
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+    #for it in range(num_iterations):
+	if (it>=max_iter):
+            break
+	print "iteration:",it
+        it +=1
         qp = dict()
         qn = dict()
         for wid in worker_masks.keys():
             qp[wid],qn[wid] = GTworker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
-        if load_p_in_mask:
-            #print "loaded pInT" 
-            log_probability_in_mask=pkl.load(open('{}{}GT_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh)))
-            log_probability_not_in_mask =pkl.load(open('{}{}GT_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh)))    
-        else: 
             #Compute pInMask and pNotInMask 
             log_probability_in_mask, log_probability_not_in_mask = GTmask_log_probabilities(worker_masks,qp,qn)
-        gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         if compute_PR_every_iter:
             # Compute PR mask based on the EM estimate mask from every iteration
-	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             with open('{}{}GT_EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
+        if DEBUG:
+	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            print qp,qn
+            print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+    	[p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
+    	prev_gt_est = gt_est_mask
     # Save only during the last iteration
-    with open('{}{}GT_gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w') as fp:
-	fp.write(pickle.dumps(gt_est_mask))
-    pickle.dump(log_probability_in_mask,open('{}{}GT_p_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
-    pickle.dump(log_probability_not_in_mask,open('{}{}GT_p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
-    pickle.dump(qp,open('{}{}GT_qp_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
-    pickle.dump(qn,open('{}{}GT_qn_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
-    if not compute_PR_every_iter:
-        # Compute PR mask based on the EM estimate mask from the last iteration
-	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        with open('{}{}GT_EM_prj_thresh{}.json'.format(outdir,mode,thresh), 'w') as fp:
-            fp.write(json.dumps([p, r, j]))
-    plt.figure()
-    plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-    plt.colorbar()
-    plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
+    pickle.dump(gt_est_mask,open('{}{}GT_gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(log_probability_in_mask,open('{}{}GT_p_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
+    pickle.dump(log_probability_not_in_mask,open('{}{}GT_p_not_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
+    pickle.dump(qp,open('{}{}GT_qp_best_thresh.pkl'.format(outdir, mode), 'w'))
+    pickle.dump(qn,open('{}{}GT_qn_best_thresh.pkl'.format(outdir, mode), 'w'))
+    
+    # Compute PR mask based on the EM estimate mask from the last iteration
+    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    with open('{}{}GT_EM_prj_best_thresh.json'.format(outdir,mode), 'w') as fp:
+        fp.write(json.dumps([p, r, j]))
+    if PLOT:
+        plt.figure()
+        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
+        plt.colorbar()
+        plt.savefig('{}{}GT_EM_mask_thresh{}.png'.format(outdir,mode,thresh))
+    if DEBUG: 
+        end = time.time()
+        print "Time:{:.2f}".format(end-start)
 def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=5,load_p_in_mask=False,rerun_existing=False,compute_PR_every_iter=False,exclude_isovote=False):
     print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo,exclude_isovote)
     if cluster_id!="":
@@ -734,13 +714,12 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
             return
     # initialize MV mask
 
-    mega_mask = get_mega_mask(sample_name, objid)
-    tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
-    area_mask = tiles2AreaMask(tiles,mega_mask,sample_name,objid)
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+    tiles = pickle.load(open("{}tiles.pkl".format(outdir)))
+    area_mask = tiles2AreaMask(tiles,mega_mask)
     gt_est_mask = get_gt_mask(objid)
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid)
     if algo=='basic':
 	q=dict()
 	for wid in worker_masks.keys():
@@ -763,13 +742,13 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
         qp2 = dict()
         qn2 = dict()
 	for wid in worker_masks.keys():
-            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote) 
-	log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)	
-	pickle.dump(qp1,open('{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
-	
-	mega_mask = get_mega_mask(sample_name, objid)
-	pickle.dump(qp2,open('{}{}{}_qp2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
-	pickle.dump(qn2,open('{}{}{}_qn2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
+            qp1[wid],qn1[wid],qp2[wid],qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid],gt_est_mask,Nworkers,area_mask,tiles,exclude_isovote=exclude_isovote)
+	    #print "area_thresh_gt,area_thresh_ngt:",area_thresh_gt, area_thresh_ngt 
+    log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks,qp1,qn1,qp2,qn2,area_mask,area_thresh_gt,area_thresh_ngt)
+    pickle.dump(qp1,open('{}{}{}_qp1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
+    pickle.dump(qn1,open('{}{}{}_qn1_ground_truth.pkl'.format(outdir,mode,algo), 'w'))	
+    pickle.dump(qp2,open('{}{}{}_qp2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
+    pickle.dump(qn2,open('{}{}{}_qn2_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
     '''
     elif algo =="AW":
 	worker_qualities = dict()
@@ -783,15 +762,16 @@ def GroundTruth_doM_once(sample_name, objid, algo,cluster_id="", num_iterations=
     # Testing:
 	area_thres = open("area_thres.txt",'a')
         gt_areas= area_mask[gt_est_mask==True]
-        print "gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
+        #print "gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
         ngt_areas= area_mask[gt_est_mask==False]
-        print "ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
+        #print "ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
 	area_thres.write("{},{},{},{},{}\n".format(sample_name, objid, algo,area_thresh_gt,area_thresh_ngt))
 	area_thres.close()
     pickle.dump(log_probability_in_mask,open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo),'w'))
     pickle.dump(log_probability_not_in_mask,open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo),'w'))
-def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False):
-    if cluster_id!="":
+def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False):
+    all_prjs=[]
+    if cluster_id!="" and cluster_id!=-1:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -799,14 +779,15 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
         mode ='iso'
     else:
         mode =''
-    if os.path.exists('{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)):
+    if (not rerun_existing) and os.path.exists('{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)):
         print '{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)+" already exist"
 	return
-    log_probability_in_mask = pkl.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
-    log_probability_not_in_mask = pkl.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
+    #print outdir
+    log_probability_in_mask = pickle.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
+    log_probability_not_in_mask = pickle.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
     if exclude_isovote:
         Nworkers = int(sample_name.split("workers")[0])
-        mega_mask = get_mega_mask(sample_name, objid)
+        mega_mask = get_mega_mask(sample_name, objid,cluster_id)
         invariant_mask = np.zeros_like(mega_mask,dtype=bool)
         invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
         invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
@@ -820,66 +801,125 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
             #gt_est_mask = gt_est_mask+invariant_mask_yes
         if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w')) 
         [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid)) 
-    	print "p,r,j:",p,r,j
+    	#print "p,r,j:",p,r,j
+	all_prjs.append([thresh,p, r, j])
     	with open(outfile, 'w') as fp:
     	    fp.write(json.dumps([p, r, j]))
-    
-def do_EM_for(sample_name, objid, cluster_id="", num_iterations=5,load_p_in_mask=False,thresh=0,rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=True):
+    #return gt_est_mask
+    return all_prjs
+def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False):
+    if cluster_id!="" and cluster_id!=-1:
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     if exclude_isovote:
         mode ='iso'
     else:
         mode =''
-    if cluster_id!="":
+    if (not rerun_existing) and os.path.exists('{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)):
+        print '{}{}{}_ground_truth_EM_prj_thresh4.json'.format(outdir,mode,algo)+" already exist"
+        return
+    #print outdir
+    log_probability_in_mask = pickle.load(open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir,mode,algo)))
+    log_probability_not_in_mask = pickle.load(open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir,mode,algo)))
+    if exclude_isovote:
+        Nworkers = int(sample_name.split("workers")[0])
+        mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+        invariant_mask = np.zeros_like(mega_mask,dtype=bool)
+        invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
+        invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
+    outfile = '{}{}{}_ground_truth_EM_prj_thresh{}.json'.format(outdir,mode,algo,thresh)
+    gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+    if exclude_isovote:
+        gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
+        gt_est_mask[gt_est_mask<0]=False
+        gt_est_mask[gt_est_mask>1]=True
+        #gt_est_mask = gt_est_mask+invariant_mask_yes
+    if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w'))
+    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    return [p,r,j]    
+def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
+    if DEBUG: start = time.time()
+    if exclude_isovote:
+        mode ='iso'
+    else:
+        mode =''
+    if cluster_id!="" and cluster_id!=-1  :
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if DEBUG: print "Doing EM"
     if not rerun_existing:
-       if os.path.isfile('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,num_iterations-1,thresh)) :
-           print "Already ran EM, Skipped"
-           return
-    print "Doing EM"
-    if rerun_existing:
-        if os.path.isfile('{}EM_prj_thresh{}.json'.format(outdir,thresh)):
-            print "Already ran, Skipped"
+        if os.path.isfile('{}EM_prj_best_thresh.json'.format(outdir)):
+            print "Already ran EM, Skipped"
             return
     # initialize MV mask
-    gt_est_mask = get_MV_mask(sample_name, objid)
+    MV = get_MV_mask(sample_name, objid,cluster_id)
+    gt_est_mask = MV 
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
-    mega_mask = get_mega_mask(sample_name, objid)
-    for it in range(num_iterations):
+    mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+    if DEBUG: 
+	t_load = time.time()
+    	print "Loading time:",t_load-start
+    prev_gt_est = gt_est_mask
+    jaccard_against_prev_gt_est = 0
+    it =0
+    max_iter = 6
+    while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	if (it>=max_iter):
+            break
+	print "iteration:",it
+	it +=1
+    #for it in range(num_iterations):
         worker_qualities = dict()
+        if DEBUG:t0 = time.time()
         for wid in worker_masks.keys():
             worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
-	if load_p_in_mask:
-	    #print "loaded pInT" 
-	    log_probability_in_mask=pkl.load(open('{}{}p_in_mask_{}.pkl'.format(outdir,mode, it)))
-	    log_probability_not_in_mask =pkl.load(open('{}{}p_not_in_mask_{}.pkl'.format(outdir,mode, it)))	
-	else: 
-	    #Compute pInMask and pNotInMask 
-            log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
-        gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
-
-	# Compute PR mask based on the EM estimate mask from the last iteration
-	if compute_PR_every_iter:
-	    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-            with open('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
-                fp.write(json.dumps([p, r, j]))
-    #Only writing output at the end of all iterations: 
-    pickle.dump(log_probability_in_mask,open('{}{}p_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
-    pickle.dump(log_probability_not_in_mask,open('{}{}p_not_in_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh),'w'))
-    pickle.dump(gt_est_mask,open('{}{}gt_est_mask_{}_thresh{}.pkl'.format(outdir,mode, it,thresh), 'w'))
-    pickle.dump(worker_qualities,open('{}{}Qj_{}_thresh{}.pkl'.format(outdir, mode,it,thresh), 'w'))
-
-    #plt.figure()
-    #plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
-    #plt.colorbar()
-    #plt.savefig('{}{}EM_mask_thresh{}.png'.format(outdir,mode,thresh))
-    if not compute_PR_every_iter:
+        if DEBUG:
+	    t1 = time.time()
+            print "Time for worker prob calculation:",t1-t0
+        #Compute pInMask and pNotInMask 
+        log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
+        if DEBUG:
+	    t2 = time.time()
+            print "Time for mask log prob calculation:",t2-t1
+        p,r,j,thresh,gt_est_mask = binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask, MV,exclude_isovote=exclude_isovote,rerun_existing=rerun_existing)
+        #gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+        if DEBUG: 
+	    t3 = time.time()
+            print "Time for binary search :",t3-t2
         # Compute PR mask based on the EM estimate mask from the last iteration
-	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        with open('{}{}EM_prj_thresh{}.json'.format(outdir,mode,thresh), 'w') as fp:
-            fp.write(json.dumps([p, r, j]))
+        #if compute_PR_every_iter:
+        #    #[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+        #    with open('{}{}EM_prj_iter{}_thresh{}.json'.format(outdir,mode,it,thresh), 'w') as fp:
+        #        fp.write(json.dumps([p, r, j]))
+        if DEBUG:
+	    print worker_qualities 
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            print "-->"+str([p,r,j])
+	# compute jaccard between previous and current gt estimation mask
+	[ p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask,prev_gt_est )
+	if DEBUG: print "jaccard_against_prev_gt_est:",jaccard_against_prev_gt_est
+	prev_gt_est = gt_est_mask
+    #Only writing output at the end of all iterations: 
+    pickle.dump(gt_est_mask,open('{}{}gt_est_mask_best_thresh.pkl'.format(outdir,mode), 'w'))
+    pickle.dump(log_probability_in_mask,open('{}{}p_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
+    pickle.dump(log_probability_not_in_mask,open('{}{}p_not_in_mask_best_thresh.pkl'.format(outdir,mode),'w'))
+    pickle.dump(worker_qualities,open('{}{}Qj_best_thresh.pkl'.format(outdir, mode), 'w'))        
+    # Compute PR mask based on the EM estimate mask from the last iteration
+    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+    with open('{}{}EM_prj_best_thresh.json'.format(outdir,mode), 'w') as fp:
+        fp.write(json.dumps([p, r, j]))
+    if PLOT:
+        plt.figure()
+        plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
+        plt.colorbar()
+        plt.savefig('{}{}EM_mask_thresh{}.png'.format(outdir,mode,thresh))
+    if DEBUG: 
+        end = time.time()
+        print "Time:{:.2f}".format(end-start)
+
 def compile_PRJ_MV():
     import glob
     import csv
@@ -943,30 +983,36 @@ def compile_PR(mode="",ground_truth=False):
                     em_p = None
                     em_r = None
                     em_j = None
-                    if ground_truth :
-                        glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
-                    else:
-                        glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
+                    #if ground_truth :
+		    #	glob_path =glob.glob('{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode))
+                        #glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
+                    #else:
+                    #    glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
                     if mode =="":
                         mv_pr_file = '{}MV_prj.json'.format(clust_path)
                         if os.path.isfile(mv_pr_file):
                             [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                    for thresh_path in glob_path:
-                        thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
+                    #for thresh_path in glob_path:
+                    	#thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
                         #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
                         #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
-                        if thresh.is_integer():
-                            thresh = int(thresh)
-                        if ground_truth :
-                            em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
-                        else:
-                            em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
-                        if os.path.isfile(em_pr_file):
-                            [em_p, em_r,em_j] = json.load(open(em_pr_file))
-                        if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
-                            if mode =="":
-                                writer.writerow(
-                                      {
+                        #if thresh.is_integer():
+                        #    thresh = int(thresh)
+		    thresh ="best"
+                    if ground_truth :
+			em_pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        #em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
+                    else:
+			# GT_EM_prj_best_thresh.json
+			em_pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
+			if mode =="basic":
+			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
+                        #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
+                    if os.path.isfile(em_pr_file):
+                        [em_p, em_r,em_j] = json.load(open(em_pr_file))
+                    if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
+                        if mode =="":
+                            writer.writerow({
                                         'num_workers': num_workers,
                                         'sample_num': sample_num,
                                         'objid': objid,
@@ -978,11 +1024,9 @@ def compile_PR(mode="",ground_truth=False):
                                         'EM_precision': em_p,
                                         'EM_recall': em_r,
                                         'EM_jaccard':em_j
-                                      }
-                                 )
-                            else:
-                                writer.writerow(
-                                      {
+                                      })
+                        else:
+                            writer.writerow({
                                         'num_workers': num_workers,
                                         'sample_num': sample_num,
                                         'objid': objid,
@@ -991,6 +1035,94 @@ def compile_PR(mode="",ground_truth=False):
                                         'EM_precision': em_p,
                                         'EM_recall': em_r,
                                         'EM_jaccard':em_j
-                                      }
-                                 )
+                                      })
     print 'Compiled PR to :'+ fname
+def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
+    thresh_min = -200
+    thresh_max = 200
+    if cluster_id!="" and cluster_id!=-1:
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid,cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
+    if exclude_isovote:
+        mode ='iso'
+    else:
+        mode =''
+    if (not rerun_existing) and os.path.exists('{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)):
+        print '{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)+" already exist"
+        return
+    delta = np.abs(thresh_max -thresh_min)
+    thresh = (thresh_min+thresh_max)/2.
+    p,r=0,-1
+    while (p==-1 or delta>1 or p!=r):
+        # stop if p=r , continue if p=-1, stop if delta (range in x) gets below a certain threshold
+        p,r,j = onlineDeriveGTinGroundTruthExperiments(sample, objid, algo,thresh,cluster_id=cluster_id,exclude_isovote=exclude_isovote,rerun_existing=True)        
+        delta = np.abs(thresh_max -thresh_min)
+        if p>r: #right 
+            thresh_max = thresh_min + 0.75*delta  
+        else: #left 
+            thresh_min =  thresh_min + 0.25*delta  
+        if p==-1:
+            #if p =-1 then it is because the result area is zero, which means nothing was selected for gt
+            # this meant that the threshold has overshot
+            thresh_max = thresh_min+0.2*delta
+        thresh = (thresh_min+thresh_max)/2.
+    
+    outfile = '{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)
+    with open(outfile, 'w') as fp:
+        fp.write(json.dumps([p, r, j]))
+    return p,r,j
+
+##############################################
+def estimate_gt_compute_PRJ_against_MV(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=False):
+    if exclude_isovote:
+        Nworkers = int(sample_name.split("workers")[0])
+        mega_mask = get_mega_mask(sample_name, objid,cluster_id)
+        invariant_mask = np.zeros_like(mega_mask,dtype=bool)
+        invariant_mask_yes = np.ma.masked_where((mega_mask==Nworkers),invariant_mask).mask
+        invariant_mask_no = np.ma.masked_where((mega_mask ==0),invariant_mask).mask
+    gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
+    if exclude_isovote:
+        gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
+        gt_est_mask[gt_est_mask<0]=False
+        gt_est_mask[gt_est_mask>1]=True
+        #gt_est_mask = gt_est_mask+invariant_mask_yes
+    # PRJ values against MV 
+    [p, r, j] = faster_compute_prj(gt_est_mask, MV)
+    return [p,r,j],gt_est_mask
+
+def binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,exclude_isovote=False,rerun_existing=False):
+    thresh_min = -200
+    thresh_max = 200
+    delta = np.abs(thresh_max -thresh_min)
+    thresh = (thresh_min+thresh_max)/2.
+    p,r=0,-1
+    iterations = 0
+    epsilon = 0.125
+    while (iterations<=100 or p==-1): # continue iterations below max iterations or if p=-1
+        # stop if p=r or if delta (range in x) gets below a certain threshold
+        if (p==r) or (thresh_min + epsilon>= thresh_max):
+            break
+        [p,r,j],gt_est_mask = estimate_gt_compute_PRJ_against_MV(sample_name,objid,cluster_id,log_probability_in_mask,log_probability_not_in_mask,MV,thresh,exclude_isovote=exclude_isovote)
+        delta = np.abs(thresh_max -thresh_min)
+        if p>r:
+            right = thresh_min + 0.75*delta  
+            thresh_max = right
+        else: 
+            left = thresh_min + 0.25*delta  
+            thresh_min = left
+        if p==-1:
+            #if p =-1 then it is because the result area is zero, which means nothing was selected for gt
+            # this meant that the threshold has overshot
+            thresh_max = thresh_min+0.2*delta
+        thresh = (thresh_min+thresh_max)/2.
+        iterations+=1
+        if DEBUG:
+            print "----Trying threshold:",thresh,"-----"
+            print p,r,j,thresh_max,thresh_min
+            print "actual prj against GT",faster_compute_prj(gt_est_mask,get_gt_mask(objid))
+            #plt.figure()
+            #plt.title("Iter #"+str(iterations))
+            #plt.imshow(gt_est_mask)
+            #plt.colorbar()
+    return p,r,j,thresh,gt_est_mask
