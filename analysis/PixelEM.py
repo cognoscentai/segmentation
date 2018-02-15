@@ -1,5 +1,6 @@
 DEBUG=True
 SHAPELY_OFF=True
+
 import matplotlib
 import numpy as np
 from config import * 
@@ -234,7 +235,7 @@ def faster_compute_prj(result,gt):
 
 def worker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=False):
     if exclude_isovote:
-	num_agreement= len(np.where((mega_mask==0) | (mega_mask==Nworkers))[0]) # no votes
+	num_agreement= len(np.where((mega_mask==0 and gt_mask == 0) | (mega_mask==Nworkers and gt_mask == 1))[0]) # either fully voted  by all workers or not voted at all
     else:
 	num_agreement = 0
     #print "Num agreement:", num_agreement
@@ -284,14 +285,15 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 		not_agreement=True
 	    if m!=0 and  m!=Nworkers:
 		not_agreement=True
-	    if (gt==1) and (w==1) and  not_agreement: 
-		gt_Ncorrect +=1
-	    if gt==1 and  not_agreement:
-		gt_total+=1
-	    if gt==0 and w==0 and not_agreement:
-		ngt_Ncorrect+=1
-	    if gt==0 and not_agreement:
-		ngt_total +=1
+            if not_agreement:
+                if gt==1:
+                    gt_total+=1
+                    if w == 1:
+                        gt_Ncorrect +=1
+                else:
+                    ngt_total +=1
+                    if w == 0:
+                        ngt_Ncorrect+=1
     qp = float(gt_Ncorrect)/float(gt_total) if gt_total!=0 else 0.6
     qn = float(ngt_Ncorrect)/float(ngt_total) if ngt_total!=0 else 0.6
     return qp,qn
@@ -919,37 +921,6 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_is
     if DEBUG: 
         end = time.time()
         print "Time:{:.2f}".format(end-start)
-
-def compile_PRJ_MV():
-    import glob
-    import csv
-    fname  = '{}MV_PRJ_table.csv'.format(PIXEL_EM_DIR)
-    with open(fname, 'w') as csvfile:
-        fieldnames = ['num_workers', 'sample_num', 'objid', 'MV_precision', 'MV_recall','MV_jaccard']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
-            sample_name = sample_path.split('/')[-2]
-            #print "Working on ", sample_path
-            num_workers = int(sample_name.split('w')[0])
-            sample_num = int(sample_name.split('d')[-1])
-            for obj_path in glob.glob('{}obj*/'.format(sample_path)):
-                objid = int(obj_path.split('/')[-2].split('j')[1])
-                mv_p = None
-                mv_r = None
-                mv_j = None
-                mv_pr_file = '{}MV_prj.json'.format(obj_path)
-                if os.path.isfile(mv_pr_file):
-                    [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                writer.writerow({
-                                    'num_workers': num_workers,
-                                    'sample_num': sample_num,
-                                    'objid': objid,
-                                    'MV_precision': mv_p,
-                                    'MV_recall': mv_r,
-                                    'MV_jaccard':mv_j
-                                  })
-    print 'Compiled PR to :'+ fname
 def compile_PR(mode="",ground_truth=False):
     import glob
     import csv
@@ -958,10 +929,7 @@ def compile_PR(mode="",ground_truth=False):
     else:
         fname  = '{}{}_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     with open(fname, 'w') as csvfile:
-        if mode=="":
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'clust','MV_precision', 'MV_recall','MV_jaccard', 'EM_precision', 'EM_recall','EM_jaccard']
-        else: # no MV columns
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'EM_precision', 'EM_recall','EM_jaccard']
+        fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'precision', 'recall','jaccard','FPR%','FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
@@ -976,66 +944,75 @@ def compile_PR(mode="",ground_truth=False):
                     if clust_path ==obj_path:
                         cluster_id = -1 #unclustered flag
                     else:
-                        cluster_id = int(clust_path.split("/clust")[-1][:-1])            
-                    mv_p = None
-                    mv_r = None
-                    mv_j = None
-                    em_p = None
-                    em_r = None
-                    em_j = None
-                    #if ground_truth :
-		    #	glob_path =glob.glob('{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode))
-                        #glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
-                    #else:
-                    #    glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
-                    if mode =="":
-                        mv_pr_file = '{}MV_prj.json'.format(clust_path)
-                        if os.path.isfile(mv_pr_file):
-                            [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                    #for thresh_path in glob_path:
-                    	#thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
-                        #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
-                        #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
-                        #if thresh.is_integer():
-                        #    thresh = int(thresh)
-		    thresh ="best"
+                        cluster_id = int(clust_path.split("/clust")[-1][:-1])          
+		    print "----clust path:",clust_path 
+		    print cluster_id
+                    p = None
+                    r = None
+                    j = None
+                    fpr = None
+                    fnr = None
+                    
+                    thresh ="best"
                     if ground_truth :
-			em_pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
-                        #em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
+                        pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        #pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
                     else:
-			# GT_EM_prj_best_thresh.json
-			em_pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
-			if mode =="basic":
-			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
-                        #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
-                    if os.path.isfile(em_pr_file):
-                        [em_p, em_r,em_j] = json.load(open(em_pr_file))
-                    if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
-                        if mode =="":
-                            writer.writerow({
-                                        'num_workers': num_workers,
-                                        'sample_num': sample_num,
-                                        'objid': objid,
-                                        'thresh':thresh,
-                                        'clust':cluster_id,
-                                        'MV_precision': mv_p,
-                                        'MV_recall': mv_r,
-                                        'MV_jaccard':mv_j,
-                                        'EM_precision': em_p,
-                                        'EM_recall': em_r,
-                                        'EM_jaccard':em_j
-                                      })
-                        else:
-                            writer.writerow({
-                                        'num_workers': num_workers,
-                                        'sample_num': sample_num,
-                                        'objid': objid,
-                                        'thresh':thresh,
-                                        'clust':cluster_id,
-                                        'EM_precision': em_p,
-                                        'EM_recall': em_r,
-                                        'EM_jaccard':em_j
-                                      })
+                        # GT_EM_prj_best_thresh.json
+                        pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        fpnr_file = '{}{}_EM_fpnr_best_thresh.json'.format(clust_path,mode)
+                        if mode =="basic":
+                            pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
+                            fpnr_file = '{}EM_fpnr_best_thresh.json'.format(clust_path)
+                        elif mode =="MV":
+                            pr_file = '{}MV_prj.json'.format(clust_path)
+                            fpnr_file = '{}MV_fpnr.json'.format(clust_path)
+		    print pr_file
+		    print  fpnr_file
+                    if os.path.isfile(pr_file):
+                        [p, r,j] = json.load(open(pr_file))
+                    if os.path.isfile(fpnr_file):
+                        [fpr,fnr] = json.load(open(fpnr_file)) 
+                    else:
+                        gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path,mode)
+            		if mode =="basic":
+                            gt_fname ="{}/gt_est_mask_best_thresh.pkl".format(clust_path)
+                        elif mode =="MV":
+                            gt_fname ="{}/MV_mask.pkl".format(clust_path)
+                        if os.path.isfile(gt_fname):
+                            result = pickle.load(open(gt_fname))
+                            gt = get_gt_mask(objid)
+                            [fpr,fnr] = TFPNR(result,gt)	
+                            with open(fpnr_file, 'w') as fp:
+                                fp.write(json.dumps([fpr,fnr]))	
+            		    print fpr,fnr
+		    print p,r,j,fpr,fnr
+		    print clust_path
+		    print {
+                                'num_workers': num_workers,
+                                'sample_num': sample_num,
+                                'objid': objid,
+                                'thresh':thresh,
+                                'clust':cluster_id,
+                                'precision': p,
+                                'recall': r,
+                                'jaccard':j,
+                                'FPR%': fpr,
+                                'FNR%': fnr
+                              }
+                    if any([prj is not None for prj in [p, r,j]]):
+                        writer.writerow({
+                                'num_workers': num_workers,
+                                'sample_num': sample_num,
+                                'objid': objid,
+                                'thresh':thresh,
+                                'clust':cluster_id,
+                                'precision': p,
+                                'recall': r,
+                                'jaccard':j,
+                                'FPR%': fpr,
+                                'FNR%': fnr
+                              })
     print 'Compiled PR to :'+ fname
 def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
     thresh_min = -200
@@ -1126,3 +1103,23 @@ def binarySearchDeriveBestThresh(sample_name,objid,cluster_id,log_probability_in
             #plt.imshow(gt_est_mask)
             #plt.colorbar()
     return p,r,j,thresh,gt_est_mask
+def TFPNR(result,gt):    
+    # True False Positive Negative Rates
+    # as defined in https://en.wikipedia.org/wiki/Sensitivity_and_specificity#Definitions
+    intersection = len(np.where(((result==1)|(gt==1))&(result==gt))[0])
+    gt_area = float(len(np.where(gt==1)[0]))
+    result_area = float(len(np.where(result==1)[0]))
+
+    TP = intersection
+    FP = result_area - intersection
+    FN = gt_area - intersection
+    TN = np.product(np.shape(result)) - (gt_area+result_area-intersection)
+
+    #TPR = TP/float(TP+FN)
+    FPR = FP/float(FP+TN)
+    FNR = FN/float(TP+FN)
+    #TNR = TN/float(TN+FP)
+    #assert TPR+FNR==1 and TNR+FPR==1
+
+    #return  TPR,TNR#,FNR,TNR,FPR
+    return FPR*100,FNR*100

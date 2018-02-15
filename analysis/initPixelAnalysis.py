@@ -3,12 +3,18 @@ import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
 from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
+<<<<<<< HEAD
 
 # for testing
 object_lst = [1]
 sample_lst = ['5workers_rand0']
 
 '''
+=======
+# sample_size = len(sample_lst)   # if all worker sets
+sample_size = 5
+
+>>>>>>> f977a40d679ed9790ac100a954752df24a1dcc87
 '''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
@@ -19,7 +25,7 @@ print "2. Creating all worker and GT pixel masks (2-3 min)"
 for objid in object_lst:
     create_all_gt_and_worker_masks(objid)
 '''
-'''
+
 
 
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
@@ -35,7 +41,7 @@ os.system("python2.7 spectral_clustering.py")
 
 
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-'''
+
 '''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
@@ -131,9 +137,14 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
+<<<<<<< HEAD
 '''
 # sample = sys.argv[1]
+=======
+>>>>>>> f977a40d679ed9790ac100a954752df24a1dcc87
 
+sample = sys.argv[1]
+'''
 #for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
     print sample+":"+str(objid)
@@ -142,7 +153,7 @@ for objid in object_lst:
     do_GT_EM_for(sample, objid, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-
+'''
 best_clust = pd.read_csv("best_clust_picking.csv")
 for objid in object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -157,7 +168,7 @@ for objid in object_lst:
             do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-'''
+
 ###########################################################
 '''
 print "With Cluster version"
@@ -250,7 +261,8 @@ for objid in object_lst:
 '''
 # Compiled PRJ written to config::HOME_DIR/analysis/pixel_em/<algoname>_full_PRJ_table.csv
 print "Compiling the output from .json to one single csv file for each algo (should take ~1min)"
-algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic"]
+algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic","MV"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
+'''
