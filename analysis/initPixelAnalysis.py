@@ -3,8 +3,11 @@ import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
 from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
-# sample_size = len(sample_lst)   # if all worker sets
-sample_size = 5
+
+# for testing
+object_lst = [1]
+sample_lst = ['5workers_rand0']
+
 '''
 '''
 print "1. if directory does not exist, create pixel_em/"
@@ -18,7 +21,7 @@ for objid in object_lst:
 '''
 '''
 
-'''
+
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
 for sample in sample_lst:
@@ -27,8 +30,9 @@ for sample in sample_lst:
         create_mega_mask(objid, PLOT=False, sample_name=sample)
 # Changes start here for the preprocessed cluster
 print "Running spectral clustering to preprocess (takes 1~2min) "
-os.system("python2.7 -i spectral_clustering.py")
-'''
+# os.system("python2.7 -i spectral_clustering.py")
+os.system("python2.7 spectral_clustering.py")
+
 
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 '''
@@ -72,6 +76,7 @@ mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
+
 sample = sys.argv[1]
 #for sample in tqdm(sample_lst):
 for objid in object_lst:
@@ -127,7 +132,7 @@ plt.close()
 
 ###########################################################
 '''
-sample = sys.argv[1]
+# sample = sys.argv[1]
 
 #for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
@@ -159,7 +164,7 @@ print "With Cluster version"
 print "Running Ground Truth Experiment to generate pInT and pNotInT"
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj = [obj for obj in object_lst if obj not in clust_df.objid.unique()]
-sample = sys.argv[1]
+# sample = sys.argv[1]
 print sample
 #for sample in tqdm(sample_specs.keys()):
 for objid in object_lst:
@@ -219,7 +224,7 @@ for sample in tqdm(sample_specs.keys()):
                 deriveGTinGroundTruthExperiments(sample, objid, "GTLSA", thresh_lst, cluster_id=cluster_id, exclude_isovote=True, rerun_existing=True)
 '''
 '''
-sample = sys.argv[1]
+# sample = sys.argv[1]
 for objid in object_lst:
     print sample+":"+str(objid)
     binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "basic", exclude_isovote=False, rerun_existing=True)
@@ -229,7 +234,7 @@ for objid in object_lst:
     binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "GTLSA", exclude_isovote=True, rerun_existing=True)
 '''
 '''
-sample = sys.argv[1]
+# sample = sys.argv[1]
 for objid in object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for cluster_id in cluster_ids:
