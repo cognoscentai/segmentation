@@ -920,49 +920,6 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_is
     if DEBUG: 
         end = time.time()
         print "Time:{:.2f}".format(end-start)
-
-def compile_PRJ_MV():
-    import glob
-    import csv
-    fname  = '{}MV_PRJ_table.csv'.format(PIXEL_EM_DIR)
-    with open(fname, 'w') as csvfile:
-        fieldnames = ['num_workers', 'sample_num', 'objid', 'MV_precision', 'MV_recall','MV_jaccard']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
-            sample_name = sample_path.split('/')[-2]
-            #print "Working on ", sample_path
-            num_workers = int(sample_name.split('w')[0])
-            sample_num = int(sample_name.split('d')[-1])
-            for obj_path in glob.glob('{}obj*/'.format(sample_path)):
-                objid = int(obj_path.split('/')[-2].split('j')[1])
-                mv_p = None
-                mv_r = None
-                mv_j = None
-                mv_pr_file = '{}MV_prj.json'.format(obj_path)
-		mv_fpnr_file = '{}MV_fpnr.json'.format(obj_path)
-                if os.path.isfile(mv_pr_file):
-                    [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                if os.path.isfile(mv_fpnr_file):
-                    [mv_fpr,mv_fnr] = json.load(open(mv_fpnr_file))
-                else:
-                    result = pickle.load(get_MV_mask(sample_name,objid)
-                    gt = get_gt_mask(objid)
-                    [em_fpr,em_fnr] = TFPNR(result,gt)
-                    with open(em_fpnr_file, 'w') as fp:
-                        fp.write(json.dumps([em_fpr,em_fnr]))
-                    print em_fpr,em_fnr
-                writer.writerow({
-                                    'num_workers': num_workers,
-                                    'sample_num': sample_num,
-                                    'objid': objid,
-                                    'MV_precision': mv_p,
-                                    'MV_recall': mv_r,
-                                    'MV_jaccard':mv_j,
-				    'MV_FPR%':em_fpr,
-				    'MV_FNR%':em_fnr
-                                  })
-    print 'Compiled PR to :'+ fname
 def compile_PR(mode="",ground_truth=False):
     import glob
     import csv
@@ -971,13 +928,10 @@ def compile_PR(mode="",ground_truth=False):
     else:
         fname  = '{}{}_full_PRJ_table.csv'.format(PIXEL_EM_DIR,mode)
     with open(fname, 'w') as csvfile:
-        if mode=="":
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'clust','MV_precision', 'MV_recall','MV_jaccard', 'EM_precision', 'EM_recall','EM_jaccard']
-        else: # no MV columns
-            fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'EM_precision', 'EM_recall','EM_jaccard','EM_FPR%','EM_FNR%']
+        fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh','clust', 'precision', 'recall','jaccard','FPR%','FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_DIR)):
             sample_name = sample_path.split('/')[-2]
             print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
@@ -990,85 +944,56 @@ def compile_PR(mode="",ground_truth=False):
                         cluster_id = -1 #unclustered flag
                     else:
                         cluster_id = int(clust_path.split("/clust")[-1][:-1])            
-                    mv_p = None
-                    mv_r = None
-                    mv_j = None
-                    em_p = None
-                    em_r = None
-                    em_j = None
-		    em_fpr = None
-		    em_fnr = None
-                    #if ground_truth :
-		    #	glob_path =glob.glob('{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode))
-                        #glob_path =glob.glob('{}{}_ground_truth_EM_prj_thresh*.json'.format(clust_path,mode))
-                    #else:
-                    #    glob_path = glob.glob('{}{}_EM_prj_iter4_thresh*.json'.format(clust_path,mode))
-                    if mode =="":
-                        mv_pr_file = '{}MV_prj.json'.format(clust_path)
-                        if os.path.isfile(mv_pr_file):
-                            [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
-                    #for thresh_path in glob_path:
-                    	#thresh= float(thresh_path.split('/')[-1].split('thresh')[1].split('.json')[0])
-                        #thresh= int(thresh_path.split('/')[-1].split('thresh')[1].split('.')[0])
-                        #thresh= int(thresh_path.split('thresh')[1].split('.')[0])
-                        #if thresh.is_integer():
-                        #    thresh = int(thresh)
-		    thresh ="best"
+                    p = None
+                    r = None
+                    j = None
+                    fpr = None
+                    fnr = None
+                    
+                    thresh ="best"
                     if ground_truth :
-			em_pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
-                        #em_pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
+                        pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        #pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
                     else:
-			# GT_EM_prj_best_thresh.json
-			em_pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
-			em_fpnr_file = '{}{}_EM_fpnr_best_thresh.json'.format(clust_path,mode)
-			if mode =="basic":
-			    em_pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
-			    em_fpnr_file = '{}EM_fpnr_best_thresh.json'.format(clust_path)
-                        #em_pr_file = '{}{}_EM_prj_iter4_thresh{}.json'.format(clust_path,mode,thresh)
-			#print em_pr_file
-                    if os.path.isfile(em_pr_file):
-                        [em_p, em_r,em_j] = json.load(open(em_pr_file))
-		    if os.path.isfile(em_fpnr_file):
-			[em_fpr,em_fnr] = json.load(open(em_fpnr_file)) 
-		    else:
-			gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path,mode)
-			if mode =="basic":
-			    gt_fname ="{}/gt_est_mask_best_thresh.pkl".format(clust_path)
-			if os.path.isfile(gt_fname):
-			    result = pickle.load(open(gt_fname))
-			    gt = get_gt_mask(objid)
-			    [em_fpr,em_fnr] = TFPNR(result,gt)	
-			    with open(em_fpnr_file, 'w') as fp:
-			        fp.write(json.dumps([em_fpr,em_fnr]))	
-			    print em_fpr,em_fnr
-                    if any([prj is not None for prj in [mv_p, mv_r, mv_j, em_p, em_r,em_j]]):
-                        if mode =="":
-                            writer.writerow({
-                                        'num_workers': num_workers,
-                                        'sample_num': sample_num,
-                                        'objid': objid,
-                                        'thresh':thresh,
-                                        'clust':cluster_id,
-                                        'MV_precision': mv_p,
-                                        'MV_recall': mv_r,
-                                        'MV_jaccard':mv_j,
-                                        'EM_precision': em_p,
-                                        'EM_recall': em_r,
-                                        'EM_jaccard':em_j
-                                      })
-                        else:
-                            writer.writerow({
-                                        'num_workers': num_workers,
-                                        'sample_num': sample_num,
-                                        'objid': objid,
-                                        'thresh':thresh,
-                                        'clust':cluster_id,
-                                        'EM_precision': em_p,
-                                        'EM_recall': em_r,
-                                        'EM_jaccard':em_j,
-					'EM_FPR%': em_fpr,
-					'EM_FNR%': em_fnr
-                                      })
+                        # GT_EM_prj_best_thresh.json
+                        pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path,mode)
+                        fpnr_file = '{}{}_EM_fpnr_best_thresh.json'.format(clust_path,mode)
+                        if mode =="basic":
+                            pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
+                            fpnr_file = '{}EM_fpnr_best_thresh.json'.format(clust_path)
+                        elif mode =="MV":
+                            pr_file = '{}MV_prj.json'.format(clust_path)
+                            fpnr_file = '{}MV_fpnr.json'.format(clust_path)
+                    if os.path.isfile(pr_file):
+                        [p, r,j] = json.load(open(pr_file))
+                    if os.path.isfile(fpnr_file):
+                        [fpr,fnr] = json.load(open(fpnr_file)) 
+                    else:
+                        gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path,mode)
+            			if mode =="basic":
+                            gt_fname ="{}/gt_est_mask_best_thresh.pkl".format(clust_path)
+                        elif mode =="MV":
+                            gt_fname ="{}/MV_mask.pkl".format(clust_path)
+                        if os.path.isfile(gt_fname):
+                            result = pickle.load(open(gt_fname))
+                            gt = get_gt_mask(objid)
+                            [fpr,fnr] = TFPNR(result,gt)	
+                            with open(fpnr_file, 'w') as fp:
+                                fp.write(json.dumps([fpr,fnr]))	
+            			    print fpr,fnr
+                if any([prj is not None for prj in [p, r,j]]):
+                    writer.writerow({
+                                'num_workers': num_workers,
+                                'sample_num': sample_num,
+                                'objid': objid,
+                                'thresh':thresh,
+                                'clust':cluster_id,
+                                'precision': p,
+                                'recall': r,
+                                'jaccard':j,
+                                'FPR%': fpr,
+                                'FNR%': fnr
+                              })
     print 'Compiled PR to :'+ fname
 def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
     thresh_min = -200
