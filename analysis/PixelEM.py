@@ -284,14 +284,15 @@ def GTworker_prob_correct(mega_mask,w_mask, gt_mask,Nworkers,exclude_isovote=Fal
 		not_agreement=True
 	    if m!=0 and  m!=Nworkers:
 		not_agreement=True
-	    if (gt==1) and (w==1) and  not_agreement: 
-		gt_Ncorrect +=1
-	    if gt==1 and  not_agreement:
-		gt_total+=1
-	    if gt==0 and w==0 and not_agreement:
-		ngt_Ncorrect+=1
-	    if gt==0 and not_agreement:
-		ngt_total +=1
+            if not_agreement:
+                if gt==1:
+                    gt_total+=1
+                    if w == 1:
+                        gt_Ncorrect +=1
+                else:
+                    ngt_total +=1
+                    if w == 0:
+                        ngt_Ncorrect+=1
     qp = float(gt_Ncorrect)/float(gt_total) if gt_total!=0 else 0.6
     qn = float(ngt_Ncorrect)/float(ngt_total) if ngt_total!=0 else 0.6
     return qp,qn
@@ -939,15 +940,27 @@ def compile_PRJ_MV():
                 mv_r = None
                 mv_j = None
                 mv_pr_file = '{}MV_prj.json'.format(obj_path)
+		mv_fpnr_file = '{}MV_fpnr.json'.format(obj_path)
                 if os.path.isfile(mv_pr_file):
                     [mv_p, mv_r,mv_j] = json.load(open(mv_pr_file))
+                if os.path.isfile(mv_fpnr_file):
+                    [mv_fpr,mv_fnr] = json.load(open(mv_fpnr_file))
+                else:
+                    result = pickle.load(get_MV_mask(sample_name,objid)
+                    gt = get_gt_mask(objid)
+                    [em_fpr,em_fnr] = TFPNR(result,gt)
+                    with open(em_fpnr_file, 'w') as fp:
+                        fp.write(json.dumps([em_fpr,em_fnr]))
+                    print em_fpr,em_fnr
                 writer.writerow({
                                     'num_workers': num_workers,
                                     'sample_num': sample_num,
                                     'objid': objid,
                                     'MV_precision': mv_p,
                                     'MV_recall': mv_r,
-                                    'MV_jaccard':mv_j
+                                    'MV_jaccard':mv_j,
+				    'MV_FPR%':em_fpr,
+				    'MV_FNR%':em_fnr
                                   })
     print 'Compiled PR to :'+ fname
 def compile_PR(mode="",ground_truth=False):
