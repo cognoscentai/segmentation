@@ -13,7 +13,7 @@
 #nohup python2.7 initPixelAnalysis.py 10workers_rand0 > 10workers_rand0.out &
 #nohup python2.7 initPixelAnalysis.py 10workers_rand1 > 10workers_rand1.out &
 #nohup python2.7 initPixelAnalysis.py 10workers_rand2 > 10workers_rand2.out &
-nohup python2.7 initPixelAnalysis.py 10workers_rand3 > 10workers_rand3.out &
+#nohup python2.7 initPixelAnalysis.py 10workers_rand3 > 10workers_rand3.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand4 > 10workers_rand4.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand5 > 10workers_rand5.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand6 > 10workers_rand6.out &

@@ -1077,10 +1077,11 @@ def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id=
             #plt.colorbar()
     outfile = '{}{}{}_ground_truth_cw{}_EM_prj_best_thresh.json'.format(outdir,mode,algo,compareWith)
     if compareWith=="MV":
-	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt(objid))
+	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
 	print p,r,j
     with open(outfile, 'w') as fp:
         fp.write(json.dumps([p, r, j]))
+    pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_cw{}_best_thresh.pkl'.format(outdir,mode,algo,compareWith), 'w'))
     return p,r,j
 
 ##############################################

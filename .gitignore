@@ -7,3 +7,5 @@ ipynb/.ipynb_checkpoints/
 analysis/sendmail.py
 analysis/cluster_img/
 ipynb/test_pInT_pNotInT/
+analysis/pixel_em.zip
+*.zip
