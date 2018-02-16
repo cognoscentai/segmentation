@@ -132,7 +132,7 @@ for objid in noClust_obj:
     do_GT_EM_for(sample, objid, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-'''
+
 best_clust = pd.read_csv("best_clust_picking.csv")
 for objid in object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -147,7 +147,7 @@ for objid in object_lst:
             do_GT_EM_for(sample, objid, cluster_id, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
             do_GTLSA_EM_for(sample, objid, cluster_id, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-
+'''
 ###########################################################
 
 print "With Cluster version"
