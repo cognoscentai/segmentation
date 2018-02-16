@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 SHAPELY_OFF=True
 
 import matplotlib
@@ -525,7 +525,7 @@ def do_GTLSA_EM_for(sample_name, objid,cluster_id="", rerun_existing=False,exclu
     while (jaccard_against_prev_gt_est < 0.999 or it<=1):
 	if (it>=max_iter):
 	    break
-        print "iteration:",it
+        if DEBUG: print "iteration:",it
         it +=1
         qp1 = dict()
         qn1 = dict()
@@ -656,7 +656,7 @@ def do_GT_EM_for(sample_name, objid, cluster_id ="",  rerun_existing=False,exclu
     #for it in range(num_iterations):
 	if (it>=max_iter):
             break
-	print "iteration:",it
+	if DEBUG: print "iteration:",it
         it +=1
         qp = dict()
         qn = dict()
@@ -840,7 +840,7 @@ def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,clust
     if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w'))
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     return [p,r,j]    
-def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False):
+def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False,initMethod="MV"):
     if DEBUG: start = time.time()
     if exclude_isovote:
         mode ='iso'
@@ -855,33 +855,45 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_is
         if os.path.isfile('{}EM_prj_best_thresh.json'.format(outdir)):
             print "Already ran EM, Skipped"
             return
-    # initialize MV mask
     MV = get_MV_mask(sample_name, objid,cluster_id)
-    gt_est_mask = MV 
+    if initMethod=="MV":
+        # initialize MV mask
+        gt_est_mask = MV
+	prev_gt_est = gt_est_mask
+    else: 
+	prev_gt_est = 0 
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid,cluster_id=cluster_id)
     Nworkers= len(worker_masks)
     mega_mask = get_mega_mask(sample_name, objid,cluster_id)
     if DEBUG: 
 	t_load = time.time()
     	print "Loading time:",t_load-start
-    prev_gt_est = gt_est_mask
     jaccard_against_prev_gt_est = 0
     it =0
     max_iter = 6
     while (jaccard_against_prev_gt_est < 0.999 or it<=1):
+	worker_qualities = dict()
+	if (it==0 and initMethod=="0.6constant"):
+	    # a little better than random guess
+	    print "starting with q=0.6"
+	    for wid in worker_masks.keys():
+    	        worker_qualities[wid] = 0.6  
 	if (it>=max_iter):
             break
-	print "iteration:",it
+	if DEBUG: print "iteration:",it
 	it +=1
     #for it in range(num_iterations):
-        worker_qualities = dict()
         if DEBUG:t0 = time.time()
-        for wid in worker_masks.keys():
-            worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
+	if (it!=0 and initMethod!="0.6constant"):
+	    #print "computing qj based on model"
+            for wid in worker_masks.keys():
+                worker_qualities[wid] = worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,Nworkers,exclude_isovote=exclude_isovote)
         if DEBUG:
 	    t1 = time.time()
             print "Time for worker prob calculation:",t1-t0
         #Compute pInMask and pNotInMask 
+	#print worker_qualities
+	#print worker_masks
         log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, worker_qualities)
         if DEBUG:
 	    t2 = time.time()

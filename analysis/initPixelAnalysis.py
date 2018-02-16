@@ -3,7 +3,10 @@ import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
 from sample_worker_seeds import sample_specs
 sample_lst = sample_specs.keys()
-
+sample = sys.argv[1]
+df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
+'''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
 if not os.path.exists("pixel_em"):
@@ -118,19 +121,18 @@ plt.close()
 # Use  submitPixelEM.sh to submit all the jobs in parallel for different samples independently
 
 ###########################################################
-
-
-sample = sys.argv[1]
+'''
 
 #for sample in tqdm(sample_specs.keys()):
-for objid in object_lst:
+#for objid in object_lst:
+for objid in noClust_obj:
     print sample+":"+str(objid)
     do_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
     do_GT_EM_for(sample, objid, rerun_existing=False, exclude_isovote=True, compute_PR_every_iter=True)
     do_GT_EM_for(sample, objid, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-
+'''
 best_clust = pd.read_csv("best_clust_picking.csv")
 for objid in object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -237,3 +239,4 @@ algorithms = ["GTLSA", "isoGTLSA", "GT", "isoGT", "basic", "MV"]
 for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
+'''
