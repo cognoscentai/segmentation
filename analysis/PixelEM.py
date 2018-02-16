@@ -961,8 +961,8 @@ def compile_PR(mode="",ground_truth=False):
                         cluster_id = -1 #unclustered flag
                     else:
                         cluster_id = int(clust_path.split("/clust")[-1][:-1])          
-		    print "----clust path:",clust_path 
-		    print cluster_id
+		    #print "----clust path:",clust_path 
+		    #print cluster_id
                     p = None
                     r = None
                     j = None
@@ -983,8 +983,8 @@ def compile_PR(mode="",ground_truth=False):
                         elif mode =="MV":
                             pr_file = '{}MV_prj.json'.format(clust_path)
                             fpnr_file = '{}MV_fpnr.json'.format(clust_path)
-		    print pr_file
-		    print  fpnr_file
+		    #print pr_file
+		    #print  fpnr_file
                     if os.path.isfile(pr_file):
                         [p, r,j] = json.load(open(pr_file))
                     if os.path.isfile(fpnr_file):
@@ -1002,20 +1002,8 @@ def compile_PR(mode="",ground_truth=False):
                             with open(fpnr_file, 'w') as fp:
                                 fp.write(json.dumps([fpr,fnr]))	
             		    print fpr,fnr
-		    print p,r,j,fpr,fnr
-		    print clust_path
-		    print {
-                                'num_workers': num_workers,
-                                'sample_num': sample_num,
-                                'objid': objid,
-                                'thresh':thresh,
-                                'clust':cluster_id,
-                                'precision': p,
-                                'recall': r,
-                                'jaccard':j,
-                                'FPR%': fpr,
-                                'FNR%': fnr
-                              }
+		    #print p,r,j,fpr,fnr
+		    #print clust_path
                     if any([prj is not None for prj in [p, r,j]]):
                         writer.writerow({
                                 'num_workers': num_workers,
