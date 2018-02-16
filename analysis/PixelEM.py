@@ -809,7 +809,7 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh_lst,cluster
     	    fp.write(json.dumps([p, r, j]))
     #return gt_est_mask
     return all_prjs
-def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False):
+def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,cluster_id="",exclude_isovote=False, SAVE_GT_MASK = False,rerun_existing=False,compareWith="gt"):
     if cluster_id!="" and cluster_id!=-1:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
     else:
@@ -838,8 +838,12 @@ def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo,thresh,clust
         gt_est_mask[gt_est_mask>1]=True
         #gt_est_mask = gt_est_mask+invariant_mask_yes
     if SAVE_GT_MASK: pickle.dump(gt_est_mask,open('{}{}{}_gt_est_ground_truth_mask_thresh{}.pkl'.format(outdir,mode,algo,thresh), 'w'))
-    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-    return [p,r,j]    
+    if compareWith=="gt":
+       compare_mask = get_gt_mask(objid)
+    elif compareWith=="MV":
+       compare_mask = get_MV_mask(sample_name,objid)
+    [p, r, j] = faster_compute_prj(gt_est_mask, compare_mask)
+    return [p,r,j],gt_est_mask 
 def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False,exclude_isovote=False,compute_PR_every_iter=False,PLOT=False,initMethod="MV"):
     if DEBUG: start = time.time()
     if exclude_isovote:
@@ -1026,7 +1030,7 @@ def compile_PR(mode="",ground_truth=False):
                                 'FNR%': fnr
                               })
     print 'Compiled PR to :'+ fname
-def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False):
+def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id="",exclude_isovote=False,rerun_existing=False,compareWith="gt"):
     thresh_min = -200
     thresh_max = 200
     if cluster_id!="" and cluster_id!=-1:
@@ -1043,21 +1047,38 @@ def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo,cluster_id=
     delta = np.abs(thresh_max -thresh_min)
     thresh = (thresh_min+thresh_max)/2.
     p,r=0,-1
-    while (p==-1 or delta>1 or p!=r):
-        # stop if p=r , continue if p=-1, stop if delta (range in x) gets below a certain threshold
-        p,r,j = onlineDeriveGTinGroundTruthExperiments(sample, objid, algo,thresh,cluster_id=cluster_id,exclude_isovote=exclude_isovote,rerun_existing=True)        
+    iterations = 0
+    epsilon = 0.125
+    while (iterations<=100 or p==-1): # continue iterations below max iterations or if p=-1
+        # stop if p=r or if delta (range in x) gets below a certain threshold
+        if (p==r) or (thresh_min + epsilon>= thresh_max):
+            break
+	[p,r,j],gt_est_mask = onlineDeriveGTinGroundTruthExperiments(sample, objid, algo,thresh,cluster_id=cluster_id,exclude_isovote=exclude_isovote,rerun_existing=True,compareWith=compareWith)
         delta = np.abs(thresh_max -thresh_min)
-        if p>r: #right 
-            thresh_max = thresh_min + 0.75*delta  
-        else: #left 
-            thresh_min =  thresh_min + 0.25*delta  
+        if p>r:
+            right = thresh_min + 0.75*delta  
+            thresh_max = right
+        else: 
+            left = thresh_min + 0.25*delta  
+            thresh_min = left
         if p==-1:
             #if p =-1 then it is because the result area is zero, which means nothing was selected for gt
             # this meant that the threshold has overshot
             thresh_max = thresh_min+0.2*delta
         thresh = (thresh_min+thresh_max)/2.
-    
-    outfile = '{}{}{}_ground_truth_EM_prj_best_thresh.json'.format(outdir,mode,algo)
+        iterations+=1
+        if DEBUG:
+            print "----Trying threshold:",thresh,"-----"
+            print p,r,j,thresh_max,thresh_min
+            print "actual prj against GT",faster_compute_prj(gt_est_mask,get_gt_mask(objid))
+            #plt.figure()
+            #plt.title("Iter #"+str(iterations))
+            #plt.imshow(gt_est_mask)
+            #plt.colorbar()
+    outfile = '{}{}{}_ground_truth_cw{}_EM_prj_best_thresh.json'.format(outdir,mode,algo,compareWith)
+    if compareWith=="MV":
+	[p, r, j] = faster_compute_prj(gt_est_mask, get_gt(objid))
+	print p,r,j
     with open(outfile, 'w') as fp:
         fp.write(json.dumps([p, r, j]))
     return p,r,j
