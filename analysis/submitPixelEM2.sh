@@ -14,14 +14,14 @@
 #nohup python2.7 initPixelAnalysis.py 10workers_rand1 > 10workers_rand1.out &
 #nohup python2.7 initPixelAnalysis.py 10workers_rand2 > 10workers_rand2.out &
 #nohup python2.7 initPixelAnalysis.py 10workers_rand3 > 10workers_rand3.out &
-nohup python2.7 initPixelAnalysis.py 10workers_rand4 > 10workers_rand4.out &
+#nohup python2.7 initPixelAnalysis.py 10workers_rand4 > 10workers_rand4.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand5 > 10workers_rand5.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand6 > 10workers_rand6.out &
 nohup python2.7 initPixelAnalysis.py 10workers_rand7 > 10workers_rand7.out &
 
 #nohup python2.7 initPixelAnalysis.py 15workers_rand0 > 15workers_rand0.out &
 #nohup python2.7 initPixelAnalysis.py 15workers_rand1 > 15workers_rand1.out &
-nohup python2.7 initPixelAnalysis.py 15workers_rand2 > 15workers_rand2.out &
+#nohup python2.7 initPixelAnalysis.py 15workers_rand2 > 15workers_rand2.out &
 nohup python2.7 initPixelAnalysis.py 15workers_rand3 > 15workers_rand3.out &
 nohup python2.7 initPixelAnalysis.py 15workers_rand4 > 15workers_rand4.out &
 nohup python2.7 initPixelAnalysis.py 15workers_rand5 > 15workers_rand5.out &
