@@ -1,6 +1,6 @@
 # from collections import defaultdict
 from matplotlib import pyplot as plt
-# import numpy as np
+import numpy as np
 import csv
 import os
 import pickle
@@ -12,6 +12,27 @@ DATA_DIR = os.path.abspath(os.path.join(CURR_DIR, '..')) + '/data/'
 VISION_DIR = CURR_DIR + 'vision-stuff/'
 VISION_TILES_DIR = VISION_DIR + 'pixel-vision-tiles/'
 PIXEL_EM_DIR = CURR_DIR + 'pixel_em/'
+
+
+def hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh):
+    hydir = '{}{}/obj{}/hybrid/{}/({},{})'.format(PIXEL_EM_DIR, sample_name, objid, k, expand_thresh, contract_thresh)
+    if not os.path.isdir(hydir):
+        os.makedirs(hydir)
+    return hydir
+
+
+def vision_pixtile_dir(img_id, k=500):
+    vdir = '{}/{}/{}'.format(VISION_TILES_DIR, k, img_id)
+    if not os.path.isdir(vdir):
+        os.makedirs(vdir)
+    return vdir
+
+
+def vision_baseline_dir(objid, k=500, include_thresh=0.1):
+    vdir = '{}obj{}/vision-only/{}/{}'.format(PIXEL_EM_DIR, objid, k, include_thresh)
+    if not os.path.isdir(vdir):
+        os.makedirs(vdir)
+    return vdir
 
 
 def show_mask(mask, figname=None):
@@ -58,7 +79,7 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid):
     return worker_masks
 
 
-def get_precision_and_recall(test_mask, gt_mask):
+def precision_and_recall(test_mask, gt_mask):
     num_intersection = 0.0  # float(len(np.where(test_mask == gt_mask)[0]))
     num_test = 0.0  # float(len(np.where(test_mask == 1)[0]))
     num_gt = 0.0  # float(len(np.where(gt_mask == 1)[0]))
@@ -75,7 +96,7 @@ def get_precision_and_recall(test_mask, gt_mask):
     return (num_intersection / num_test), (num_intersection / num_gt)
 
 
-def jaccard_from_mask(test_mask, gt_mask):
+def jaccard(test_mask, gt_mask):
     num_intersection = 0.0  # float(len(np.where(test_mask == gt_mask)[0]))
     num_test = 0.0  # float(len(np.where(test_mask == 1)[0]))
     num_gt = 0.0  # float(len(np.where(gt_mask == 1)[0]))
@@ -89,16 +110,26 @@ def jaccard_from_mask(test_mask, gt_mask):
                 num_test += 1
             elif gt_mask[i][j] == 1:
                 num_gt += 1
-    return (num_intersection) / (num_test + num_gt - num_intersection)
+    return (num_intersection) / (num_test - num_intersection + num_gt)
 
 
-def get_pixtiles(objid, test=False):
+def tiles_to_mask(tile_id_list, tile_to_pix_dict, base_mask):
+    # given a list of chosen tids, converts that to a pixel mask of all chosen pixels
+    tile_mask = np.zeros_like(base_mask)
+    for tid in tile_id_list:
+        for pix in tile_to_pix_dict[tid]:
+            tile_mask[pix] = 1
+    return tile_mask
+
+
+def get_pixtiles(objid, k=500):
     obj_to_img_id = get_obj_to_img_id()
     img_id = obj_to_img_id[objid]
-    with open('{}/{}{}{}.pkl'.format(VISION_TILES_DIR, ('test_' if test else ''), 'pixtile_mask', img_id), 'r') as fp:
+    vdir = vision_pixtile_dir(img_id, k)
+    with open('{}/pixtile_mask.pkl'.format(vdir), 'r') as fp:
         mask = pickle.loads(fp.read())
 
-    with open('{}/{}{}{}.pkl'.format(VISION_TILES_DIR, ('test_' if test else ''), 'pixtile_list', img_id), 'r') as fp:
+    with open('{}/pixtile_list.pkl'.format(vdir), 'r') as fp:
         tiles = pickle.loads(fp.read())
     return mask, tiles
 
