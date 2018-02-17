@@ -1,11 +1,14 @@
 # from collections import defaultdict
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import csv
 import os
 import pickle
 import json
-
+import  pandas as pd
 
 CURR_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 DATA_DIR = os.path.abspath(os.path.join(CURR_DIR, '..')) + '/data/'
@@ -91,15 +94,24 @@ def get_gt_mask(objid):
 
 
 def create_objid_to_clustid():
-    from collections import defaultdict
-    clust_ids = defaultdict(list)
-
-    # TODO: DORIS CLUSTER
     # create and dump dictionary
     # clust_ids[sample_num][objid] ---> list of clust IDs
     # for example, clust_ids['5workers_rand0'][1] = [0, 1]
-    raise NotImplementedError
-
+    from sample_worker_seeds import sample_specs
+    sample_lst = sample_specs.keys()
+    from collections import defaultdict
+    clust_ids = defaultdict(dict)
+    df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+    best_clust = pd.read_csv("best_clust_picking.csv")
+    for sample in sample_specs.keys():
+        x= dict()
+        for objid in df.objid.unique():
+            cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+            clusts = []
+            for cluster_id in cluster_ids:
+                if len(best_clust[(best_clust["sample"] == sample) & (best_clust["objid"] == objid) & (best_clust["clust"] == cluster_id)]) == 1:
+                    #print sample + ":" + str(objid)+"clust"+str(cluster_id)
+                    clust_ids[sample][objid]=cluster_id
     with open('objid_to_clustid.json', 'w') as fp:
         fp.write(json.dumps(clust_ids))
 

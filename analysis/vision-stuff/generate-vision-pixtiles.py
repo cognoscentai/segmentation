@@ -2,11 +2,14 @@ import scipy.misc
 # from scipy import misc
 import numpy as np
 from numpy import shape
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import glob
 import os
 import pickle
-
+import time
 
 CURR_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 SEGMENTED_DIR = CURR_DIR + 'color-segmented-images/'
@@ -102,7 +105,9 @@ def test_tiling_on_raw_img(k=500):
 
 def generate_all():
     img_name_to_id = get_img_name_to_id()
+    print "Number of imgs to loop through:",len(glob.glob(SEGMENTED_DIR + '*/*.png'))
     for img_file in glob.glob(SEGMENTED_DIR + '*/*.png'):
+	start = time.time()
         # if 'COCO_train2014_000000000127' not in img_file:
         #     continue
         img_name = img_file.split('/')[-1].split('.png')[0]
@@ -136,8 +141,8 @@ def generate_all():
         # plt.show()
         plt.savefig('{}/{}.png'.format(outdir, 'viz_mask'))
         plt.close()
-
-
+	end = time.time()
+	print "Time Elapsed:",end-start
 if __name__ == '__main__':
     # test_tiling_on_raw_img()
     generate_all()

@@ -45,5 +45,5 @@ def segment_all(k=500):
 if __name__ == '__main__':
     if not os.path.isdir(OUTPUT_IMG_DIR):
         os.makedirs(OUTPUT_IMG_DIR)
-    for k in [500]:
+    for k in range(100,550,50):
         segment_all(k)

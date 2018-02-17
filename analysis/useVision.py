@@ -1,6 +1,9 @@
 from utils import get_pixtiles, get_gt_mask, get_MV_mask, \
     hybrid_dir, vision_baseline_dir, faster_compute_prj, clusters
 from collections import defaultdict
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import pickle
@@ -167,17 +170,19 @@ def compile_PR():
 
 
 if __name__ == '__main__':
-    # TODO: DORIS CLUSTER
-    # obj_clusters = clusters()
+    obj_clusters = clusters()
     for k in [500]:
-        for objid in range(1, 2):
+        for objid in [2]: #range(1, 2):
             print '*****************************************************************'
             print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
             for batch in ['5workers_rand0']:
-                # TODO: DORIS CLUSTER
-                # for clust in [""] + obj_clusters[batch][objid]:
-                for clust in [""]:
+		if objid in obj_clusters[batch]:
+		    clusts = [""] + [obj_clusters[batch][objid]]
+		else:
+		    clusts = [""]
+                for clust in clusts: 
+                #for clust in [""]:
                     print 'Compute vision hybrid for batch', batch, 'clust:', clust
                     create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
 
