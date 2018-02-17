@@ -82,11 +82,11 @@ def discrete_cmap(N, base_cmap=None):
     cmap_name = base.name + str(N)
     return base.from_list(cmap_name, color_list, N)
 
-def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
+def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2, rerun_existing=False):
     outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
     clust_num = '-1' if clust == "" else str(clust)
     algo_name = base + '_' + clust_num
-    if os.path.exists('{}/{}_hybrid_prj.json'.format(outdir, algo_name)):
+    if not rerun_existing and os.path.exists('{}/{}_hybrid_prj.json'.format(outdir, algo_name)):
         print "already ran "+outdir
         return
     agg_vision_mask, _ = get_pixtiles(objid, k)
@@ -119,9 +119,9 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
         fp.write(json.dumps([p, r, j]))
 
 
-def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
+def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
     outdir = vision_baseline_dir(objid, k, include_thresh)
-    if os.path.exists('{}vision_prj.json'.format(outdir)):
+    if not rerun_existing and os.path.exists('{}vision_prj.json'.format(outdir)):
         print "already ran "+outdir
         return
     agg_vision_mask, _ = get_pixtiles(objid)
