@@ -212,11 +212,11 @@ if __name__ == '__main__':
                     clusts = [""] + [obj_clusters[batch][objid]]
                 else:
                     clusts = [""]
-                    for clust in clusts:
-                    #for clust in [""]:
-                        print 'Compute vision hybrid for batch', batch, 'clust:', clust
-                        start = time.time()
-                        create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=True)
-                        end = time.time()
-                        print "Time elapsed:", end-start
+                for clust in clusts:
+                #for clust in [""]:
+                    print 'Compute vision hybrid for batch', batch, 'clust:', clust
+                    start = time.time()
+                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=True)
+                    end = time.time()
+                    print "Time elapsed:", end-start
     compile_PR()
