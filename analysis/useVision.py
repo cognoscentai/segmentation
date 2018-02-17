@@ -1,5 +1,6 @@
 from utils import get_pixtiles, get_gt_mask, get_MV_mask, \
-    hybrid_dir, vision_baseline_dir, faster_compute_prj, clusters
+    hybrid_dir, vision_baseline_dir, faster_compute_prj, clusters, \
+    discrete_cmap
 from collections import defaultdict
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
@@ -9,6 +10,7 @@ import numpy as np
 import pickle
 import json
 import os
+
 
 def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_thresh=0, objid=None, vision_only=False, DEBUG=False):
     # objid only for debugging purposes
@@ -21,10 +23,10 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
             vtile_id = agg_vision_mask[i][j]
             if vtile_id == 0:
                 continue
-            vtile_area[vtile_id] += 1
+            vtile_area[vtile_id] += 1.0
             if base_mask[i][j]:
-                base_mask_area += 1
-                intersection_area[vtile_id] += 1
+                base_mask_area += 1.0
+                intersection_area[vtile_id] += 1.0
     if vision_only:
         # only include or delete full vision tiles
         # only using base mask to decide which to include / delete
@@ -40,16 +42,22 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
         # or leave unchanged
         if intersection_area[vtile_id] == 0:
             continue
-        elif DEBUG:
+
+        frac_vtile_covered = float(intersection_area[vtile_id]) / float(vtile_area[vtile_id])
+
+        if DEBUG:
+            print '-----------------'
             print 'Intersection area: ', intersection_area[vtile_id]
             print 'vtile area: ', vtile_area[vtile_id]
             print 'Base mask area: ', base_mask_area
-        if (float(intersection_area[vtile_id]) / vtile_area[vtile_id]) > expand_thresh:
+            print 'Frac vtile covered: ', frac_vtile_covered
+
+        if frac_vtile_covered > expand_thresh:
             # expand mask to include entire vision tile
             final_mask[agg_vision_mask == vtile_id] = True
             if DEBUG:
                 print 'Expanding'
-        elif (float(intersection_area[vtile_id]) / vtile_area[vtile_id]) < contract_thresh:
+        elif frac_vtile_covered < contract_thresh:
             # delete mask to exclude entire vision tile
             final_mask[agg_vision_mask == vtile_id] = False
             if DEBUG:
@@ -70,17 +78,6 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
             plt.close()
     return final_mask
 
-def discrete_cmap(N, base_cmap=None):
-    """Create an N-bin discrete colormap from the specified input map"""
-
-    # Note that if base_cmap is a string or None, you can simply do
-    #    return plt.cm.get_cmap(base_cmap, N)
-    # The following works for string, None, or a colormap instance:
-
-    base = plt.cm.get_cmap(base_cmap)
-    color_list = base(np.linspace(0, 1, N))
-    cmap_name = base.name + str(N)
-    return base.from_list(cmap_name, color_list, N)
 
 def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2, rerun_existing=False):
     outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
@@ -96,12 +93,12 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
     if base == 'MV':
         # MV hybrid
         base_mask = get_MV_mask(sample_name, objid, cluster_id=clust)
+        # print 'base and gt mask lens:', len(np.where(base_mask == 1)[0]), len(np.where(gt_mask == 1)[0])
     else:
         print 'Only supports MV base right now'
         raise NotImplementedError
 
-
-    hybrid_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid)
+    hybrid_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid, DEBUG=False)
     with open('{}/{}_hybrid_mask.pkl'.format(outdir, algo_name), 'w') as fp:
         fp.write(pickle.dumps(hybrid_mask))
 
@@ -109,7 +106,7 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
     sum_mask = hybrid_mask.astype(int) * 1 + MV_mask.astype(int) * 2 + gt_mask.astype(int) * 4
 
     plt.figure()
-    plt.imshow(sum_mask, interpolation="none",cmap=discrete_cmap(8, 'rainbow'))  # , cmap="rainbow")
+    plt.imshow(sum_mask, interpolation="none", cmap=discrete_cmap(8, 'rainbow'))  # , cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, algo_name))
     plt.close()
@@ -134,7 +131,7 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, r
     sum_mask = vision_only_mask.astype(int) * 1 + gt_mask.astype(int) * 2
 
     plt.figure()
-    plt.imshow(sum_mask, interpolation="none",cmap=discrete_cmap(4, 'rainbow'))  # , cmap="rainbow")
+    plt.imshow(sum_mask, interpolation="none", cmap=discrete_cmap(4, 'rainbow'))  # , cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}/vision_with_gt_viz.png'.format(outdir))
     plt.close()
@@ -189,9 +186,9 @@ if __name__ == '__main__':
     import time
     import sys
     from sample_worker_seeds import sample_specs
-    expand_thresh = sys.argv[1]
-    contract_thresh = sys.argv[2]
-    print "Working on expand={}; contract ={}".format(expand_thresh, contract_thresh)
+    expand_thresh = float(sys.argv[1])
+    contract_thresh = float(sys.argv[2])
+    print "Working on expand={}; contract={}".format(expand_thresh, contract_thresh)
     sample_lst = sample_specs.keys()
     obj_clusters = clusters()
     print 'Clusters:', obj_clusters[obj_clusters.keys()[0]]
@@ -212,8 +209,8 @@ if __name__ == '__main__':
                     clusts = [""] + [obj_clusters[batch][objid]]
                 else:
                     clusts = [""]
-                for clust in clusts:
-                #for clust in [""]:
+                # for clust in clusts:
+                for clust in [""]:
                     print 'Compute vision hybrid for batch', batch, 'clust:', clust
                     start = time.time()
                     create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=True)
