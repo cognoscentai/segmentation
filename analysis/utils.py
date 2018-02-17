@@ -46,6 +46,40 @@ def show_mask(mask, figname=None):
     plt.close()
 
 
+def get_mega_mask(sample_name, objid, cluster_id=""):
+    if cluster_id != "":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    return pickle.load(open('{}mega_mask.pkl'.format(indir)))
+
+
+def workers_in_sample(sample_name, objid, cluster_id=""):
+    if cluster_id != "":
+        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    else:
+        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    return json.load(open('{}worker_ids.json'.format(indir)))
+
+
+def get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=""):
+    worker_masks = dict()  # key = worker_id, value = worker mask
+    worker_ids = workers_in_sample(sample_name, objid, cluster_id=cluster_id)
+    for wid in worker_ids:
+        worker_masks[wid] = get_worker_mask(objid, wid)
+    return worker_masks
+
+
+def get_MV_mask(sample_name, objid, cluster_id=""):
+    if cluster_id != "":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    if not os.path.exists('{}MV_mask.pkl'.format(outdir)):
+        compute_PRJ_MV(sample_name, objid, cluster_id)
+    return pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+
+
 def get_worker_mask(objid, worker_id):
     indir = '{}obj{}/'.format(PIXEL_EM_DIR, objid)
     return pickle.load(open('{}mask{}.pkl'.format(indir, worker_id)))
@@ -56,61 +90,48 @@ def get_gt_mask(objid):
     return pickle.load(open('{}gt.pkl'.format(indir)))
 
 
-def get_MV_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return pickle.load(open('{}MV_mask.pkl'.format(indir)))
+# glob = to read prj.json files
 
 
-def get_mega_mask(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return pickle.load(open('{}mega_mask.pkl'.format(indir)))
+def faster_compute_prj(result, gt):
+    intersection = len(np.where(((result == 1) | (gt == 1)) & (result == gt))[0])
+    gt_area = float(len(np.where(gt == 1)[0]))
+    result_area = float(len(np.where(result == 1)[0]))
+    try:
+        precision = intersection / result_area
+    except(ZeroDivisionError):
+        precision = -1
+    try:
+        recall = intersection / gt_area
+    except(ZeroDivisionError):
+        recall = -1
+    try:
+        jaccard = intersection / (gt_area + result_area - intersection)
+    except(ZeroDivisionError):
+        jaccard = -1
+    return precision, recall, jaccard
 
 
-def workers_in_sample(sample_name, objid):
-    indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return json.load(open('{}worker_ids.json'.format(indir)))
+def TFPNR(result, gt):
+    # True False Positive Negative Rates
+    # as defined in https://en.wikipedia.org/wiki/Sensitivity_and_specificity#Definitions
+    intersection = len(np.where(((result == 1) | (gt == 1)) & (result == gt))[0])
+    gt_area = float(len(np.where(gt == 1)[0]))
+    result_area = float(len(np.where(result == 1)[0]))
 
+    TP = intersection
+    FP = result_area - intersection
+    FN = gt_area - intersection
+    TN = np.product(np.shape(result)) - (gt_area+result_area-intersection)
 
-def get_all_worker_mega_masks_for_sample(sample_name, objid):
-    worker_masks = dict()  # key = worker_id, value = worker mask
-    worker_ids = workers_in_sample(sample_name, objid)
-    for wid in worker_ids:
-        worker_masks[wid] = get_worker_mask(objid, wid)
-    return worker_masks
+    #TPR = TP/float(TP+FN)
+    FPR = FP/float(FP+TN)
+    FNR = FN/float(TP+FN)
+    #TNR = TN/float(TN+FP)
+    #assert TPR+FNR==1 and TNR+FPR==1
 
-
-def precision_and_recall(test_mask, gt_mask):
-    num_intersection = 0.0  # float(len(np.where(test_mask == gt_mask)[0]))
-    num_test = 0.0  # float(len(np.where(test_mask == 1)[0]))
-    num_gt = 0.0  # float(len(np.where(gt_mask == 1)[0]))
-    for i in range(len(gt_mask)):
-        for j in range(len(gt_mask[i])):
-            if test_mask[i][j] == 1 and gt_mask[i][j] == 1:
-                num_intersection += 1
-                num_test += 1
-                num_gt += 1
-            elif test_mask[i][j] == 1:
-                num_test += 1
-            elif gt_mask[i][j] == 1:
-                num_gt += 1
-    return (num_intersection / num_test), (num_intersection / num_gt)
-
-
-def jaccard(test_mask, gt_mask):
-    num_intersection = 0.0  # float(len(np.where(test_mask == gt_mask)[0]))
-    num_test = 0.0  # float(len(np.where(test_mask == 1)[0]))
-    num_gt = 0.0  # float(len(np.where(gt_mask == 1)[0]))
-    for i in range(len(gt_mask)):
-        for j in range(len(gt_mask[i])):
-            if test_mask[i][j] == 1 and gt_mask[i][j] == 1:
-                num_intersection += 1
-                num_test += 1
-                num_gt += 1
-            elif test_mask[i][j] == 1:
-                num_test += 1
-            elif gt_mask[i][j] == 1:
-                num_gt += 1
-    return (num_intersection) / (num_test - num_intersection + num_gt)
+    #return  TPR,TNR#,FNR,TNR,FPR
+    return FPR*100, FNR*100
 
 
 def tiles_to_mask(tile_id_list, tile_to_pix_dict, base_mask):
@@ -153,3 +174,41 @@ def get_obj_to_img_id():
             except:
                 print 'Reading object.csv table, skipped row: ', row
     return obj_to_img_id
+
+
+def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False, mode=""):
+    # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
+    if cluster_id != "":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+
+    if os.path.exists('{}MV_prj.json'.format(outdir)):
+        print "MV already exist"
+        return json.load(open('{}MV_prj.json'.format(outdir)))
+
+    if mode == "":
+        num_workers = len(workers_in_sample(sample_name, objid, cluster_id=cluster_id))
+        mega_mask = get_mega_mask(sample_name, objid, cluster_id=cluster_id)
+        MV_mask = np.zeros((len(mega_mask), len(mega_mask[0])))
+        [xs, ys] = np.where(mega_mask > (num_workers / 2))
+        for i in range(len(xs)):
+            MV_mask[xs[i]][ys[i]] = 1
+        with open('{}MV_mask.pkl'.format(outdir), 'w') as fp:
+            fp.write(pickle.dumps(MV_mask))
+
+        if plot:
+            plt.figure()
+            plt.imshow(MV_mask, interpolation="none")  # ,cmap="rainbow")
+            plt.colorbar()
+            plt.savefig('{}MV_mask.png'.format(outdir))
+    elif mode == "compute_pr_only":
+        MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+
+    # Computing MV PRJ against Ground Truth
+    gt = get_gt_mask(objid)
+    p, r, j = faster_compute_prj(MV_mask, gt)
+    with open('{}MV_prj.json'.format(outdir), 'w') as fp:
+        fp.write(json.dumps([p, r, j]))
+
+    return p, r, j

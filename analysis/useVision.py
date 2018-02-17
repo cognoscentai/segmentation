@@ -1,12 +1,10 @@
-from utils import VISION_DIR,\
-    get_pixtiles, get_gt_mask, get_mega_mask, get_MV_mask, show_mask, \
-    precision_and_recall, jaccard, tiles_to_mask, hybrid_dir, vision_baseline_dir
+from utils import get_pixtiles, get_gt_mask, get_MV_mask, \
+    hybrid_dir, vision_baseline_dir, faster_compute_prj
 from collections import defaultdict
 from matplotlib import pyplot as plt
 import numpy as np
 import pickle
 import json
-import os.path
 
 
 def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_thresh=0, objid=None, vision_only=False, DEBUG=False):
@@ -91,8 +89,7 @@ def create_and_store_hybrid_masks(sample_name, objid, k=500, expand_thresh=0.8, 
     plt.close()
 
     gt_mask = get_gt_mask(objid)
-    [p, r] = precision_and_recall(mv_hybrid_mask, gt_mask)
-    j = jaccard(mv_hybrid_mask, gt_mask)
+    p, r, j = faster_compute_prj(mv_hybrid_mask, gt_mask)
     with open('{}/MV_hybrid_prj.json'.format(outdir), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
 
@@ -117,8 +114,7 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
     plt.savefig('{}/vision_with_gt_viz.png'.format(outdir))
     plt.close()
 
-    [p, r] = precision_and_recall(vision_only_mask, gt_mask)
-    j = jaccard(vision_only_mask, gt_mask)
+    p, r, j = faster_compute_prj(vision_only_mask, gt_mask)
     with open('{}vision_prj.json'.format(outdir), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
 
