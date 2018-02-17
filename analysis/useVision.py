@@ -187,13 +187,20 @@ def compile_PR():
 
 if __name__ == '__main__':
     import time
+    import sys
+    from sample_worker_seeds import sample_specs
+    expand_thresh= sys.argv[1]
+    contract_thresh= sys.argv[2]
+    print "Working on expand={}; contract ={}".format(expand_thresh, contract_thresh)
+    sample_lst = sample_specs.keys()
     obj_clusters = clusters()
-    for k in [500]:
-        for objid in [1,2,3]: #range(1, 2):
+    object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
+    for k in range(100,550,50):
+        for objid in object_lst: #range(1, 2):
             print '*****************************************************************'
             print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
-            for batch in ['5workers_rand0']:
+            for batch in sample_lst:
 		if objid in obj_clusters[batch]:
 		    clusts = [""] + [obj_clusters[batch][objid]]
 		else:
@@ -202,7 +209,7 @@ if __name__ == '__main__':
                 #for clust in [""]:
                     print 'Compute vision hybrid for batch', batch, 'clust:', clust
 		    start = time.time()
-                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
+                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh)
 	    	    end = time.time()
 	    	    print "Time elapsed:",end-start
     compile_PR()
