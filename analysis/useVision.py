@@ -1,5 +1,5 @@
 from utils import get_pixtiles, get_gt_mask, get_MV_mask, \
-    hybrid_dir, vision_baseline_dir, faster_compute_prj
+    hybrid_dir, vision_baseline_dir, faster_compute_prj, clusters
 from collections import defaultdict
 from matplotlib import pyplot as plt
 import numpy as np
@@ -70,15 +70,15 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
 
 def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
     agg_vision_mask, _ = get_pixtiles(objid, k)
-    MV_mask = get_MV_mask(sample_name, objid)
+    MV_mask = get_MV_mask(sample_name, objid, cluster_id=clust)
     gt_mask = get_gt_mask(objid)
 
-    clust_name = 'noclust' if clust == "" else 'clust' + str(clust)
-    algo_name = base + '_' + clust_name
+    clust_num = '-1' if clust == "" else str(clust)
+    algo_name = base + '_' + clust_num
 
     if base == 'MV':
         # MV hybrid
-        base_mask = get_MV_mask(sample_name, objid, clust="")
+        base_mask = get_MV_mask(sample_name, objid, cluster_id=clust)
     else:
         print 'Only supports MV base right now'
         raise NotImplementedError
@@ -126,19 +126,59 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
 
 
 def compile_PR():
+    import glob
+    import csv
     # compiles a PRJ table for all hybrid masks
     # dir structure:
-    # pixel_em/batch_name/objid/
-    raise NotImplementedError
+    # pixel_em/batch_name/objid/hybrid/k/(expand_thresh,contract_thresh)/base_clust_hybrid_prj.json
+
+    fname = 'pixel_em/hybrid_prj_table.csv'
+    with open(fname, 'w') as csvfile:
+        fieldnames = ['sample_num', 'objid', 'base_algo', 'clust', 'precision', 'recall', 'jaccard']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for path in glob.glob('pixel_em/*/*/hybrid/*/*/*_hybrid_prj.json'):
+            splits = path.split('/')
+            # print splits
+            batch = splits[1]
+            objid = splits[2].split('j')[1]
+            k = splits[4]
+            threshs = splits[5].split(',')
+            expand_thresh = threshs[0][1:]
+            contract_thresh = threshs[1][:-1]
+            base_algo = '_'.join(splits[6].split('_')[:-3])
+            clust_id = splits[6].split('_')[-3]
+
+            print batch, objid, k, expand_thresh, contract_thresh, base_algo, clust_id
+
+            with open(path, 'r') as fp:
+                [p, r, j] = json.loads(fp.read())
+
+                writer.writerow({
+                    'sample_num': batch,
+                    'objid': objid,
+                    'base_algo': base_algo,
+                    'clust': clust_id,
+                    'precision': p,
+                    'recall': r,
+                    'jaccard': j
+                })
 
 
 if __name__ == '__main__':
-    for k in [500, 100]:
-        for objid in range(1, 48):
+    # TODO: DORIS CLUSTER
+    # obj_clusters = clusters()
+    for k in [500]:
+        for objid in range(1, 2):
             print '*****************************************************************'
             print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
             for batch in ['5workers_rand0']:
+                # TODO: DORIS CLUSTER
+                # for clust in [""] + obj_clusters[batch][objid]:
                 for clust in [""]:
                     print 'Compute vision hybrid for batch', batch, 'clust:', clust
                     create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
+
+    compile_PR()

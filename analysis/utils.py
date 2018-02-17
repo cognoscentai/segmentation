@@ -90,7 +90,27 @@ def get_gt_mask(objid):
     return pickle.load(open('{}gt.pkl'.format(indir)))
 
 
-# glob = to read prj.json files
+def create_objid_to_clustid():
+    from collections import defaultdict
+    clust_ids = defaultdict(list)
+
+    # TODO: DORIS CLUSTER
+    # create and dump dictionary
+    # clust_ids[sample_num][objid] ---> list of clust IDs
+    # for example, clust_ids['5workers_rand0'][1] = [0, 1]
+    raise NotImplementedError
+
+    with open('objid_to_clustid.json', 'w') as fp:
+        fp.write(json.dumps(clust_ids))
+
+
+def clusters(rerun=True):
+    # return all valid cluster ids for a given obj
+    if rerun or not os.path.isfile('objid_to_clustid.json'):
+        create_objid_to_clustid()
+
+    with open('objid_to_clustid.json', 'r') as fp:
+        return json.loads(fp.read())
 
 
 def faster_compute_prj(result, gt):
