@@ -68,36 +68,39 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
     return final_mask
 
 
-def create_and_store_hybrid_masks(sample_name, objid, k=500, expand_thresh=0.8, contract_thresh=0.2):
+def create_and_store_hybrid_masks(sample_name, objid, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
     agg_vision_mask, _ = get_pixtiles(objid, k)
-
-    # MV hybrid
     MV_mask = get_MV_mask(sample_name, objid)
+    gt_mask = get_gt_mask(objid)
+
+    if base == 'MV':
+        # MV hybrid
+        base_mask = get_MV_mask(sample_name, objid)
+    else:
+        print 'Only supports MV base right now'
+        raise NotImplementedError
 
     outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
 
-    mv_hybrid_mask = compute_hybrid_mask(MV_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid)
-    with open('{}/MV_hybrid_mask.pkl'.format(outdir), 'w') as fp:
-        fp.write(pickle.dumps(mv_hybrid_mask))
+    hybrid_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid)
+    with open('{}/{}_hybrid_mask.pkl'.format(outdir, base), 'w') as fp:
+        fp.write(pickle.dumps(hybrid_mask))
 
-    sum_mask = mv_hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + get_gt_mask(objid).astype(int) * 50
+    sum_mask = hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + gt_mask.astype(int) * 50
 
     plt.figure()
     plt.imshow(sum_mask, interpolation="none")  # , cmap="rainbow")
     plt.colorbar()
-    plt.savefig('{}/MV_hybrid_mask.png'.format(outdir))
+    plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, base))
     plt.close()
 
-    gt_mask = get_gt_mask(objid)
-    p, r, j = faster_compute_prj(mv_hybrid_mask, gt_mask)
-    with open('{}/MV_hybrid_prj.json'.format(outdir), 'w') as fp:
+    p, r, j = faster_compute_prj(hybrid_mask, gt_mask)
+    with open('{}/{}_hybrid_prj.json'.format(outdir, base), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
 
 
 def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
     agg_vision_mask, _ = get_pixtiles(objid)
-
-    # MV hybrid
     gt_mask = get_gt_mask(objid)
 
     outdir = vision_baseline_dir(objid, k, include_thresh)
@@ -119,6 +122,10 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
         fp.write(json.dumps([p, r, j]))
 
 
+def compile_PR():
+    raise NotImplementedError
+
+
 if __name__ == '__main__':
     for k in [500, 100]:
         for objid in range(1, 48):
@@ -127,4 +134,4 @@ if __name__ == '__main__':
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
             for batch in ['5workers_rand0']:
                 print 'Compute vision hybrid for batch', batch
-                create_and_store_hybrid_masks(batch, objid, k, expand_thresh=0.8, contract_thresh=0.2)
+                create_and_store_hybrid_masks(batch, objid, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
