@@ -68,14 +68,17 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
     return final_mask
 
 
-def create_and_store_hybrid_masks(sample_name, objid, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
+def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
     agg_vision_mask, _ = get_pixtiles(objid, k)
     MV_mask = get_MV_mask(sample_name, objid)
     gt_mask = get_gt_mask(objid)
 
+    clust_name = 'noclust' if clust == "" else 'clust' + str(clust)
+    algo_name = base + '_' + clust_name
+
     if base == 'MV':
         # MV hybrid
-        base_mask = get_MV_mask(sample_name, objid)
+        base_mask = get_MV_mask(sample_name, objid, clust="")
     else:
         print 'Only supports MV base right now'
         raise NotImplementedError
@@ -83,7 +86,7 @@ def create_and_store_hybrid_masks(sample_name, objid, base='MV', k=500, expand_t
     outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
 
     hybrid_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid)
-    with open('{}/{}_hybrid_mask.pkl'.format(outdir, base), 'w') as fp:
+    with open('{}/{}_hybrid_mask.pkl'.format(outdir, algo_name), 'w') as fp:
         fp.write(pickle.dumps(hybrid_mask))
 
     sum_mask = hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + gt_mask.astype(int) * 50
@@ -91,11 +94,11 @@ def create_and_store_hybrid_masks(sample_name, objid, base='MV', k=500, expand_t
     plt.figure()
     plt.imshow(sum_mask, interpolation="none")  # , cmap="rainbow")
     plt.colorbar()
-    plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, base))
+    plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, algo_name))
     plt.close()
 
     p, r, j = faster_compute_prj(hybrid_mask, gt_mask)
-    with open('{}/{}_hybrid_prj.json'.format(outdir, base), 'w') as fp:
+    with open('{}/{}_hybrid_prj.json'.format(outdir, algo_name), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
 
 
@@ -123,6 +126,9 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
 
 
 def compile_PR():
+    # compiles a PRJ table for all hybrid masks
+    # dir structure:
+    # pixel_em/batch_name/objid/
     raise NotImplementedError
 
 
@@ -133,5 +139,6 @@ if __name__ == '__main__':
             print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
             for batch in ['5workers_rand0']:
-                print 'Compute vision hybrid for batch', batch
-                create_and_store_hybrid_masks(batch, objid, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
+                for clust in [""]:
+                    print 'Compute vision hybrid for batch', batch, 'clust:', clust
+                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)

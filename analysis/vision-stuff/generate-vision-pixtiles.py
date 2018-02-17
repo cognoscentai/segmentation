@@ -134,7 +134,7 @@ def generate_all():
         plt.imshow(mask)
         plt.colorbar()
         # plt.show()
-        plt.savefig('{}/{}/{}.png'.format(OUTDIR, k, img_id))
+        plt.savefig('{}/{}.png'.format(outdir, 'viz_mask'))
         plt.close()
 
 
