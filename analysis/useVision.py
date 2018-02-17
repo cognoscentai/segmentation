@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pickle
 import json
-
+import os
 
 def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_thresh=0, objid=None, vision_only=False, DEBUG=False):
     # objid only for debugging purposes
@@ -70,14 +70,28 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
             plt.close()
     return final_mask
 
+def discrete_cmap(N, base_cmap=None):
+    """Create an N-bin discrete colormap from the specified input map"""
+
+    # Note that if base_cmap is a string or None, you can simply do
+    #    return plt.cm.get_cmap(base_cmap, N)
+    # The following works for string, None, or a colormap instance:
+
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, N))
+    cmap_name = base.name + str(N)
+    return base.from_list(cmap_name, color_list, N)
 
 def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2):
+    outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
+    clust_num = '-1' if clust == "" else str(clust)
+    algo_name = base + '_' + clust_num
+    if os.path.exists('{}/{}_hybrid_prj.json'.format(outdir, algo_name)):
+        print "already ran "+outdir
+        return
     agg_vision_mask, _ = get_pixtiles(objid, k)
     MV_mask = get_MV_mask(sample_name, objid, cluster_id=clust)
     gt_mask = get_gt_mask(objid)
-
-    clust_num = '-1' if clust == "" else str(clust)
-    algo_name = base + '_' + clust_num
 
     if base == 'MV':
         # MV hybrid
@@ -86,16 +100,16 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
         print 'Only supports MV base right now'
         raise NotImplementedError
 
-    outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
 
     hybrid_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=expand_thresh, contract_thresh=contract_thresh, objid=objid)
     with open('{}/{}_hybrid_mask.pkl'.format(outdir, algo_name), 'w') as fp:
         fp.write(pickle.dumps(hybrid_mask))
 
-    sum_mask = hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + gt_mask.astype(int) * 50
+    #sum_mask = hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + gt_mask.astype(int) * 50
+    sum_mask = hybrid_mask.astype(int) * 1 + MV_mask.astype(int) * 2 + gt_mask.astype(int) * 4
 
     plt.figure()
-    plt.imshow(sum_mask, interpolation="none")  # , cmap="rainbow")
+    plt.imshow(sum_mask, interpolation="none",cmap=discrete_cmap(8, 'rainbow'))  # , cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, algo_name))
     plt.close()
@@ -106,19 +120,21 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
 
 
 def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5):
+    outdir = vision_baseline_dir(objid, k, include_thresh)
+    if os.path.exists('{}vision_prj.json'.format(outdir)):
+        print "already ran "+outdir
+        return
     agg_vision_mask, _ = get_pixtiles(objid)
     gt_mask = get_gt_mask(objid)
-
-    outdir = vision_baseline_dir(objid, k, include_thresh)
 
     vision_only_mask = compute_hybrid_mask(gt_mask, agg_vision_mask, expand_thresh=include_thresh, contract_thresh=0, vision_only=True)
     with open('{}/vision_with_gt_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(vision_only_mask))
 
-    sum_mask = vision_only_mask.astype(int) * 5 + gt_mask.astype(int) * 10
+    sum_mask = vision_only_mask.astype(int) * 1 + gt_mask.astype(int) * 2
 
     plt.figure()
-    plt.imshow(sum_mask, interpolation="none")  # , cmap="rainbow")
+    plt.imshow(sum_mask, interpolation="none",cmap=discrete_cmap(4, 'rainbow'))  # , cmap="rainbow")
     plt.colorbar()
     plt.savefig('{}/vision_with_gt_viz.png'.format(outdir))
     plt.close()
@@ -170,9 +186,10 @@ def compile_PR():
 
 
 if __name__ == '__main__':
+    import time
     obj_clusters = clusters()
     for k in [500]:
-        for objid in [2]: #range(1, 2):
+        for objid in [1,2,3]: #range(1, 2):
             print '*****************************************************************'
             print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
@@ -184,6 +201,8 @@ if __name__ == '__main__':
                 for clust in clusts: 
                 #for clust in [""]:
                     print 'Compute vision hybrid for batch', batch, 'clust:', clust
+		    start = time.time()
                     create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2)
-
+	    	    end = time.time()
+	    	    print "Time elapsed:",end-start
     compile_PR()
