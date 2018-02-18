@@ -108,7 +108,7 @@ def create_objid_to_clustid():
             for cluster_id in cluster_ids:
                 if len(best_clust[(best_clust["sample"] == sample) & (best_clust["objid"] == objid) & (best_clust["clust"] == cluster_id)]) == 1:
                     #print sample + ":" + str(objid)+"clust"+str(cluster_id)
-                    clust_ids[sample][int(objid)] = cluster_id
+                    clust_ids[sample][objid] = cluster_id
     with open('objid_to_clustid.json', 'w') as fp:
         fp.write(json.dumps(clust_ids))
 

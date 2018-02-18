@@ -205,17 +205,15 @@ if __name__ == '__main__':
     print 'Clusters:', obj_clusters[obj_clusters.keys()[0]]
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
     for k in range(100, 550, 50):
-        #for objid in object_lst[:22]: 
-	for objid in object_lst[23:]:
-            for batch in sample_lst:
-                if batch != '5workers_rand0':
-                    continue
-                if objid in obj_clusters[batch]:
-                    clusts = [""] + [obj_clusters[batch][objid]]
+        for batch in sample_lst:
+            for objid in object_lst:
+                if str(objid) in obj_clusters[batch]:
+                    clusts = [""] + [obj_clusters[batch][str(objid)]]
+		    print "here",clusts
                 else:
                     clusts = [""]
-                # for clust in clusts:
-                for clust in [""]:
+		print "clusts:",clusts
+                for clust in clusts:
 		    if DEBUG: 
 	            	print 'Compute vision hybrid for batch', batch, 'clust:', clust
                     	start = time.time()
