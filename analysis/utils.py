@@ -9,7 +9,7 @@ import os
 import pickle
 import json
 import  pandas as pd
-
+DEBUG = False
 CURR_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 DATA_DIR = os.path.abspath(os.path.join(CURR_DIR, '..')) + '/data/'
 VISION_DIR = CURR_DIR + 'vision-stuff/'
@@ -201,7 +201,7 @@ def get_obj_to_img_id():
             try:
                 obj_to_img_id[int(row['id'])] = row['image_id']
             except:
-                print 'Reading object.csv table, skipped row: ', row
+                if DEBUG: print 'Reading object.csv table, skipped row: ', row
     return obj_to_img_id
 
 

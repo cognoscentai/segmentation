@@ -17,7 +17,7 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
     intersection_area = defaultdict(float)  # key = v_tile id taken as value of agg_vision_mask[i][j]
     vtile_area = defaultdict(float)  # key = v_tile id taken as value of agg_vision_mask[i][j]
     base_mask_area = 0.0
-    print 'Num unique vision tiles: ', len(np.unique(agg_vision_mask))
+    if DEBUG: print 'Num unique vision tiles: ', len(np.unique(agg_vision_mask))
     for i in range(len(agg_vision_mask)):
         for j in range(len(agg_vision_mask[0])):
             vtile_id = agg_vision_mask[i][j]
@@ -80,6 +80,7 @@ def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_
 
 
 def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500, expand_thresh=0.8, contract_thresh=0.2, rerun_existing=False):
+    print "creating and storing hybrid mask for {}, obj{}, clust{}, k={}".format(sample_name,objid,clust,k)
     outdir = hybrid_dir(sample_name, objid, k, expand_thresh, contract_thresh)
     clust_num = '-1' if clust == "" else str(clust)
     algo_name = base + '_' + clust_num
@@ -186,6 +187,16 @@ if __name__ == '__main__':
     import time
     import sys
     from sample_worker_seeds import sample_specs
+    DEBUG = False
+    '''
+    # For Computing Vision Baseline
+    for k in range(100, 550, 50):
+        for objid in object_lst:  # range(1, 2):
+            if DEBUG:
+                print '*****************************************************************'
+                print 'Compute vision baseline for obj', objid
+            create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
+    '''
     expand_thresh = float(sys.argv[1])
     contract_thresh = float(sys.argv[2])
     print "Working on expand={}; contract={}".format(expand_thresh, contract_thresh)
@@ -194,14 +205,8 @@ if __name__ == '__main__':
     print 'Clusters:', obj_clusters[obj_clusters.keys()[0]]
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
     for k in range(100, 550, 50):
-        if k != 100:
-            continue
-        for objid in object_lst:  # range(1, 2):
-            if objid != 1:
-                continue
-            print '*****************************************************************'
-            print 'Compute vision baseline for obj', objid
-            create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
+        #for objid in object_lst[:22]: 
+	for objid in object_lst[23:]:
             for batch in sample_lst:
                 if batch != '5workers_rand0':
                     continue
@@ -211,9 +216,10 @@ if __name__ == '__main__':
                     clusts = [""]
                 # for clust in clusts:
                 for clust in [""]:
-                    print 'Compute vision hybrid for batch', batch, 'clust:', clust
-                    start = time.time()
-                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=True)
+		    if DEBUG: 
+	            	print 'Compute vision hybrid for batch', batch, 'clust:', clust
+                    	start = time.time()
+                    create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=False)
                     end = time.time()
-                    print "Time elapsed:", end-start
+                    if DEBUG: print "Time elapsed:", end-start
     compile_PR()
