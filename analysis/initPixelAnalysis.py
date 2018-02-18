@@ -122,7 +122,7 @@ plt.close()
 
 ###########################################################
 '''
-
+'''
 #for sample in tqdm(sample_specs.keys()):
 #for objid in object_lst:
 for objid in noClust_obj:
@@ -132,9 +132,9 @@ for objid in noClust_obj:
     do_GT_EM_for(sample, objid, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=True)
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
-
+'''
 best_clust = pd.read_csv("best_clust_picking.csv")
-for objid in object_lst:
+for objid in object_lst[::-1]:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for cluster_id in cluster_ids:
         #worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
@@ -163,7 +163,6 @@ for objid in object_lst:
     print sample + ":" + str(objid)
     GroundTruth_doM_once(sample, objid, cluster_id="", algo="GTLSA", exclude_isovote=False, rerun_existing=False)
     GroundTruth_doM_once(sample, objid, cluster_id="", algo="GTLSA", exclude_isovote=True, rerun_existing=False)
-
 # then do all the clustered objects
 #for objid in list(clust_df.objid.unique()):
 for objid in object_lst:

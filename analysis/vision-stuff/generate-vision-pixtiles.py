@@ -2,11 +2,14 @@ import scipy.misc
 # from scipy import misc
 import numpy as np
 from numpy import shape
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import glob
 import os
 import pickle
-
+import time
 
 CURR_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 SEGMENTED_DIR = CURR_DIR + 'color-segmented-images/'
@@ -14,6 +17,14 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.join(CURR_DIR, '..'),  '..')) + 
 OUTDIR = CURR_DIR + 'pixel-vision-tiles'
 if not os.path.isdir(OUTDIR):
     os.makedirs(OUTDIR)
+
+
+def vision_pixtile_dir(img_id, k=500):
+    # TODO: import from utils.py instead of redefining here
+    vdir = '{}/{}/{}'.format(OUTDIR, k, img_id)
+    if not os.path.isdir(vdir):
+        os.makedirs(vdir)
+    return vdir
 
 
 def get_size(fname):
@@ -80,9 +91,9 @@ def get_tiles_from_img(img):
     return mask, tiles
 
 
-def test_tiling_on_raw_img():
+def test_tiling_on_raw_img(k=500):
     # NOTE: this might give disjointed same color pieces into a common tile
-    img = scipy.misc.imread(SEGMENTED_DIR + 'COCO_train2014_000000000127.png')
+    img = scipy.misc.imread(SEGMENTED_DIR + str(k) + '/COCO_train2014_000000000127.png')
     mask, tiles = get_tiles_from_img(img)
     plt.figure()
     plt.imshow(mask)
@@ -94,16 +105,17 @@ def test_tiling_on_raw_img():
 
 def generate_all():
     img_name_to_id = get_img_name_to_id()
-    for img_file in glob.glob(SEGMENTED_DIR + '/*.png'):
+    print "Number of imgs to loop through:",len(glob.glob(SEGMENTED_DIR + '*/*.png'))
+    for img_file in glob.glob(SEGMENTED_DIR + '*/*.png'):
+	start = time.time()
         # if 'COCO_train2014_000000000127' not in img_file:
         #     continue
-        # if 'test' in img_file:
-        #     continue
         img_name = img_file.split('/')[-1].split('.png')[0]
-        test_stripped_name = img_name.split('test_')[1] if 'test' in img_name else img_name  # some test_color_segmented_images too
+        k = img_file.split('/')[-2]
+        # print img_name, k
         img = scipy.misc.imread(img_file)
         # print shape(img)
-        original_img_path = '{}/{}.png'.format(CURR_DIR + 'COCO', test_stripped_name)
+        original_img_path = '{}/{}.png'.format(CURR_DIR + 'COCO', img_name)
         img = scipy.misc.imresize(img, rescale_factor(original_img_path, img_file))
         # print shape(img)
 
@@ -113,22 +125,24 @@ def generate_all():
 
         mask, tiles = get_tiles_from_img(img)
 
-        img_id = img_name_to_id[test_stripped_name]
+        img_id = img_name_to_id[img_name]
 
-        with open('{}/{}{}{}.pkl'.format(OUTDIR, ('test_' if 'test' in img_name else ''), 'pixtile_mask', img_id), 'w') as fp:
+        outdir = vision_pixtile_dir(img_id, k)
+
+        with open('{}/{}.pkl'.format(outdir, 'pixtile_mask'), 'w') as fp:
             fp.write(pickle.dumps(mask))
 
-        with open('{}/{}{}{}.pkl'.format(OUTDIR, ('test_' if 'test' in img_name else ''), 'pixtile_list', img_id), 'w') as fp:
+        with open('{}/{}.pkl'.format(outdir, 'pixtile_list'), 'w') as fp:
             fp.write(pickle.dumps(tiles))
 
         plt.figure()
         plt.imshow(mask)
         plt.colorbar()
         # plt.show()
-        plt.savefig('{}/{}{}.png'.format(OUTDIR, ('test_' if 'test' in img_name else ''), img_id))
+        plt.savefig('{}/{}.png'.format(outdir, 'viz_mask'))
         plt.close()
-
-
+	end = time.time()
+	print "Time Elapsed:",end-start
 if __name__ == '__main__':
     # test_tiling_on_raw_img()
     generate_all()

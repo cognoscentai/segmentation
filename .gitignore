@@ -9,3 +9,7 @@ analysis/cluster_img/
 ipynb/test_pInT_pNotInT/
 analysis/pixel_em.zip
 *.zip
+analysis/objid_to_clustid.json
+analysis/vision-stuff/color-segmented-images/
+analysis/vision-stuff/pixel-vision-tiles/
+
