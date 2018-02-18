@@ -106,11 +106,12 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
     #sum_mask = hybrid_mask.astype(int) * 5 + MV_mask.astype(int) * 20 + gt_mask.astype(int) * 50
     sum_mask = hybrid_mask.astype(int) * 1 + MV_mask.astype(int) * 2 + gt_mask.astype(int) * 4
 
-    plt.figure()
-    plt.imshow(sum_mask, interpolation="none", cmap=discrete_cmap(8, 'rainbow'))  # , cmap="rainbow")
-    plt.colorbar()
-    plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, algo_name))
-    plt.close()
+    if DEBUG:
+	plt.figure()
+   	plt.imshow(sum_mask, interpolation="none", cmap=discrete_cmap(8, 'rainbow'))  # , cmap="rainbow")
+    	plt.colorbar()
+    	plt.savefig('{}/{}_hybrid_mask.png'.format(outdir, algo_name))
+    	plt.close()
 
     p, r, j = faster_compute_prj(hybrid_mask, gt_mask)
     with open('{}/{}_hybrid_prj.json'.format(outdir, algo_name), 'w') as fp:
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     import time
     import sys
     from sample_worker_seeds import sample_specs
-    DEBUG = False
+    DEBUG = False 
     '''
     # For Computing Vision Baseline
     for k in range(100, 550, 50):
@@ -197,25 +198,31 @@ if __name__ == '__main__':
                 print 'Compute vision baseline for obj', objid
             create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
     '''
-    expand_thresh = float(sys.argv[1])
-    contract_thresh = float(sys.argv[2])
-    print "Working on expand={}; contract={}".format(expand_thresh, contract_thresh)
+    batch = sys.argv[1]
+    #expand_thresh = float(sys.argv[2])
+    #contract_thresh = float(sys.argv[3])
+    ec_threshs=[(0.6,0.4),(0.7,0.3),(0.8,0.2),(0.9,0.1)]
     sample_lst = sample_specs.keys()
     obj_clusters = clusters()
     if DEBUG: print 'Clusters:', obj_clusters[obj_clusters.keys()[0]]
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-    for k in range(100, 550, 50):
-        for batch in sample_lst:
+    #for k in range(100, 550, 50):
+    for k in range(100, 550, 100):
+	for ec_thresh in ec_threshs:
+	    expand_thresh = ec_thresh[0]
+	    contract_thresh = ec_thresh[1]
+            #for batch in sample_lst:
             for objid in object_lst:
                 if str(objid) in obj_clusters[batch]:
                     clusts = [""] + [obj_clusters[batch][str(objid)]]
                 else:
                     clusts = [""]
                 for clust in clusts:
-		    if DEBUG: 
-	            	print 'Compute vision hybrid for batch', batch, 'clust:', clust
-                    	start = time.time()
+   		    if DEBUG: 
+	                print 'Compute vision hybrid for batch', batch, 'clust:', clust
+                        start = time.time()
                     create_and_store_hybrid_masks(batch, objid, clust=clust, base='MV', k=k, expand_thresh=expand_thresh, contract_thresh=contract_thresh, rerun_existing=False)
-                    end = time.time()
-                    if DEBUG: print "Time elapsed:", end-start
+                    if DEBUG:
+	    	        end = time.time()
+                        print "Time elapsed:", end-start
     compile_PR()
