@@ -1,112 +1,151 @@
 import pickle as pkl
-from PixelEM import *
-def greedy(sample,objid,algo,cluster_id="",est_type="",output="prj",rerun_existing=False):    
-    if cluster_id!="":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid,cluster_id)
+import json
+from utils import PIXEL_EM_DIR, get_gt_mask, get_all_worker_tiles, get_mega_mask, \
+    num_workers, faster_compute_prj
+import os.path
+import numpy as np
+from collections import defaultdict
+import tqdm
+# from PixelEM import *
+
+
+def process_all_worker_tiles(sample, objid, algo, cluster_id="", DEBUG=False):
+    '''
+    returns:
+        1) num_votes[tid] = number of votes given to tid
+        2) tile_area[tid] = area of tile tid
+        3) tile_int_area[tid] = est_int_area for tid under given algo
+            algo can be 'worker_fraction', 'ground_truth', 'GTLSA' etc.
+    '''
+
+    if cluster_id != "":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
-    if (not rerun_existing) and  os.path.exists('{}{}greedy_prj.json'.format(outdir,algo)):
-        print '{}{}greedy_prj.json'.format(outdir,algo)+" already exist, read from file"
-        p,r,j = json.load(open('{}{}greedy_prj.json'.format(outdir,algo)))	
-        return p,r,j
-    tiles = pkl.load(open("{}tiles.pkl".format(outdir)))
-    gt = get_gt_mask(objid)
-    if est_type=="ground_truth":
-        #using ground truth ia for testing purposes
-        gt_idxs = set(zip(*np.where(gt)))
-    elif est_type=="worker_fraction":
-        worker_mask = pkl.load(open("{}voted_workers_mask.pkl".format(outdir)))	
-	Nworkers = float(sample.split("workers")[0])
-    else:
-        log_probability_in_mask=pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir,algo)))
-        log_probability_not_in_mask =pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir,algo)))
 
-    candidate_tiles_lst = []
-    metric_lst = []
-    ia_lst = []
-    picked_tiles = []
-    GT_area  = 0. #sum of intersection areas of all tiles
-    total_intersection_area = 0. 
-    total_outside_area = 0. 
+    if algo not in ['ground_truth', 'worker_fraction']:
+        # for ground_truth, worker_fraction don't need to do anything, already computed by default
+        log_probability_in_mask = pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir, algo)))
+        log_probability_not_in_mask = pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir, algo)))
 
-    # compute I/O metric for all tiles
-    #for tile in tiles[1:]:#ignore the large outside tile
-    for tile in tiles[1:]:
-        if est_type=="ground_truth":
-            intersection_area = float(len(gt_idxs.intersection(set(tile)))) # exact intersection areas
+    pixels_in_tile = get_all_worker_tiles(sample, objid, cluster_id)
+    gt_mask = get_gt_mask(objid)
+    worker_mega_mask = get_mega_mask(sample, objid)
+    nworkers = num_workers(sample, objid, cluster_id)
+    # mv_mask = get_MV_mask(sample, objid)
+    if DEBUG:
+        print 'Num tiles: ', len(pixels_in_tile)
+
+    num_votes = defaultdict(int)
+    tile_area = defaultdict(int)
+    tile_int_area = defaultdict(lambda: defaultdict(int))
+
+    pix_frequency = defaultdict(int)
+
+    num_pixs_total = 0
+    for tid in range(len(pixels_in_tile)):
+        pixs = pixels_in_tile[tid]
+        # num_votes[tid] = worker_mega_mask[next(iter(pixs))]
+        num_votes[tid] = worker_mega_mask[pixs[0]]
+        tile_area[tid] = len(pixs)
+        if algo == 'ground_truth':
+            tile_int_area = 0
+            for pix in pixs:
+                tile_int_area[tid] += int(gt_mask[pix])
+        elif algo == 'worker_fraction':
+            tile_int_area[tid] = (float(num_votes[tid]) / float(nworkers)) * tile_area[tid]
         else:
-	    if est_type =="worker_fraction":
-		norm_pInT = len(worker_mask[list(tile)[0]])/Nworkers
-            else:
-	        pInT = np.exp(log_probability_in_mask[list(tile)[0]]) # all pixels in same tile should have the same pInT
-   	        pNotInT = np.exp(log_probability_not_in_mask[list(tile)[0]])
-                if pInT+pNotInT!=0:
-                    norm_pInT = pInT/(pNotInT+pInT) #normalized pInT
-                else: #weird bug for object 18 isoGT case
-                    norm_pInT = 1.
-            assert norm_pInT<=1 and norm_pInT>=0
-            intersection_area = float(len(tile) * norm_pInT) #estimated intersection area
-        outside_area = float(len(tile) - intersection_area)
-        GT_area+= intersection_area
-        if outside_area!=0:
-            metric = intersection_area/outside_area
-            metric_lst.append(metric)
-            candidate_tiles_lst.append(tile)
-            ia_lst.append(intersection_area)
-        else:# if outside area =0, then tile completely encapsulated by GT, it must be included in picked tiles
-            #print "here"
-            picked_tiles.append(tile)
-            total_intersection_area += intersection_area
-            total_outside_area += outside_area
+            # for ground_truth, worker_fraction don't need to do anything, already computed by default
+            pInT = np.exp(log_probability_in_mask[pixs[0]])  # all pixels in same tile should have the same pInT
+            pNotInT = np.exp(log_probability_not_in_mask[pixs[0]])
+            if pInT + pNotInT != 0:
+                norm_pInT = pInT / (pNotInT+pInT)  # normalized pInT
+            else:  # weird bug for object 18 isoGT case
+                norm_pInT = 1.
+            assert norm_pInT <= 1 and norm_pInT >= 0
+            tile_int_area[tid] = norm_pInT * tile_area[tid]
 
-    assert len(metric_lst)==len(candidate_tiles_lst)==len(ia_lst)
-    srt_decr_idx = np.argsort(metric_lst)[::-1] # sorting from largest to smallest metric_lst
-    #print np.array(metric_lst)[srt_decr_idx]
-    jaccard_lst = []
-#     if total_area!=0:
-#         print "here"
-#         prev_jac = ia_cum / total_area
-#     else:
-#         prev_jac = -10000.
-    if (total_outside_area+GT_area)!=0:
-    	prev_jacc = total_intersection_area/(total_outside_area+GT_area)
-    else: 
-	prev_jacc = -10000.
-#    print ia_cum,total_area
-#    print prev_jac
-    for tidx  in srt_decr_idx:
-        tile = candidate_tiles_lst[tidx]
-        ia = ia_lst[tidx]
-        #if ia!=0:
-        temp_new_out_area = total_outside_area + len(tile) - ia
-        temp_new_in_area = total_intersection_area + ia 
-        jaccard = (temp_new_in_area) / (temp_new_out_area + GT_area)
-        if jaccard >= prev_jacc:
-            prev_jacc = jaccard
-            total_outside_area = temp_new_out_area
-            total_intersection_area = temp_new_in_area
-            picked_tiles.append(tile)
-        else: # stop when jaccard starts decreasing after the addition of a tile
-            break
-            #continue #for debugging purposes to see how jaccard_lst evolves, technically should break here
+    if DEBUG:
+        print 'Max number of tiles any pixel belongs to: ', max(pix_frequency.values())
+        print 'Height x width of gt_mask = {}, num pixs accounted for: {}'.format(
+            len(gt_mask)*len(gt_mask[0]), num_pixs_total)
 
-    #populate final img with tiles in picked tiles
-    
+    return num_votes, tile_area, tile_int_area
+
+
+def run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False):
+    '''
+    input:
+        tile_area[tid], tile_int_area[tid]
+    output:
+        1) sorted_order_tids = [tid1, tid2, ...]  # decreasing order of I/O
+        2) tile_added = {tid: bool}  # tile included or not
+        3) est_jacc_list = [estj1, estj2, ...]  # estimated jaccard after each tile
+    '''
+
+    GT_area = sum(tile_int_area.values())
+    completely_contained_tid_list = [tid for tid in tile_area.keys() if tile_area[tid] == tile_int_area[tid]]
+    tids_not_completely_contained = [tid for tid in tile_area.keys() if tile_area[tid] != tile_int_area[tid]]
+    sorted_order_tids = completely_contained_tid_list + sorted(
+        tids_not_completely_contained,
+        key=(lambda x: (float((tile_int_area[x])) / float(tile_area[x] - tile_int_area[x]))),
+        reverse=True
+    )
+    tile_added = defaultdict(bool)
+    est_jacc_list = []
+
+    curr_total_int_area = 0.0
+    curr_total_out_area = 0.0
+    curr_jacc = 0.0
+    for tid in sorted_order_tids:
+        IA = tile_int_area[tid]
+        OA = tile_area[tid] - IA
+        new_jacc_if_added = float(curr_total_int_area + IA) / float(curr_total_out_area + OA + GT_area)
+        if DEBUG:
+            print 'IA: {}, OA: {}'.format(IA, OA)
+            print curr_jacc, new_jacc_if_added
+        if new_jacc_if_added >= curr_jacc:
+            # add tile if it improves jaccard
+            tile_added[tid] = True
+            curr_total_int_area += IA
+            curr_total_out_area += OA
+            curr_jacc = new_jacc_if_added
+        est_jacc_list.append(curr_jacc)
+
+    return sorted_order_tids, tile_added, est_jacc_list
+
+
+def greedy(sample, objid, algo, cluster_id="", output="prj", rerun_existing=False):
+    if cluster_id != "":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
+
+    if (not rerun_existing) and os.path.exists('{}{}greedy_prj.json'.format(outdir, algo)):
+        print '{}{}greedy_prj.json'.format(outdir, algo) + " already exist, read from file"
+        p, r, j = json.load(open('{}{}greedy_prj.json'.format(outdir, algo)))
+        return p, r, j
+
+    num_votes, tile_area, tile_int_area = process_all_worker_tiles(sample, objid, algo, cluster_id, DEBUG=False)
+    sorted_order_tids, tile_added, est_jacc_list = run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False)
+
+    pixels_in_tile = get_all_worker_tiles(sample, objid, cluster_id)
+    gt = get_gt_mask(objid)
     gt_est_mask = np.zeros_like(gt)
-    for t in picked_tiles:
-        for tidx in t:
-            gt_est_mask[tidx]=1
-    # pkl.dump(open('{}{}gt_est_mask_greedy.pkl'.format(outdir,algo),'w'))
-    if output=="mask":
-	return gt_est_mask
+    for tid in sorted_order_tids:
+        if tile_added[tid]:
+            for pix in pixels_in_tile[tid]:
+                gt_est_mask[pix] = 1
+
+    if output == "mask":
+        return gt_est_mask
     elif output == "prj":
         [p, r, j] = faster_compute_prj(gt_est_mask, gt)
-	with open('{}{}greedy_prj.json'.format(outdir,algo), 'w') as fp:
+        with open('{}{}greedy_prj.json'.format(outdir, algo), 'w') as fp:
             fp.write(json.dumps([p, r, j]))
-	if j<=0.5: # in the case where we are aggregating a semantic error cluster 
-	    pkl.dump(gt_est_mask,open('{}{}gt_est_mask_greedy.pkl'.format(outdir,algo),'w')) 
-        return p,r,j
-
+        if j <= 0.5:  # in the case where we are aggregating a semantic error cluster
+            pkl.dump(gt_est_mask, open('{}{}gt_est_mask_greedy.pkl'.format(outdir, algo), 'w'))
+        return p, r, j
 
 
 if __name__ == '__main__':
@@ -114,78 +153,77 @@ if __name__ == '__main__':
     from sample_worker_seeds import sample_specs
     sample_lst = sample_specs.keys()
 
-    import pandas as pd 
+    import pandas as pd
 
+    df_data = []
+    for sample in tqdm(sample_specs.keys()):
+        for objid in object_lst:
+            p, r, j = greedy(sample, objid, "ground_truth")
+            df_data.append([sample, objid, "ground truth", p, r, j])
+            print sample, objid, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
+    df.to_csv("greedy_result_ground_truth.csv", index=None)
+
+    df_data = []
+    for sample in tqdm(sample_specs.keys()):
+        for objid in object_lst:
+            p, r, j = greedy(sample, objid, "worker_fraction")
+            df_data.append([sample, objid, "worker fraction", p, r, j])
+            print sample, objid, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
+    df.to_csv("greedy_result_worker_fraction.csv", index=None)
 
     '''
     df_data = []
-    for sample in tqdm(sample_specs.keys()):
-        for objid in object_lst:
-            p,r,j = greedy(sample,objid,"","ground_truth")
-            df_data.append([sample,objid,"ground truth",p,r,j])
-            print sample,objid,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-    df.to_csv("greedy_result_ground_truth.csv",index=None)
-    
-    df_data = []
-    for sample in tqdm(sample_specs.keys()):
-        for objid in object_lst:
-            p,r,j = greedy(sample,objid,"","worker_fraction")
-            df_data.append([sample,objid,"worker fraction",p,r,j])
-            print sample,objid,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-    df.to_csv("greedy_result_worker_fraction.csv",index=None)
-    ''' 
-    df_data = []
-    #for sample in tqdm(sample_specs.keys()[::-1]):
+    # for sample in tqdm(sample_specs.keys()[::-1]):
     import sys
     idx = int(sys.argv[1])
     sample = sample_specs.keys()[idx]
     clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-    noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
+    noClust_obj = [obj for obj in object_lst if obj not in clust_df.objid.unique()]
     for objid in object_lst:
     #for objid in noClust_obj:
-        for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
-	    p,r,j = greedy(sample,objid,algo)
-	    df_data.append([sample,objid,algo,p,r,j])
-	    print sample,objid,algo,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','p','r','j'])
-    df.to_csv("greedy_result_{}.csv".format(idx))	
-    
-        
+        for algo in ['basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
+            p, r, j = greedy(sample, objid, algo)
+            df_data.append([sample, objid, algo, p, r, j])
+            print sample, objid, algo, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
+    df.to_csv("greedy_result_{}.csv".format(idx))
+
     # With clusters
     df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-    '''
+
     df_data = []
     for sample in tqdm(sample_specs.keys()):
         for objid in object_lst:
-	    cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+            cluster_ids = df[(df["objid"] == objid)].cluster.unique()
             for cluster_id in cluster_ids:
-                worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
-                if len(worker_ids)!=1:
-                    print sample + ":" + str(objid)+"clust"+str(cluster_id)
-            	    p,r,j = greedy(sample,objid,"",cluster_id=cluster_id,est_type="worker_fraction")
-            	    df_data.append([sample,objid,"worker fraction",cluster_id,p,r,j])
-            	    print sample,objid,cluster_id,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
-    df.to_csv("withClust_greedy_result_worker_fraction.csv",index=None)	
+                worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
+                if len(worker_ids) != 1:
+                    print sample + ":" + str(objid) + "clust" + str(cluster_id)
+                    p, r, j = greedy(sample, objid, "worker_fraction", cluster_id=cluster_id)
+                    df_data.append([sample, objid, "worker fraction", cluster_id, p, r, j])
+                    print sample, objid, cluster_id, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'cluster_id', 'p', 'r', 'j'])
+    df.to_csv("withClust_greedy_result_worker_fraction.csv", index=None)
     '''
+
     '''
     # Takes about 2.5~3hrs to run
     df_data = []
-    #for sample in tqdm(sample_specs.keys()[::-1]):
+    # for sample in tqdm(sample_specs.keys()[::-1]):
     import sys
     idx = int(sys.argv[1])
     sample = sample_specs.keys()[idx]
     for objid in object_lst:
-	cluster_ids = df[(df["objid"]==objid)].cluster.unique()
+        cluster_ids = df[(df["objid"] == objid)].cluster.unique()
         for cluster_id in cluster_ids:
-            worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
-	    if len(worker_ids)!=1:
-                for algo in ['basic','GT','isoGT','GTLSA','isoGTLSA']:
-            	    p,r,j = greedy(sample,objid,algo,cluster_id)
-            	    df_data.append([sample,objid,algo,cluster_id,p,r,j])
-            	    print sample,objid,algo,cluster_id,p,r,j
-    df = pd.DataFrame(df_data,columns=['sample','objid','algo','cluster_id','p','r','j'])
+            worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
+            if len(worker_ids) != 1:
+                for algo in ['basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
+                    p, r, j = greedy(sample, objid, algo, cluster_id)
+                    df_data.append([sample, objid, algo, cluster_id, p, r, j])
+                    print sample, objid, algo, cluster_id, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'cluster_id', 'p', 'r', 'j'])
     df.to_csv("withClust_greedy_result_{}.csv".format(idx))
     '''

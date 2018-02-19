@@ -49,6 +49,14 @@ def show_mask(mask, figname=None):
     plt.close()
 
 
+def get_all_worker_tiles(sample, objid, cluster_id=""):
+    if cluster_id != "":
+        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
+    else:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
+    return pickle.load(open("{}tiles.pkl".format(outdir)))
+
+
 def get_mega_mask(sample_name, objid, cluster_id=""):
     if cluster_id != "":
         indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
@@ -63,6 +71,11 @@ def workers_in_sample(sample_name, objid, cluster_id=""):
     else:
         indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     return json.load(open('{}worker_ids.json'.format(indir)))
+
+
+def num_workers(sample, objid, cluster_id=""):
+    # return total number of workers for given cluster
+    return len(workers_in_sample)(sample, objid, cluster_id)
 
 
 def get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=""):
@@ -107,7 +120,7 @@ def create_objid_to_clustid():
             cluster_ids = df[(df["objid"] == objid)].cluster.unique()
             for cluster_id in cluster_ids:
                 if len(best_clust[(best_clust["sample"] == sample) & (best_clust["objid"] == objid) & (best_clust["clust"] == cluster_id)]) == 1:
-                    #print sample + ":" + str(objid)+"clust"+str(cluster_id)
+                    # print sample + ":" + str(objid)+"clust"+str(cluster_id)
                     clust_ids[sample][objid] = cluster_id
     with open('objid_to_clustid.json', 'w') as fp:
         fp.write(json.dumps(clust_ids))
@@ -201,7 +214,8 @@ def get_obj_to_img_id():
             try:
                 obj_to_img_id[int(row['id'])] = row['image_id']
             except:
-                if DEBUG: print 'Reading object.csv table, skipped row: ', row
+                if DEBUG:
+                    print 'Reading object.csv table, skipped row: ', row
     return obj_to_img_id
 
 
