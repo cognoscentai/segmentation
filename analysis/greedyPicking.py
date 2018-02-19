@@ -154,8 +154,8 @@ if __name__ == '__main__':
     import time
     import sys
     import pandas as pd
-    DEBUG = False 
-    '''
+    DEBUG = False
+    ''' 
     df_data = []
     for sample in sample_specs.keys():
         for objid in object_lst:
@@ -169,29 +169,13 @@ if __name__ == '__main__':
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
     '''
-    obj_clusters = clusters()
-    df_data = []
-    idx = int(sys.argv[1])
-    sample = sample_specs.keys()[idx]
-    #for sample in sample_specs.keys():
-    if True:
-        for objid in object_lst:
-	    if str(objid) in obj_clusters[sample]:
-                clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
-            else:
-                clusts = ["-1"]
-	    for clust in clusts: 
-            	p, r, j = greedy(sample, objid, "worker_fraction",cluster_id=clust,rerun_existing=True)
-            	df_data.append([sample, objid, "worker fraction", p, r, j])
-            	print 'worker_fraction', sample, objid, clust, p, r, j
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
-    df.to_csv("greedy_result_worker_fraction.csv", index=None)
-   
+    
     # Takes about 2.5~3hrs to run
     obj_clusters = clusters()
     df_data = []
     idx = int(sys.argv[1])
-    sample = sample_specs.keys()[idx]    
+    sample = sample_specs.keys()[idx]   
+    if DEBUG: start = time.time() 
     for objid in object_lst:
         if str(objid) in obj_clusters[sample]:
             clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
@@ -199,8 +183,12 @@ if __name__ == '__main__':
             clusts = ["-1"]
         for clust in clusts:
 	    for algo in ["worker_fraction",'basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
-            p, r, j = greedy(sample, objid, algo,cluster_id=clust,rerun_existing=False)
-            df_data.append([sample, objid, algo, clust, p, r, j])
-            print algo, sample, objid, clust, p, r, j
+                p, r, j = greedy(sample, objid, algo,cluster_id=clust,rerun_existing=False)
+                df_data.append([sample, objid, algo, clust, p, r, j])
+                if DEBUG: print algo, sample, objid, clust, p, r, j
+    if DEBUG:
+	end = time.time()
+	print "Time Elapsed:",end-start
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo','clust', 'p', 'r', 'j'])
-    df.to_csv("greedy_result_{}.csv".format(idx), index=None) 
+    df.to_csv("greedy_result_{}.csv".format(idx), index=None)
+     
