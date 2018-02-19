@@ -152,6 +152,7 @@ if __name__ == '__main__':
     # object_lst = [1]
     from sample_worker_seeds import sample_specs
     import time
+    import sys
     import pandas as pd
     DEBUG = False 
     '''
@@ -170,72 +171,36 @@ if __name__ == '__main__':
     '''
     obj_clusters = clusters()
     df_data = []
-    for sample in sample_specs.keys():
+    idx = int(sys.argv[1])
+    sample = sample_specs.keys()[idx]
+    #for sample in sample_specs.keys():
+    if True:
         for objid in object_lst:
 	    if str(objid) in obj_clusters[sample]:
                 clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
             else:
                 clusts = ["-1"]
 	    for clust in clusts: 
-            	p, r, j = greedy(sample, objid, "worker_fraction",cluster_id=clust)
+            	p, r, j = greedy(sample, objid, "worker_fraction",cluster_id=clust,rerun_existing=True)
             	df_data.append([sample, objid, "worker fraction", p, r, j])
             	print 'worker_fraction', sample, objid, clust, p, r, j
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
     df.to_csv("greedy_result_worker_fraction.csv", index=None)
-    
-    '''
-    df_data = []
-    # for sample in tqdm(sample_specs.keys()[::-1]):
-    import sys
-    idx = int(sys.argv[1])
-    sample = sample_specs.keys()[idx]
-    clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-    noClust_obj = [obj for obj in object_lst if obj not in clust_df.objid.unique()]
-    for objid in object_lst:
-    #for objid in noClust_obj:
-        for algo in ['basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
-            p, r, j = greedy(sample, objid, algo)
-            df_data.append([sample, objid, algo, p, r, j])
-            print sample, objid, algo, p, r, j
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
-    df.to_csv("greedy_result_{}.csv".format(idx))
-    '''
-
-    '''
-    # With clusters
-    df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-
-    df_data = []
-    for sample in tqdm(sample_specs.keys()):
-        for objid in object_lst:
-            cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-            for cluster_id in cluster_ids:
-                worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
-                if len(worker_ids) != 1:
-                    print sample + ":" + str(objid) + "clust" + str(cluster_id)
-                    p, r, j = greedy(sample, objid, "worker_fraction", cluster_id=cluster_id)
-                    df_data.append([sample, objid, "worker fraction", cluster_id, p, r, j])
-                    print sample, objid, cluster_id, p, r, j
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'cluster_id', 'p', 'r', 'j'])
-    df.to_csv("withClust_greedy_result_worker_fraction.csv", index=None)
-    '''
-
-    '''
+   
     # Takes about 2.5~3hrs to run
+    obj_clusters = clusters()
     df_data = []
-    # for sample in tqdm(sample_specs.keys()[::-1]):
-    import sys
     idx = int(sys.argv[1])
-    sample = sample_specs.keys()[idx]
+    sample = sample_specs.keys()[idx]    
     for objid in object_lst:
-        cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-        for cluster_id in cluster_ids:
-            worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
-            if len(worker_ids) != 1:
-                for algo in ['basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
-                    p, r, j = greedy(sample, objid, algo, cluster_id)
-                    df_data.append([sample, objid, algo, cluster_id, p, r, j])
-                    print sample, objid, algo, cluster_id, p, r, j
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'cluster_id', 'p', 'r', 'j'])
-    df.to_csv("withClust_greedy_result_{}.csv".format(idx))
-    '''
+        if str(objid) in obj_clusters[sample]:
+            clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
+        else:
+            clusts = ["-1"]
+        for clust in clusts:
+	    for algo in ["worker_fraction",'basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
+            p, r, j = greedy(sample, objid, algo,cluster_id=clust,rerun_existing=False)
+            df_data.append([sample, objid, algo, clust, p, r, j])
+            print algo, sample, objid, clust, p, r, j
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo','clust', 'p', 'r', 'j'])
+    df.to_csv("greedy_result_{}.csv".format(idx), index=None) 
