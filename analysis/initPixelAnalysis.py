@@ -134,8 +134,10 @@ for objid in noClust_obj:
     do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False)
 '''
 best_clust = pd.read_csv("best_clust_picking.csv")
-for objid in object_lst[::-1]:
+for objid in object_lst:
+    print "objid:",objid
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+    print "cluster_ids:",cluster_ids
     for cluster_id in cluster_ids:
         #worker_ids = np.array(df[(df["objid"]==objid)&(df["cluster"]==cluster_id)].wid)
         #if len(worker_ids)!=1:
