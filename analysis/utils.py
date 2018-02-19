@@ -50,7 +50,7 @@ def show_mask(mask, figname=None):
 
 
 def get_all_worker_tiles(sample, objid, cluster_id=""):
-    if cluster_id != "":
+    if cluster_id != "" and  cluster_id != "-1":
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
@@ -58,7 +58,7 @@ def get_all_worker_tiles(sample, objid, cluster_id=""):
 
 
 def get_mega_mask(sample_name, objid, cluster_id=""):
-    if cluster_id != "":
+    if cluster_id != "" and cluster_id != "-1":
         indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     else:
         indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -66,7 +66,7 @@ def get_mega_mask(sample_name, objid, cluster_id=""):
 
 
 def workers_in_sample(sample_name, objid, cluster_id=""):
-    if cluster_id != "":
+    if cluster_id != "" and  cluster_id != "-1":
         indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     else:
         indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
