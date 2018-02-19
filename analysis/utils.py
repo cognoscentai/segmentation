@@ -75,7 +75,7 @@ def workers_in_sample(sample_name, objid, cluster_id=""):
 
 def num_workers(sample, objid, cluster_id=""):
     # return total number of workers for given cluster
-    return len(workers_in_sample)(sample, objid, cluster_id)
+    return len(workers_in_sample(sample, objid, cluster_id))
 
 
 def get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=""):
