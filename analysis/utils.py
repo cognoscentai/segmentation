@@ -66,7 +66,7 @@ def get_mega_mask(sample_name, objid, cluster_id=""):
 
 
 def workers_in_sample(sample_name, objid, cluster_id=""):
-    if cluster_id != "" and  cluster_id != "-1":
+    if cluster_id != "" and  cluster_id != "-1" and cluster_id != -1:
         indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     else:
         indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
