@@ -151,7 +151,7 @@ for objid in small_obj_list:
         GTLSA(
             sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
             dump_output_at_every_iter=False, compute_PR_every_iter=False,
-            PLOT=False, DEBUG=False)
+            PLOT=False, DEBUG=True)
         # GTLSA(
         #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,

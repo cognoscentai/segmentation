@@ -390,7 +390,7 @@ def estimate_gt_compute_PRJ_against_MV(
 
 def binarySearchDeriveBestThresh(
     sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against,
-    exclude_isovote=False, rerun_existing=False, plot_crossover=True, DEBUG=False
+    exclude_isovote=False, rerun_existing=False, DEBUG=False
 ):
     # binary search for p == r point
     # p and r computed against tiles_to_search_against
@@ -402,11 +402,10 @@ def binarySearchDeriveBestThresh(
     iterations = 0
     epsilon = 0.125
     outdir = tile_em_output_dir(sample_name, objid, cluster_id)
-    if plot_crossover:
-        track = []  # for plotting
 
     if DEBUG:
         # used to compute actual prj
+        track = []  # for plotting
         gt_mask = get_gt_mask(objid)
         tiles = get_all_worker_tiles(sample_name, objid, cluster_id)
 
@@ -427,9 +426,7 @@ def binarySearchDeriveBestThresh(
             gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
             gt_p, gt_r, gt_j = faster_compute_prj(gt_est_mask, gt_mask)
             print "actual prj against GT", gt_p, gt_r, gt_j
-        if plot_crossover:
-            # track.append([thresh, gt_p, gt_r, gt_j])
-            track.append([thresh, p, r, j])
+            track.append([thresh, p, r, j, gt_p, gt_r, gt_j])
             # plt.figure()
             # plt.title("Iter #"+str(iterations))
             # plt.imshow(gt_est_mask)
@@ -438,7 +435,7 @@ def binarySearchDeriveBestThresh(
         thresh = (thresh_min+thresh_max)/2.0
         iterations += 1
 
-    if DEBUG and plot_crossover:
+    if DEBUG:
         # TODO: currently overwritten by different algos and iterations
         track = np.array(track)
         # print track
@@ -448,12 +445,21 @@ def binarySearchDeriveBestThresh(
         ths = track[:, 0][idx]
         ps = track[:, 1][idx]
         rs = track[:, 2][idx]
-        plt.plot(ths, ps, label="p")
-        plt.plot(ths, rs, label="r")
-        plt.plot(track[-1][0], track[-1][1], '^')
+        js = track[:, 3][idx]
+        act_ps = track[:, 4][idx]
+        act_rs = track[:, 5][idx]
+        act_js = track[:, 6][idx]
+        plt.plot(ths, ps, 'o', color='blue', label="p")
+        plt.plot(ths, rs, 'x', color='orange', label="r")
+        plt.plot(ths, js, '-', color='green', label="j")
+        plt.plot(ths, act_ps, '--', color='blue', label="act_p")
+        plt.plot(ths, act_rs, '--', color='orange', label="act_r")
+        plt.plot(ths, act_js, '--', color='green', label="act_j")
+        plt.legend(loc='lower right')
+        plt.plot(track[-1][0], track[-1][1], '^', color='red')
         # print track
         # print track[-1][0], track[-1][1]
-        plt.savefig('{}tmp_crossover.png'.format(outdir))
+        plt.savefig('{}prj_crossover.png'.format(outdir))
         plt.close()
 
     return p, r, j, thresh, gt_est_tiles
