@@ -24,7 +24,7 @@ def process_all_worker_tiles(sample, objid, algo, cluster_id="", DEBUG=False):
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
 
     if algo not in ['ground_truth', 'worker_fraction']:
-        # for ground_truth, worker_fraction don't need to do anything, already computed by default
+        if ''
         log_probability_in_mask = pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir, algo)))
         log_probability_not_in_mask = pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir, algo)))
 
@@ -155,40 +155,43 @@ if __name__ == '__main__':
     import sys
     import pandas as pd
     DEBUG = False
-    ''' 
+
+    # test sample: '25workers_rand0', obj1, 2, 3, 4, 5, 15, 20
+
     df_data = []
     for sample in sample_specs.keys():
         for objid in object_lst:
-	    if DEBUG: start = time.time()
+            if DEBUG:
+                start = time.time()
             p, r, j = greedy(sample, objid, "ground_truth")
-	    if DEBUG:
-		end =  time.time()
-		print "Time Elapsed:",end-start
+            if DEBUG:
+                end = time.time()
+            print "Time Elapsed:", end-start
             df_data.append([sample, objid, "ground truth", p, r, j])
             print 'ground_truth', sample, objid, p, r, j
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
+
     '''
-    
     # Takes about 2.5~3hrs to run
     obj_clusters = clusters()
     df_data = []
     idx = int(sys.argv[1])
-    sample = sample_specs.keys()[idx]   
-    if DEBUG: start = time.time() 
+    sample = sample_specs.keys()[idx]
+    if DEBUG: start = time.time()
     for objid in object_lst:
         if str(objid) in obj_clusters[sample]:
             clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
         else:
             clusts = ["-1"]
         for clust in clusts:
-	    for algo in ["worker_fraction",'basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
+            for algo in ["worker_fraction",'basic', 'GT', 'isoGT', 'GTLSA', 'isoGTLSA']:
                 p, r, j = greedy(sample, objid, algo,cluster_id=clust,rerun_existing=False)
                 df_data.append([sample, objid, algo, clust, p, r, j])
                 if DEBUG: print algo, sample, objid, clust, p, r, j
     if DEBUG:
-	end = time.time()
-	print "Time Elapsed:",end-start
+        end = time.time()
+        print "Time Elapsed:", end-start
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo','clust', 'p', 'r', 'j'])
     df.to_csv("greedy_result_{}.csv".format(idx), index=None)
-     
+    '''
