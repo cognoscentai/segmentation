@@ -462,15 +462,15 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir, mode, it, thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
-    if DEBUG:
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        print qp1, qn1, qp2, qn2
-        print "-->"+str([p, r, j])
-    # compute jaccard between previous and current gt estimation mask
-    [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask, prev_gt_est)
-    if DEBUG:
-        print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
-    prev_gt_est = gt_est_mask
+        if DEBUG:
+            [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            print qp1, qn1, qp2, qn2
+            print "-->"+str([p, r, j])
+        # compute jaccard between previous and current gt estimation mask
+        [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask, prev_gt_est)
+        if DEBUG:
+            print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
+        prev_gt_est = gt_est_mask
     [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
@@ -850,12 +850,12 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_i
             print worker_qualities
             [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
             print "-->"+str([p, r, j])
-    # compute jaccard between previous and current gt estimation mask
-    [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask, prev_gt_est)
-    if DEBUG:
-        print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
-    prev_gt_est = gt_est_mask
-    #Only writing output at the end of all iterations:
+        # compute jaccard between previous and current gt estimation mask
+        [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask, prev_gt_est)
+        if DEBUG:
+            print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
+        prev_gt_est = gt_est_mask
+    # Only writing output at the end of all iterations:
     pickle.dump(gt_est_mask, open('{}{}gt_est_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
     pickle.dump(log_probability_in_mask, open('{}{}p_in_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
     pickle.dump(log_probability_not_in_mask, open('{}{}p_not_in_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
