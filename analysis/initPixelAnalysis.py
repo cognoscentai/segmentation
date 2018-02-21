@@ -137,6 +137,22 @@ for objid in small_obj_list:
         # check for data consistency against pixel version
         sanity_checks(sample, objid, clust_id)
 
+
+print "7. Running tile EM"
+for objid in small_obj_list:
+    cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+    for clust_id in ['-1'] + list(cluster_ids):
+        outdir = tile_and_mask_dir(sample, objid, clust_id)
+        print sample + ':' + str(objid) + ':' + str(clust_id)
+        do_GTLSA_EM_for(
+            sample_name, objid, cluster_id, exclude_isovote=False,
+            dump_output_at_every_iter=False, compute_PR_every_iter=False,
+            PLOT=False, DEBUG=False)
+        do_GTLSA_EM_for(
+            sample_name, objid, cluster_id, exclude_isovote=True,
+            dump_output_at_every_iter=False, compute_PR_every_iter=False,
+            PLOT=False, DEBUG=False)
+
 '''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
