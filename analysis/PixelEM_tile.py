@@ -347,7 +347,7 @@ def do_GTLSA_EM_for(
 
     gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
     [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
-    print 'Final prj:', [p, r, j]
+    if DEBUG: print 'Final prj:', [p, r, j]
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
     pickle.dump(gt_est_tiles, open('{}{}GTLSA_gt_est_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
@@ -422,7 +422,7 @@ def binarySearchDeriveBestThresh(
         else:
             thresh_min = thresh
 
-        if DEBUG:
+        if False:
             print "----Trying threshold:", thresh, "-----"
             print p, r, j, thresh_max, thresh_min
             gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)

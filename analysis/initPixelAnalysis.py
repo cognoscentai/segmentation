@@ -140,9 +140,9 @@ for objid in small_obj_list:
         sanity_checks(sample, objid, clust_id)
 '''
 
-
-from PixelEM_tile import do_GTLSA_EM_for as GTLSA
-small_obj_list=[1,2,4,10,50]
+from PixelEM import do_GTLSA_EM_for
+#from PixelEM_tile import do_GTLSA_EM_for as GTLSA
+small_obj_list=[1,2,4,10]
 print "7. Running tile EM"
 times=[]
 for objid in small_obj_list:
@@ -151,10 +151,11 @@ for objid in small_obj_list:
         outdir = tile_and_mask_dir(sample, objid, clust_id)
         print sample + ':' + str(objid) + ':' + str(clust_id)
 
-        telapsed = GTLSA(
-            sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
-            dump_output_at_every_iter=False, compute_PR_every_iter=False,
-            PLOT=False, DEBUG=False)
+        #telapsed = GTLSA(
+        #    sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
+        #    dump_output_at_every_iter=False, compute_PR_every_iter=False,
+        #    PLOT=False, DEBUG=True)
+        telapsed =do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False,DEBUG=True)
         # GTLSA(
         #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,

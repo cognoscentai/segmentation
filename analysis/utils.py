@@ -47,7 +47,8 @@ def tile_and_mask_dir(sample, objid, clust_id=''):
 
 def tile_em_output_dir(sample, objid, clust_id=''):
     outdir = tile_and_mask_dir(sample, objid, clust_id)
-    outdir += '/tile_output/'
+    outdir +="/"
+    #outdir += '/tile_output/'
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     return outdir
