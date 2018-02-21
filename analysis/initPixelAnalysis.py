@@ -155,7 +155,7 @@ for objid in small_obj_list:
         #    sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
         #    dump_output_at_every_iter=False, compute_PR_every_iter=False,
         #    PLOT=False, DEBUG=True)
-        telapsed =do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False,DEBUG=True)
+        #telapsed =do_GTLSA_EM_for(sample, objid, rerun_existing=False, compute_PR_every_iter=True, exclude_isovote=False,DEBUG=True)
         # GTLSA(
         #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,
