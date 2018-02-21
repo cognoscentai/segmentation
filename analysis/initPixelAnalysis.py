@@ -65,6 +65,7 @@ compute_best_worker_picking()
 obj_clusters = clusters()
 '''
 
+'''
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
@@ -86,6 +87,33 @@ for objid in object_lst:
         if len(worker_ids) != 1:
             print sample + ":" + str(objid)+"clust"+str(cluster_id)
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
+'''
+
+from PixelEM_tile import create_tile_area_map
+from utils import tile_and_mask_dir
+print "6. Creating tile id to area map for all sample-objects"
+
+sample = '25workers_rand0'
+small_obj_list = [1, 2]
+for objid in small_obj_list:
+    cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+    for clust_id in [''] + cluster_ids:
+        outdir = tile_and_mask_dir
+        filepath = "{}/tile_area.pkl".format(outdir)
+    if os.path.exists(filepath):
+        print '{} already exists.'.format(filepath)
+    else:
+        print sample + ":" + str(objid) + ':' + clust_id
+        create_tile_area_map(sample, objid)
+
+for objid in small_obj_list:
+    
+    for cluster_id in cluster_ids:
+        # worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
+        # if len(worker_ids) != 1:
+        print sample + ":" + str(objid)+"clust"+str(cluster_id)
+        create_tile_area_map(sample, objid, cluster_id)
+
 
 '''
 ###########################################################

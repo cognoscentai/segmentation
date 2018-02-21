@@ -8,7 +8,7 @@ import csv
 import os
 import pickle
 import json
-import  pandas as pd
+import pandas as pd
 DEBUG = False
 CURR_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 DATA_DIR = os.path.abspath(os.path.join(CURR_DIR, '..')) + '/data/'
@@ -38,6 +38,13 @@ def vision_baseline_dir(objid, k=500, include_thresh=0.1):
     return vdir
 
 
+def tile_and_mask_dir(sample, objid, clust_id=''):
+    return 'pixel_em/{}/obj{}{}'.format(
+        sample, objid,
+        ('/clust'+clust_id) if clust_id not in ['', '-1', -1] else ''
+    )
+
+
 def show_mask(mask, figname=None):
     plt.figure()
     plt.imshow(mask, interpolation="none")  # ,cmap="rainbow")
@@ -50,27 +57,18 @@ def show_mask(mask, figname=None):
 
 
 def get_all_worker_tiles(sample, objid, cluster_id=""):
-    if cluster_id != "" and  cluster_id != "-1":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
-    else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
-    return pickle.load(open("{}tiles.pkl".format(outdir)))
+    outdir = tile_and_mask_dir(sample, objid, cluster_id)
+    return pickle.load(open("{}/tiles.pkl".format(outdir)))
 
 
 def get_mega_mask(sample_name, objid, cluster_id=""):
-    if cluster_id != "" and cluster_id != "-1":
-        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
-    else:
-        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return pickle.load(open('{}mega_mask.pkl'.format(indir)))
+    indir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    return pickle.load(open('{}/mega_mask.pkl'.format(indir)))
 
 
 def workers_in_sample(sample_name, objid, cluster_id=""):
-    if cluster_id != "" and  cluster_id != "-1" and cluster_id != -1:
-        indir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
-    else:
-        indir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    return json.load(open('{}worker_ids.json'.format(indir)))
+    indir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    return json.load(open('{}/worker_ids.json'.format(indir)))
 
 
 def num_workers(sample, objid, cluster_id=""):
@@ -87,13 +85,10 @@ def get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=""):
 
 
 def get_MV_mask(sample_name, objid, cluster_id=""):
-    if cluster_id != "":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
-    else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if not os.path.exists('{}MV_mask.pkl'.format(outdir)):
+    outdir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    if not os.path.exists('{}/MV_mask.pkl'.format(outdir)):
         compute_PRJ_MV(sample_name, objid, cluster_id)
-    return pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+    return pickle.load(open('{}/MV_mask.pkl'.format(outdir)))
 
 
 def get_worker_mask(objid, worker_id):
@@ -221,13 +216,10 @@ def get_obj_to_img_id():
 
 def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False, mode=""):
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
-    if cluster_id == "" or cluster_id == "-1" or cluster_id == -1:
-	outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    else:
-	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
-    if os.path.exists('{}MV_prj.json'.format(outdir)):
+    outdir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    if os.path.exists('{}/MV_prj.json'.format(outdir)):
         print "MV already exist"
-        return json.load(open('{}MV_prj.json'.format(outdir)))
+        return json.load(open('{}/MV_prj.json'.format(outdir)))
 
     if mode == "":
         num_workers = len(workers_in_sample(sample_name, objid, cluster_id=cluster_id))
@@ -236,21 +228,21 @@ def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False, mode=""):
         [xs, ys] = np.where(mega_mask > (num_workers / 2))
         for i in range(len(xs)):
             MV_mask[xs[i]][ys[i]] = 1
-        with open('{}MV_mask.pkl'.format(outdir), 'w') as fp:
+        with open('{}/MV_mask.pkl'.format(outdir), 'w') as fp:
             fp.write(pickle.dumps(MV_mask))
 
         if plot:
             plt.figure()
             plt.imshow(MV_mask, interpolation="none")  # ,cmap="rainbow")
             plt.colorbar()
-            plt.savefig('{}MV_mask.png'.format(outdir))
+            plt.savefig('{}/MV_mask.png'.format(outdir))
     elif mode == "compute_pr_only":
-        MV_mask = pickle.load(open('{}MV_mask.pkl'.format(outdir)))
+        MV_mask = pickle.load(open('{}/MV_mask.pkl'.format(outdir)))
 
     # Computing MV PRJ against Ground Truth
     gt = get_gt_mask(objid)
     p, r, j = faster_compute_prj(MV_mask, gt)
-    with open('{}MV_prj.json'.format(outdir), 'w') as fp:
+    with open('{}/MV_prj.json'.format(outdir), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
 
     return p, r, j
@@ -358,4 +350,3 @@ def visualize_test_gt_vision_overlay(batch, objid, k, test_mask, outdir=None):
     plt.close()
 
     return zoomed_viz_mask, zoomed_test_mask, zoomed_gt_mask, zoomed_mega_mask
-
