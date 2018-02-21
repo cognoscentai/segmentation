@@ -69,34 +69,40 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
     with open('{}gt.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(mask))
 
-
-def create_mega_mask(objid, worker_ids=[], cluster_id="", PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
+def create_mega_mask(objid, cluster_id="", PLOT=False, sample_name='5workers_rand0', PRINT=False, EXCLUDE_BBG=True):
     img_info, object_tbl, bb_info, hit_info = load_info()
-    # Ji_tbl (bb_info) is the set of all workers that annotated object i
+    # bb_info is the set of all workers that annotated object i
     bb_objects = bb_info[bb_info["object_id"] == objid]
-    outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-    if worker_ids != []:
-        # if no worker ids given, then create gt and masks for all workers who have annotated that object
-        # this is for all workers whos annotation lies within that cluster.
-        bb_objects = bb_info[(bb_info["object_id"] == objid) & (bb_info["worker_id"].isin(worker_ids))]
+    if cluster_id=="" or cluster_id=="-1" or cluster_id==-1:
+        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+    else:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     if EXCLUDE_BBG:
         bb_objects = bb_objects[bb_objects.worker_id != 3]
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
-    # Sampling Data from Ji table
+
     sampleNworkers = sample_specs[sample_name][0]
     if sampleNworkers > 0 and sampleNworkers < len(bb_objects):
         bb_objects = bb_objects.sample(n=sample_specs[sample_name][0], random_state=sample_specs[sample_name][1])
+    worker_ids_in_sample = list(bb_objects["worker_id"])
+    if cluster_id=="" or cluster_id=="-1" or cluster_id==-1:
+        # For the no cluster cases, sampling data from table 
+        worker_ids= worker_ids_in_sample
+    else:
+        clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+        worker_ids_in_cluster = list(clust_df[(clust_df["objid"]==objid)&(clust_df["cluster"]==cluster_id)]["wid"])
+        worker_ids_in_cluster= set(worker_ids_in_cluster)
+        worker_ids_in_sample = set(worker_ids_in_sample)
+        worker_ids = list(worker_ids_in_cluster.intersection(worker_ids_in_sample))
+    with open('{}worker_ids.json'.format(outdir), 'w') as fp:
+        fp.write(json.dumps(worker_ids))
+    # Megamask creation
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
     fname = ORIGINAL_IMG_DIR + img_name + ".png"
     width, height = get_size(fname)
     mega_mask = np.zeros((height, width))
     voted_workers_mask = np.zeros((height, width), dtype=object)
-
-    worker_ids = list(bb_objects["worker_id"])
-    with open('{}worker_ids.json'.format(outdir), 'w') as fp:
-        fp.write(json.dumps(worker_ids))
 
     for wid in worker_ids:
         mask = get_worker_mask(objid, wid)
@@ -108,20 +114,17 @@ def create_mega_mask(objid, worker_ids=[], cluster_id="", PLOT=False, sample_nam
                 voted_workers_mask[x, y] = [wid]
             else:
                 voted_workers_mask[x, y].append(wid)
-
     if PLOT:
         # Visualize mega_mask
         plt.figure()
         plt.imshow(mega_mask, interpolation="none")  # ,cmap="rainbow")
         # plt.imshow(mask, interpolation="none")  # ,cmap="rainbow")
         plt.colorbar()
-        plt.savefig('{}mega_mask.png'.format(outdir))
-
+        #plt.savefig('{}mega_mask.png'.format(outdir))
     with open('{}mega_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(mega_mask))
     with open('{}voted_workers_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(voted_workers_mask))
-
 
 def worker_prob_correct(mega_mask, w_mask, gt_mask, Nworkers, exclude_isovote=False):
     if exclude_isovote:

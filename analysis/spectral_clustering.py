@@ -52,6 +52,7 @@ def run_spectral_clustering(obj,N,PLOT=True):
         for widx in workers_in_cluster:
             obj_worker_cluster.append([obj,worker_lst[widx],ylabel])
     return obj_worker_cluster
+'''
 def generate_worker_sample(clust_df):
     data_df = []
     for sample in sample_specs.keys():
@@ -68,6 +69,7 @@ def generate_worker_sample(clust_df):
     assert len(clust_sample_df)==len(clust_sample_df.objid.unique())*380
     clust_sample_df.to_csv("all_sample_cluster_worker.csv")
     return clust_sample_df
+'''
 if __name__ == '__main__':
     objN_lst = [(1,2),(4,2),(7,2),(8,3),(10,2),(20,5),(15,2),(18,2),(21,2),(22,2),(25,2),(26,2),(27,4),(28,2),(29,3),(30,2),(31,3),(32,2),(33,2),(34,2),(37,2),(40,2),(41,2),(42,2),(47,3)]
     obj_worker_clusters =[]
@@ -76,5 +78,5 @@ if __name__ == '__main__':
         obj_worker_cluster = run_spectral_clustering(objN[0],objN[1])
         obj_worker_clusters.extend(obj_worker_cluster)
     clust_df = pd.DataFrame(obj_worker_clusters,columns=["objid","wid","cluster"])
-    #df.to_csv("spectral_clustering_all_hard_obj.csv",index=None)
-    clust_sample_df=generate_worker_sample(clust_df)
+    clust_df.to_csv("spectral_clustering_all_hard_obj.csv",index=None)
+    #clust_sample_df=generate_worker_sample(clust_df)

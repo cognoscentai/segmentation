@@ -26,20 +26,18 @@ for sample in sample_lst:
 print "Running spectral clustering to preprocess (takes 1~2min) "
 # os.system("python2.7 -i spectral_clustering.py")
 os.system("python2.7 spectral_clustering.py")
-
+'''
 
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-
-
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
 for sample in sample_lst:
     for objid in object_lst:
         cluster_ids = df[(df["objid"] == objid)].cluster.unique()
         for cluster_id in cluster_ids:
-            worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
             print sample + ":" + str(objid) + "; clust:" + str(cluster_id)
-            create_mega_mask(objid, worker_ids=worker_ids, cluster_id=cluster_id, PLOT=False, sample_name=sample)
+            create_mega_mask(objid,cluster_id=cluster_id, PLOT=False, sample_name=sample)
+'''
 mv_prj_vals = []
 for sample in sample_lst:
     for objid in object_lst:
