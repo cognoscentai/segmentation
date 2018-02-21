@@ -325,7 +325,7 @@ def do_GTLSA_EM_for(
             print "Time for mask log prob calculation:", t2-t1
         # gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         p, r, j, thresh, gt_est_tiles = binarySearchDeriveBestThresh(
-            sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, MV_tiles, exclude_isovote=exclude_isovote, rerun_existing=rerun_existing)
+            sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, MV_tiles, exclude_isovote=exclude_isovote, rerun_existing=rerun_existing,DEBUG=DEBUG)
         # Compute PR mask based on the EM estimate mask from every iteration
         if compute_PR_every_iter:
             gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
@@ -400,7 +400,6 @@ def binarySearchDeriveBestThresh(
     p, r = 0, -1
     iterations = 0
     epsilon = 0.125
-
     outdir = tile_em_output_dir(sample_name, objid, cluster_id)
     if plot_crossover:
         track = []  # for plotting
@@ -422,30 +421,34 @@ def binarySearchDeriveBestThresh(
             thresh_min = thresh
         thresh = (thresh_min+thresh_max)/2.0
         iterations += 1
-        if plot_crossover:
-            track.append((thresh, p, r, j))
         if DEBUG:
             print "----Trying threshold:", thresh, "-----"
             print p, r, j, thresh_max, thresh_min
             gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
-            print "actual prj against GT", faster_compute_prj(gt_est_mask, gt_mask)
+	    gt_p,gt_r,gt_j = faster_compute_prj(gt_est_mask, gt_mask)
+            print "actual prj against GT", gt_p,gt_r,gt_j
+            if plot_crossover:
+  		track.append([thresh, gt_p, gt_r, gt_j])
             # plt.figure()
             # plt.title("Iter #"+str(iterations))
             # plt.imshow(gt_est_mask)
             # plt.colorbar()
 
-    if plot_crossover:
+    if DEBUG and plot_crossover:
         # TODO: currently overwritten by different algos and iterations
         track = np.array(track)
+	print track
         plt.figure()
         plt.title('prj_crossover')
-        np.argsort(track[:, 0])
-        ths = track[:, 0]
-        ps = track[:, 1]
-        rs = track[:, 2]
+        idx = np.argsort(track[:, 0])
+        ths = track[:, 0][idx]
+        ps = track[:, 1][idx]
+        rs = track[:, 2][idx]
         plt.plot(ths, ps, label="p")
         plt.plot(ths, rs, label="r")
-        plt.plot(track[-1][1], track[-1][2], '^')
+        plt.plot(track[-1][0], track[-1][1], '^')
+	print track
+	print track[-1][0],track[-1][1]
         plt.savefig('{}tmp_crossover.png'.format(outdir))
         plt.close()
 
