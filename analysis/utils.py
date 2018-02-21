@@ -221,11 +221,10 @@ def get_obj_to_img_id():
 
 def compute_PRJ_MV(sample_name, objid, cluster_id="", plot=False, mode=""):
     # worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid)
-    if cluster_id != "":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    if cluster_id == "" or cluster_id == "-1" or cluster_id == -1:
+	outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
-
+	outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     if os.path.exists('{}MV_prj.json'.format(outdir)):
         print "MV already exist"
         return json.load(open('{}MV_prj.json'.format(outdir)))

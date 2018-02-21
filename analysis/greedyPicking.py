@@ -24,7 +24,7 @@ def process_all_worker_tiles(sample, objid, algo, cluster_id="", DEBUG=False):
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
 
     if algo not in ['ground_truth', 'worker_fraction']:
-        if ''
+        #if ''
         log_probability_in_mask = pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir, algo)))
         log_probability_not_in_mask = pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir, algo)))
 

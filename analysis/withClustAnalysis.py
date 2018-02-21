@@ -25,33 +25,22 @@ def compile_cluster_MV_prj_into_csv():
     MV_df = pd.concat([MV_clust,MV])
     MV_df.to_csv("pixel_em/all_MV_PRJ_table.csv")
     return MV_df
+def compute_best_worker_picking():
+    # pick the best MV performing cluster as the cluster to run
+    # we store -1 for the rest of the unclustered objects 
 
-def best_worker_picking():
-    MV_clust = pd.read_csv("pixel_em/withClust_MV_PRJ_table.csv",index_col=0)
+    MV_clust = pd.read_csv("pixel_em/MV_full_PRJ_table.csv",index_col=0)
     MV_clust["num_workers"] = MV_clust["sample"].apply(lambda x: int(x.split("workers")[0]))
     MV_clust["sample_num"] = MV_clust["sample"].apply(lambda x: int(x.split("rand")[-1]))
     clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-    #pick the cluster with the highest count
-    # clust_df["count"]=clust_df.groupby(['objid','cluster']).transform("count")
-    # clust_df=clust_df.drop('wid',axis=1)
-    # best_clust_df = clust_df.loc[clust_df.groupby(['objid'])["count"].idxmax()]
-    # best_clust_df = best_clust_df.drop(["count"],axis=1)
 
     # pick the cluster with the highest MV
-    best_clust_df = MV_clust.loc[MV_clust.groupby(["sample_num","num_workers","objid"])["MV_jaccard"].idxmax()]
+    best_clust_df = MV_clust.loc[MV_clust.groupby(["sample","objid"])["MV_jaccard"].idxmax()]
     best_clust_df = best_clust_df.drop(['MV_precision','MV_recall','MV_jaccard'],axis=1)
-
-    # Note this does not account for the list of objects that have not been clustered
-    # noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
-    # noClust_df = pd.DataFrame(zip(noClust_obj,list(-1*np.ones_like(noClust_obj))),columns=["objid","clust"])
-    # clust_df = pd.concat([best_clust_df,noClust_df])
     best_clust_df = best_clust_df.rename(columns={'cluster':'clust'})
-    #best_clust contains the best cluster for each object sample. There should be no best clusters that is -1, since that is the unclustered case. 
-    assert len(best_clust_df[best_clust_df["clust"]==-1])==0
-    # There can only be one best cluster for every sample objid 
-    assert int(best_clust_df.groupby(["sample","objid"]).count()["clust"].unique())==1 
+    # There can only be one best cluster for every sample objid
+    assert int(best_clust_df.groupby(["sample","objid"]).count()["clust"].unique())==1
     best_clust_df.to_csv("best_clust_picking.csv")
-    return best_clust_df
 def compile_all_algo_PRJs(ground_truth=False):
     if ground_truth:
 	gt = "_ground_truth"

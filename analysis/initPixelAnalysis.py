@@ -2,6 +2,8 @@ from PixelEM import *
 import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,41,42, 43, 44, 45, 46, 47]
 from sample_worker_seeds import sample_specs
+from utils import clusters
+from withClustAnalysis import compute_best_worker_picking
 sample_lst = sample_specs.keys()
 sample = sys.argv[1]
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
@@ -21,16 +23,14 @@ print "This might take a while (~2hrs)"
 for sample in sample_lst:
     for objid in object_lst:
         print sample + ":" + str(objid)
-        create_mega_mask(objid, PLOT=False, sample_name=sample)
-# Changes start here for the preprocessed cluster
+	create_mega_mask(objid, PLOT=False, sample_name=sample)
 print "Running spectral clustering to preprocess (takes 1~2min) "
-# os.system("python2.7 -i spectral_clustering.py")
-os.system("python2.7 spectral_clustering.py")
+os.system("python2.7 preprocessing.py")
 '''
-
+'''
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
-print "This might take a while (~2hrs)"
+print "This might take a while (~1hrs)"
 for sample in sample_lst:
     for objid in object_lst:
         cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -38,30 +38,32 @@ for sample in sample_lst:
             print sample + ":" + str(objid) + "; clust:" + str(cluster_id)
             create_mega_mask(objid,cluster_id=cluster_id, PLOT=False, sample_name=sample)
 '''
-mv_prj_vals = []
-for sample in sample_lst:
-    for objid in object_lst:
-        print sample + ":" + str(objid)
-        p, r, j = compute_PRJ_MV(sample, objid)
-        mv_prj_vals.append([sample, objid, -1, p, r, j])
-mv_df = pd.DataFrame(mv_prj_vals, columns=["sample", "objid", "clust", "MV_precision", "MV_recall", "MV_jaccard"])
-mv_df.to_csv("pixel_em/MV_PRJ_table.csv")
-
-
+'''
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals = []
-for sample in sample_lst:
+for batch in sample_lst:
     for objid in object_lst:
-        cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-        for cluster_id in cluster_ids:
-            worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
-            if len(worker_ids) != 1:
-                print sample + ":" + str(objid)+";clust"+str(cluster_id)
-                p, r, j = compute_PRJ_MV(sample, objid, cluster_id)
-                mv_prj_vals.append([sample, objid, cluster_id, p, r, j])
+	cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+	if len(cluster_ids)==0: #no cluster case
+            cluster_ids=["-1"]
+        for clust in cluster_ids:
+            print batch + ":" + str(objid)+";clust"+str(clust)
+            if clust=="-1":
+                hydir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, batch, objid)
+            else:
+                hydir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, batch, objid,clust)
+            worker_ids = json.load(open(hydir+"worker_ids.json"))
+            p, r, j = compute_PRJ_MV(batch, objid,cluster_id=clust)
+            mv_prj_vals.append([batch, objid, clust, p, r, j])
 mv_df = pd.DataFrame(mv_prj_vals, columns=["sample", "objid", "clust", "MV_precision", "MV_recall", "MV_jaccard"])
-mv_df.to_csv("pixel_em/withClust_MV_PRJ_table.csv")
-
+mv_df.to_csv("pixel_em/MV_full_PRJ_table.csv")
+'''
+'''
+# pick the best MV performing cluster as the cluster to run
+# we store -1 for the rest of the unclustered objects
+compute_best_worker_picking()
+obj_clusters = clusters()
+'''
 
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
@@ -85,7 +87,7 @@ for objid in object_lst:
             print sample + ":" + str(objid)+"clust"+str(cluster_id)
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
 
-
+'''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
 
