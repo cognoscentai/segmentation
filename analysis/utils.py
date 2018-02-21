@@ -122,6 +122,11 @@ def get_worker_to_tiles_map(sample, objid, cluster_id=''):
     return pickle.load(open('{}/worker_to_tiles.pkl'.format(indir)))
 
 
+def get_MV_tiles(sample, objid, cluster_id=''):
+    indir = tile_and_mask_dir(sample, objid, cluster_id)
+    return pickle.load(open('{}/MV_tiles.pkl'.format(indir)))
+
+
 def create_objid_to_clustid():
     # create and dump dictionary
     # clust_ids[sample_num][objid] ---> list of clust IDs

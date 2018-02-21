@@ -89,7 +89,8 @@ for objid in object_lst:
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
 '''
 
-from PixelEM_tile import create_tile_area_map, create_tile_to_worker_list_map_and_inverse, sanity_checks
+from PixelEM_tile import create_MV_tiles, create_tile_area_map, \
+    create_tile_to_worker_list_map_and_inverse, sanity_checks
 from utils import tile_and_mask_dir
 sample = '25workers_rand0'
 small_obj_list = [1]
@@ -99,6 +100,16 @@ for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for clust_id in ['-1'] + list(cluster_ids):
         outdir = tile_and_mask_dir(sample, objid, clust_id)
+        print sample + ":" + str(objid) + ':' + str(clust_id)
+        ################################################
+        ################### MV tiles ###################
+        ################################################
+        filepath = "{}/MV_tiles.pkl".format(outdir)
+        if os.path.exists(filepath):
+            print '{} already exists.'.format(filepath)
+        else:
+            print 'Creating {}.'.format(filepath)
+            create_MV_tiles(sample, objid, clust_id)
         ################################################
         ############### tile to area map ###############
         ################################################
@@ -106,7 +117,7 @@ for objid in small_obj_list:
         if os.path.exists(filepath):
             print '{} already exists.'.format(filepath)
         else:
-            print sample + ":" + str(objid) + ':' + str(clust_id)
+            print 'Creating {}.'.format(filepath)
             create_tile_area_map(sample, objid, clust_id)
         ################################################
         ### tile to workers and worker to tiles maps ###
@@ -116,7 +127,7 @@ for objid in small_obj_list:
         if os.path.exists(filepath1) and os.path.exists(filepath2):
             print '{} and {} already exist.'.format(filepath1, filepath2)
         else:
-            print sample + ":" + str(objid) + ':' + str(clust_id)
+            print 'Creating {} and {}.'.format(filepath1, filepath2)
             create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
 
         # check for data consistency against pixel version
