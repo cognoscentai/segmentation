@@ -1,10 +1,10 @@
 import json
 import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-metric_keys=[u'P [MV]',u'R [MV]', u'J [MV]', u'P [GT]', u'R [GT]', u'J [GT]', u'P [isoGT]',
+metric_keys=[ u'P [GT]', u'R [GT]', u'J [GT]', u'P [isoGT]',
        u'R [isoGT]', u'J [isoGT]', u'P [GTLSA]', u'R [GTLSA]', u'J [GTLSA]',
        u'P [isoGTLSA]', u'R [isoGTLSA]', u'J [isoGTLSA]', u'P [basic]',
-       u'R [basic]', u'J [basic]']
+       u'R [basic]', u'J [basic]','P [MV]',u'R [MV]', u'J [MV]']
 metric_J= [u'J [MV]', u'J [GT]', u'J [isoGT]', u'J [GTLSA]', u'J [isoGTLSA]', u'J [basic]']
 #include only the "whole" MV PRJ of objects that were unclustered
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
@@ -111,7 +111,8 @@ def filter_best_clust(df,best_clust_df):
     keys  = [u'objid', u'clust', u'num_workers', u'sample_num']
     i1 = df.set_index(keys).index
     i2 = best_clust_df.set_index(keys).index
-    best_clust_no_thresh_df = df[(i1.isin(i2))|(df.clust==-1)]
+    best_clust_no_thresh_df = df[((df.clust!=-1)&(i1.isin(i2))|((df.clust==-1) & (df.objid.isin(noClust_obj))))]
+    #best_clust_no_thresh_df = df[(i1.isin(i2))|(df.clust==-1)]
     # #Check that initially, there was 2~3 clusters in df for every ["num_workers","objid","sample_num","thresh"]
     # df.groupby(["num_workers","objid","sample_num","thresh"]).count()
     # # Now there is only one cluster in the filtered df for every ["num_workers","objid","sample_num","thresh"]
