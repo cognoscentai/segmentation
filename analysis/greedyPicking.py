@@ -24,7 +24,7 @@ def process_all_worker_tiles(sample, objid, algo, cluster_id="", DEBUG=False):
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
 
     if algo not in ['ground_truth', 'worker_fraction']:
-        # for ground_truth, worker_fraction don't need to do anything, already computed by default
+        if ''
         log_probability_in_mask = pkl.load(open("{}{}_p_in_mask_ground_truth.pkl".format(outdir, algo)))
         log_probability_not_in_mask = pkl.load(open("{}{}_p_not_in_ground_truth.pkl".format(outdir, algo)))
 
@@ -153,7 +153,10 @@ if __name__ == '__main__':
     from sample_worker_seeds import sample_specs
     import time
     import pandas as pd
-    DEBUG = False 
+    DEBUG = False
+
+    # test sample: '25workers_rand0', obj1, 2, 3, 4, 5, 15, 20
+
     '''
     df_data = []
     for sample in sample_specs.keys():
