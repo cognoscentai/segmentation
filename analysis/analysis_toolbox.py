@@ -47,7 +47,7 @@ def load_info(eliminate_self_intersection_bb=True):
     object_location = pd.read_csv("object_location.csv")
     object_tbl = object_info.merge(object_location,how="inner",left_on="id",right_on="object_id")
     bb_info = pd.read_csv("bounding_box.csv")
-    bb_info=bb_info[bb_info["worker_id"]!=3]
+    bb_info=bb_info[bb_info["worker_id"]>3]#do not include BB<=3 since they are drawn for testing and wid=3 is ground truth
     if eliminate_self_intersection_bb:
         for bb in bb_info.iterrows():
             bb=bb[1]

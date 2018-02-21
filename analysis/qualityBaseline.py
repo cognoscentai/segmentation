@@ -47,12 +47,12 @@ def compute_img_to_bb_area_ratio(img_name,worker_x_locs,worker_y_locs):
     img_area = width*height
     bb_poly = Polygon(zip(worker_x_locs,worker_y_locs))
     return bb_poly.area/float(img_area)
-#def majority_vote(obj_x_locs,obj_y_locs): 
-#    '''
-#    Jaccard Simmilarity or Overlap Method
-#    used for PASCAL VOC challenge
-#    ''' 
-#    return intersection(obj_x_locs,obj_y_locs)/union(obj_x_locs,obj_y_locs)
+def jaccard(obj_x_locs,obj_y_locs): 
+    '''
+    Jaccard Simmilarity or Overlap Method
+    used for PASCAL VOC challenge
+    ''' 
+    return intersection(obj_x_locs,obj_y_locs)/union(obj_x_locs,obj_y_locs)
 from shapely.geometry import box,Polygon
 def intersection(obj_x_locs,obj_y_locs,debug=False):
     # Compute intersecting area
@@ -221,6 +221,56 @@ def get_size(fname):
     width = im.size[0]
     height = im.size[1]
     return width, height
+
+def compute_self_BBvals(compute_metrics=['simple','area','dist']):
+    #compute_metrics=["Num Points", 'Precision [Self]','Recall [Self]','Jaccard [Self]',"NME [Self]","Area Ratio"]
+    from analysis_toolbox import *
+    from collections import OrderedDict
+    '''
+    Selectively compute metrics and store into computed_my_COCO_BBvals.csv
+    'simple': simple baselines [Point,Size]
+    'area': Area based metrics [Precision, Recall, Jaccard index]
+    'distance': Distance based metrics [MunkresEuclidean]
+    '''
+    if len(compute_metrics)==3: print "Note: It will take about 2 hours to compute all metrics for all workers"
+    #save_db_as_csv(connect=False)
+    #If we are recomputing everything, then load brand new bb_info table
+    img_info,object_tbl,bb_info,hit_info = load_info()
+    ground_truth = pd.read_csv("../data/object_ground_truth.csv")
+    my_BBG  = pd.read_csv("../data/my_ground_truth.csv")
+
+    for bb in tqdm(list(bb_info.iterrows())):
+
+        oid = bb[1]["object_id"]
+        #Image information
+        image_id = int(object_tbl[object_tbl.object_id==oid].image_id)
+        img_name = img_info["filename"][image_id-1]
+
+        bbx_path= bb[1]["x_locs"]
+        bby_path= bb[1]["y_locs"]
+        worker_x_locs,worker_y_locs= process_raw_locs([bbx_path,bby_path])
+        worker_x_locs,worker_y_locs = zip(*list(OrderedDict.fromkeys(zip(worker_x_locs,worker_y_locs))))
+        #Simple Baseline Measures
+        if 'simple' in compute_metrics:
+            bb_info = bb_info.set_value(bb[0],"Num Points",len(worker_x_locs))
+            bb_info = bb_info.set_value(bb[0],"Area Ratio",compute_img_to_bb_area_ratio(img_name,worker_x_locs,worker_y_locs))
+        if ('area' in compute_metrics) or ('dist' in compute_metrics):
+            
+            # Comparing with SELF ground truth
+            my_ground_truth_match = my_BBG[my_BBG.object_id==oid]
+            my_x_locs,my_y_locs =  process_raw_locs([my_ground_truth_match["x_locs"].iloc[0],my_ground_truth_match["y_locs"].iloc[0]])
+            my_x_locs,my_y_locs = zip(*list(OrderedDict.fromkeys(zip(my_x_locs,my_y_locs))))
+            obj_x_locs = [list(worker_x_locs),list(my_x_locs)]
+            obj_y_locs = [list(worker_y_locs),list(my_y_locs)]
+            if ('area' in compute_metrics):
+                bb_info = bb_info.set_value(bb[0],"Jaccard [Self]",jaccard(obj_x_locs,obj_y_locs))
+                bb_info = bb_info.set_value(bb[0],"Precision [Self]",precision(obj_x_locs,obj_y_locs))
+                bb_info = bb_info.set_value(bb[0],"Recall [Self]",recall(obj_x_locs,obj_y_locs))
+    #Drop Unnamed columns (index from rewriting same file)
+    bb_info = bb_info[bb_info.columns[~bb_info.columns.str.contains('Unnamed:')]]
+    # replace all NAN values with -1, these are entries for which we don't have COCO ground truth
+    bb_info = bb_info.fillna(-1)
+    bb_info.to_csv("../data/computed_my_COCO_BBvals.csv")
 
 def compute_my_COCO_BBvals(compute_metrics=['simple','area','dist']):
     compute_metrics=['Precision [COCO]','Recall [COCO]','Jaccard [COCO]',"NME [COCO]","Num Points", 'Precision [Self]','Recall [Self]','Jaccard [Self]',"NME [Self]","Area Ratio"]
