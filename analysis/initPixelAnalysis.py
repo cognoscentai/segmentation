@@ -8,9 +8,10 @@ sample_lst = sample_specs.keys()
 sample = sys.argv[1]
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
-from qualityBaseline import *
-print "generate baseline comparisons"
-compute_self_BBvals(compute_metrics=['simple','area'])
+# from qualityBaseline import *
+# print "generate baseline comparisons"
+# compute_self_BBvals(compute_metrics=['simple','area'])
+
 '''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
@@ -99,6 +100,7 @@ from utils import tile_and_mask_dir
 sample = '25workers_rand0'
 small_obj_list = [1]
 
+'''
 print "6. Creating tile related maps for all sample-objects"
 for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -136,22 +138,24 @@ for objid in small_obj_list:
 
         # check for data consistency against pixel version
         sanity_checks(sample, objid, clust_id)
+'''
 
+from PixelEM_tile import do_GTLSA_EM_for as GTLSA
 
 print "7. Running tile EM"
 for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-    for clust_id in ['-1'] + list(cluster_ids):
+    for clust_id in ['-1']:  # + list(cluster_ids):
         outdir = tile_and_mask_dir(sample, objid, clust_id)
         print sample + ':' + str(objid) + ':' + str(clust_id)
-        do_GTLSA_EM_for(
-            sample_name, objid, cluster_id, exclude_isovote=False,
+        GTLSA(
+            sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
             dump_output_at_every_iter=False, compute_PR_every_iter=False,
             PLOT=False, DEBUG=False)
-        do_GTLSA_EM_for(
-            sample_name, objid, cluster_id, exclude_isovote=True,
-            dump_output_at_every_iter=False, compute_PR_every_iter=False,
-            PLOT=False, DEBUG=False)
+        # GTLSA(
+        #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
+        #     dump_output_at_every_iter=False, compute_PR_every_iter=False,
+        #     PLOT=False, DEBUG=False)
 
 '''
 ###########################################################

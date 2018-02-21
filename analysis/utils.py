@@ -45,6 +45,14 @@ def tile_and_mask_dir(sample, objid, clust_id=''):
     )
 
 
+def tile_em_output_dir(sample, objid, clust_id=''):
+    outdir = tile_and_mask_dir(sample, objid, clust_id)
+    outdir += '/tile_output/'
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    return outdir
+
+
 def show_mask(mask, figname=None):
     plt.figure()
     plt.imshow(mask, interpolation="none")  # ,cmap="rainbow")
@@ -190,9 +198,18 @@ def prj_tile_against_tile(test_tiles, base_tiles, tarea):
             test_area += tile_area
         if tid in base_tiles:
             base_area += tile_area
-    precision = intersection_area / test_area
-    recall = intersection_area / base_area
-    jaccard = intersection_area / union_area
+    try:
+        precision = intersection_area / test_area
+    except(ZeroDivisionError):
+        precision = -1
+    try:
+        recall = intersection_area / base_area
+    except(ZeroDivisionError):
+        recall = -1
+    try:
+        jaccard = intersection_area / union_area
+    except(ZeroDivisionError):
+        jaccard = -1
     return precision, recall, jaccard
 
 

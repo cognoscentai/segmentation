@@ -18,7 +18,7 @@ import os
 from utils import get_gt_mask, get_worker_mask, get_mega_mask, workers_in_sample, get_MV_mask, \
     get_all_worker_mega_masks_for_sample, faster_compute_prj, compute_PRJ_MV, TFPNR, \
     get_all_worker_tiles, tile_and_mask_dir, get_voted_workers_mask, \
-    PIXEL_EM_DIR, num_workers, tiles_to_mask, prj_tile_against_tile, \
+    PIXEL_EM_DIR, num_workers, tiles_to_mask, prj_tile_against_tile, tile_em_output_dir, \
     get_tile_to_area_map, get_tile_to_workers_map, get_worker_to_tiles_map, get_MV_tiles
 
 
@@ -139,6 +139,7 @@ def GTLSAworker_prob_correct(gt_tiles, curr_worker_tiles, tarea, tworkers, Nwork
         area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
         area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
     else:
+        # TODO: investigate further
         print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)"
         gt_areas.extend(ngt_areas)
         area_thresh_gt = np.mean(gt_areas)
@@ -260,7 +261,10 @@ def estimate_gt_from(log_probability_in, log_probability_not_in, thresh=0):
 #     return A_thres
 
 
-def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False, dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False, DEBUG=False):
+def do_GTLSA_EM_for(
+    sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False,
+    dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False, DEBUG=False
+):
     if exclude_isovote:
         mode = 'iso'
     else:
@@ -269,10 +273,7 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
         print "Doing GTLSA mode=", mode
         start = time.time()
 
-    outdir = tile_and_mask_dir(sample_name, objid, cluster_id)
-    outdir += '/tile_output/'
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    outdir = tile_em_output_dir(sample_name, objid, cluster_id)
 
     print "Doing GTLSA mode=", mode
     if not rerun_existing:
@@ -291,11 +292,7 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
 
     # initialize MV tiles
     MV_tiles = get_MV_tiles(sample_name, objid, cluster_id)
-    gt_est_tiles = set()
-    for tid in tworkers:
-        if tid in MV_tiles:
-            gt_est_tiles.add
-    gt_est_mask = MV_tiles.copy()
+    gt_est_tiles = MV_tiles.copy()
     # In the first step we use 50% MV for initializing T*, A thres is therefore the median area pixel based on votes and noVotes
     prev_gt_est = gt_est_tiles.copy()
     jaccard_against_prev_gt_est = 0
@@ -349,6 +346,7 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
 
     gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
     [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
+    print 'Final prj:', [p, r, j]
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
     pickle.dump(gt_est_tiles, open('{}{}GTLSA_gt_est_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
@@ -368,8 +366,12 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
         print "Time:{}".format(end-start)
 
 
-def estimate_gt_compute_PRJ_against_MV(sample, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, thresh, exclude_isovote=False):
+def estimate_gt_compute_PRJ_against_MV(
+    sample, objid, cluster_id, log_probability_in, log_probability_not_in,
+    tiles_to_search_against, thresh, exclude_isovote=False
+):
     gt_est_tiles = estimate_gt_from(log_probability_in, log_probability_not_in, thresh=thresh)
+    tarea = get_tile_to_area_map(sample, objid, cluster_id)
     if exclude_isovote:
         nWorkers = num_workers(sample, objid, cluster_id)
         tworkers = get_tile_to_workers_map(sample, objid, cluster_id)
@@ -381,11 +383,14 @@ def estimate_gt_compute_PRJ_against_MV(sample, objid, cluster_id, log_probabilit
                 gt_est_tiles.remove(tid)
 
     # PRJ values against MV
-    [p, r, j] = prj_tile_against_tile(gt_est_tiles, tiles_to_search_against)
+    [p, r, j] = prj_tile_against_tile(gt_est_tiles, tiles_to_search_against, tarea)
     return [p, r, j], gt_est_tiles
 
 
-def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, exclude_isovote=False, rerun_existing=False, plot_crossover=True, DEBUG=False):
+def binarySearchDeriveBestThresh(
+    sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against,
+    exclude_isovote=False, rerun_existing=False, plot_crossover=True, DEBUG=False
+):
     # binary search for p == r point
     # p and r computed against tiles_to_search_against
     # if arbitrary reference (for eg., gt) that does not respect tile boundaries, need to change to mask
@@ -396,6 +401,7 @@ def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability
     iterations = 0
     epsilon = 0.125
 
+    outdir = tile_em_output_dir(sample_name, objid, cluster_id)
     if plot_crossover:
         track = []  # for plotting
 
@@ -416,7 +422,8 @@ def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability
             thresh_min = thresh
         thresh = (thresh_min+thresh_max)/2.0
         iterations += 1
-        track.append((p, r, j))
+        if plot_crossover:
+            track.append((thresh, p, r, j))
         if DEBUG:
             print "----Trying threshold:", thresh, "-----"
             print p, r, j, thresh_max, thresh_min
@@ -428,16 +435,18 @@ def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability
             # plt.colorbar()
 
     if plot_crossover:
+        # TODO: currently overwritten by different algos and iterations
+        track = np.array(track)
         plt.figure()
-        plt.title('prj crossover')
-        idx = np.argsort(track[:, 1])
-        ths = track[:, 1][idx]
-        ps = track[:, 2][idx]
-        rs = track[:, 3][idx]
+        plt.title('prj_crossover')
+        np.argsort(track[:, 0])
+        ths = track[:, 0]
+        ps = track[:, 1]
+        rs = track[:, 2]
         plt.plot(ths, ps, label="p")
         plt.plot(ths, rs, label="r")
         plt.plot(track[-1][1], track[-1][2], '^')
-        plt.show()
+        plt.savefig('{}tmp_crossover.png'.format(outdir))
         plt.close()
 
     return p, r, j, thresh, gt_est_tiles
