@@ -365,6 +365,7 @@ def do_GTLSA_EM_for(
     if DEBUG:
         end = time.time()
         print "Time:{}".format(end-start)
+        return end-start
 
 
 def estimate_gt_compute_PRJ_against_MV(
@@ -390,7 +391,7 @@ def estimate_gt_compute_PRJ_against_MV(
 
 def binarySearchDeriveBestThresh(
     sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against,
-    exclude_isovote=False, rerun_existing=False, plot_crossover=True, DEBUG=False
+    exclude_isovote=False, rerun_existing=False, plot_crossover=False, DEBUG=False
 ):
     # binary search for p == r point
     # p and r computed against tiles_to_search_against
@@ -441,7 +442,6 @@ def binarySearchDeriveBestThresh(
     if DEBUG and plot_crossover:
         # TODO: currently overwritten by different algos and iterations
         track = np.array(track)
-        # print track
         plt.figure()
         plt.title('prj_crossover')
         idx = np.argsort(track[:, 0])
