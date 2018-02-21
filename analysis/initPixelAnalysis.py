@@ -104,7 +104,7 @@ for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for clust_id in ['-1'] + list(cluster_ids):
         outdir = tile_and_mask_dir(sample, objid, clust_id)
-        print sample + ":" + str(objid) + ':' + str(clust_id)
+        print sample + ':' + str(objid) + ':' + str(clust_id)
         ################################################
         ################### MV tiles ###################
         ################################################

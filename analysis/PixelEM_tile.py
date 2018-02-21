@@ -1,4 +1,3 @@
-DEBUG = False
 SHAPELY_OFF = True
 
 import matplotlib
@@ -19,7 +18,7 @@ import os
 from utils import get_gt_mask, get_worker_mask, get_mega_mask, workers_in_sample, get_MV_mask, \
     get_all_worker_mega_masks_for_sample, faster_compute_prj, compute_PRJ_MV, TFPNR, \
     get_all_worker_tiles, tile_and_mask_dir, get_voted_workers_mask, \
-    PIXEL_EM_DIR, num_workers, tiles_to_mask, \
+    PIXEL_EM_DIR, num_workers, tiles_to_mask, prj_tile_against_tile, \
     get_tile_to_area_map, get_tile_to_workers_map, get_worker_to_tiles_map, get_MV_tiles
 
 
@@ -242,26 +241,26 @@ def estimate_gt_from(log_probability_in, log_probability_not_in, thresh=0):
     return gt_est_tiles
 
 
-def compute_A_thres(condition, tarea):
-    '''
-    intput condition lambda that takes tid as input
-    # Compute the new area threshold based on the median area of high confidence pixels
-    '''
-    high_confidence_pixel_area = []
-    for tid in tarea.keys():
-        if condition(tid):
-            high_confidence_pixel_area.append(tarea[tid])
+# def compute_A_thres(condition, tarea):
+#     '''
+#     intput condition lambda that takes tid as input
+#     # Compute the new area threshold based on the median area of high confidence pixels
+#     '''
+#     high_confidence_pixel_area = []
+#     for tid in tarea.keys():
+#         if condition(tid):
+#             high_confidence_pixel_area.append(tarea[tid])
 
-    # TODO: why was the following commented section in the code?
-    # passing_xs, passing_ys = np.where(condition)  # pInT >= pNotInT)
-    # for i in range(len(passing_xs)):
-    #     high_confidence_pixel_area.append(area_mask[passing_xs[i]][passing_ys[i]])
+#     # TODO: why was the following commented section in the code?
+#     # passing_xs, passing_ys = np.where(condition)  # pInT >= pNotInT)
+#     # for i in range(len(passing_xs)):
+#     #     high_confidence_pixel_area.append(area_mask[passing_xs[i]][passing_ys[i]])
 
-    A_thres = np.median(high_confidence_pixel_area)
-    return A_thres
+#     A_thres = np.median(high_confidence_pixel_area)
+#     return A_thres
 
 
-def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False, dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False):
+def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False, dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False, DEBUG=False):
     if exclude_isovote:
         mode = 'iso'
     else:
@@ -269,11 +268,15 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
     if DEBUG:
         print "Doing GTLSA mode=", mode
         start = time.time()
+
     outdir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    outdir += '/tile_output/'
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     print "Doing GTLSA mode=", mode
     if not rerun_existing:
-        if os.path.isfile('{}/{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode)):
+        if os.path.isfile('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode)):
             print "Already ran GTLSA, Skipped"
             return
 
@@ -281,10 +284,10 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
     tworkers = get_tile_to_workers_map(sample_name, objid, cluster_id)
     wtiles = get_worker_to_tiles_map(sample_name, objid, cluster_id)
     Nworkers = num_workers(sample_name, objid, cluster_id)
-    if compute_PR_every_iter:
-        # only used to convert tiles to pixels if prj needs to be computed every iterations
-        tiles = get_all_worker_tiles(sample_name, objid, cluster_id)
-        gt_mask = get_gt_mask(objid)
+
+    # only used to convert tiles to pixels when prj needs to be computed
+    tiles = get_all_worker_tiles(sample_name, objid, cluster_id)
+    gt_mask = get_gt_mask(objid)
 
     # initialize MV tiles
     MV_tiles = get_MV_tiles(sample_name, objid, cluster_id)
@@ -332,21 +335,25 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
             [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
             with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir, mode, it, thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
-    if DEBUG:
-        [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
-        print qp1, qn1, qp2, qn2
-        print "-->"+str([p, r, j])
-    # compute jaccard between previous and current gt estimation mask
-    [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = faster_compute_prj(gt_est_mask, prev_gt_est)
-    if DEBUG:
-        print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
-    prev_gt_est = gt_est_mask
-    [p, r, j] = faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+
+            if DEBUG:
+                print qp1, qn1, qp2, qn2
+                print "-->"+str([p, r, j])
+
+        # compute jaccard between previous and current gt estimation mask
+        [p_against_prev, r_against_prev, jaccard_against_prev_gt_est] = prj_tile_against_tile(
+            gt_est_tiles, prev_gt_est, tarea)
+        if DEBUG:
+            print "jaccard_against_prev_gt_est:", jaccard_against_prev_gt_est
+        prev_gt_est = gt_est_tiles.copy()
+
+    gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
+    [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
     with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
-    pickle.dump(gt_est_mask, open('{}{}GTLSA_gt_est_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(log_probability_in_mask, open('{}{}GTLSA_p_in_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(log_probability_not_in_mask, open('{}{}GTLSA_p_not_in_mask_best_thresh.pkl'.format(outdir, mode), 'w'))
+    pickle.dump(gt_est_tiles, open('{}{}GTLSA_gt_est_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
+    pickle.dump(log_probability_in, open('{}{}GTLSA_p_in_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
+    pickle.dump(log_probability_not_in, open('{}{}GTLSA_p_not_in_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
     pickle.dump(qp1, open('{}{}GTLSA_qp1_best_thresh.pkl'.format(outdir, mode), 'w'))
     pickle.dump(qn1, open('{}{}GTLSA_qn1_best_thresh.pkl'.format(outdir, mode), 'w'))
     pickle.dump(qp2, open('{}{}GTLSA_qp2_best_thresh.pkl'.format(outdir, mode), 'w'))
@@ -361,131 +368,76 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
         print "Time:{}".format(end-start)
 
 
-def GroundTruth_doM_once(sample_name, objid, algo, cluster_id="", num_iterations=5, load_p_in_mask=False, rerun_existing=False, compute_PR_every_iter=False, exclude_isovote=False):
-    print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo, exclude_isovote)
-    if cluster_id != "":
-        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
-    else:
-        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+def estimate_gt_compute_PRJ_against_MV(sample, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, thresh, exclude_isovote=False):
+    gt_est_tiles = estimate_gt_from(log_probability_in, log_probability_not_in, thresh=thresh)
     if exclude_isovote:
-        mode = 'iso'
-    else:
-        mode = ''
-    if not rerun_existing:
-        # pixel_em/25workers_rand0/obj47/basic_p_in_mask_ground_truth.pkl
-        if os.path.isfile('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir, mode, algo)):
-            print "Already ran ground truth experiment, Skipped"
-            print '{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir, mode, algo)
-            return
+        nWorkers = num_workers(sample, objid, cluster_id)
+        tworkers = get_tile_to_workers_map(sample, objid, cluster_id)
+        for tid in tworkers:
+            num_votes = len(tworkers[tid])
+            if num_votes == nWorkers:
+                gt_est_tiles.add(tid)
+            elif num_votes == 0 and tid in gt_est_tiles:
+                gt_est_tiles.remove(tid)
 
-    # initialize MV mask
-    mega_mask = get_mega_mask(sample_name, objid, cluster_id)
-    tiles = pickle.load(open("{}tiles.pkl".format(outdir)))
-    area_mask = tiles2AreaMask(tiles, mega_mask)
-    gt_est_mask = get_gt_mask(objid)
-    worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=cluster_id)
-    Nworkers = len(worker_masks)
-    if algo == 'basic':
-        q = dict()
-        for wid in worker_masks.keys():
-            q[wid] = worker_prob_correct(mega_mask, worker_masks[wid], gt_est_mask, Nworkers, exclude_isovote=exclude_isovote)
-        # Compute pInMask and pNotInMask
-        log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks, q)
-        pickle.dump(q, open('{}{}{}_q_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    elif algo == 'GT':
-        qp = dict()
-        qn = dict()
-        for wid in worker_masks.keys():
-            qp[wid], qn[wid] = GTworker_prob_correct(mega_mask, worker_masks[wid], gt_est_mask, Nworkers, exclude_isovote=exclude_isovote)
-        # Compute pInMask and pNotInMask
-        log_probability_in_mask, log_probability_not_in_mask = GTmask_log_probabilities(worker_masks, qp, qn)
-        pickle.dump(qp, open('{}{}{}_qp_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-        pickle.dump(qn, open('{}{}{}_qn_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    elif algo == 'GTLSA':
-        qp1 = dict()
-        qn1 = dict()
-        qp2 = dict()
-        qn2 = dict()
-        for wid in worker_masks.keys():
-            qp1[wid], qn1[wid], qp2[wid], qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(mega_mask, worker_masks[wid], gt_est_mask, Nworkers, area_mask, tiles, exclude_isovote=exclude_isovote)
-        # print "area_thresh_gt,area_thresh_ngt:",area_thresh_gt, area_thresh_ngt
-    log_probability_in_mask, log_probability_not_in_mask = GTLSAmask_log_probabilities(worker_masks, qp1, qn1, qp2, qn2, area_mask, area_thresh_gt, area_thresh_ngt)
-    pickle.dump(qp1, open('{}{}{}_qp1_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    pickle.dump(qn1, open('{}{}{}_qn1_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    pickle.dump(qp2, open('{}{}{}_qp2_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    pickle.dump(qn2, open('{}{}{}_qn2_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    '''
-    elif algo =="AW":
-        worker_qualities = dict()
-        for wid in worker_masks.keys():
-            worker_qualities[wid] = aw_worker_prob_correct(mega_mask,worker_masks[wid], gt_est_mask,area_lst,Nworkers,exclude_isovote=exclude_isovote)
-        #Compute pInMask and pNotInMask
-        log_probability_in_mask, log_probability_not_in_mask = mask_log_probabilities(worker_masks,worker_qualities)
-    pickle.dump(worker_qualities,open('{}{}{}_q_ground_truth.pkl'.format(outdir,mode,algo), 'w'))
-    '''
-    if algo == 'GTLSA':
-        # Testing:
-        area_thres = open("area_thres.txt", 'a')
-        gt_areas = area_mask[gt_est_mask == True]
-        # print "gt split: ", len(np.where(gt_areas<area_thresh_gt)[0]), len(np.where(gt_areas>=area_thresh_gt)[0])
-        ngt_areas = area_mask[gt_est_mask == False]
-        # print "ngt split: ",len(np.where(ngt_areas<area_thresh_ngt)[0]),len(np.where(ngt_areas>=area_thresh_ngt)[0])
-    area_thres.write("{},{},{},{},{}\n".format(sample_name, objid, algo, area_thresh_gt, area_thresh_ngt))
-    area_thres.close()
-    pickle.dump(log_probability_in_mask, open('{}{}{}_p_in_mask_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-    pickle.dump(log_probability_not_in_mask, open('{}{}{}_p_not_in_ground_truth.pkl'.format(outdir, mode, algo), 'w'))
-
-
-def estimate_gt_compute_PRJ_against_MV(sample_name, objid, cluster_id, log_probability_in_mask, log_probability_not_in_mask, MV, thresh, exclude_isovote=False):
-    if exclude_isovote:
-        Nworkers = int(sample_name.split("workers")[0])
-        mega_mask = get_mega_mask(sample_name, objid, cluster_id)
-        invariant_mask = np.zeros_like(mega_mask, dtype=bool)
-        invariant_mask_yes = np.ma.masked_where((mega_mask == Nworkers), invariant_mask).mask
-        invariant_mask_no = np.ma.masked_where((mega_mask == 0), invariant_mask).mask
-    gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask, thresh=thresh)
-    if exclude_isovote:
-        gt_est_mask = gt_est_mask+invariant_mask_yes-invariant_mask_no
-        gt_est_mask[gt_est_mask < 0] = False
-        gt_est_mask[gt_est_mask > 1] = True
-        # gt_est_mask = gt_est_mask+invariant_mask_yes
     # PRJ values against MV
-    [p, r, j] = faster_compute_prj(gt_est_mask, MV)
-    return [p, r, j], gt_est_mask
+    [p, r, j] = prj_tile_against_tile(gt_est_tiles, tiles_to_search_against)
+    return [p, r, j], gt_est_tiles
 
 
-def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability_in_mask, log_probability_not_in_mask, MV, exclude_isovote=False, rerun_existing=False):
-    thresh_min = -200
-    thresh_max = 200
-    delta = np.abs(thresh_max - thresh_min)
-    thresh = (thresh_min+thresh_max)/2.
+def binarySearchDeriveBestThresh(sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, exclude_isovote=False, rerun_existing=False, plot_crossover=True, DEBUG=False):
+    # binary search for p == r point
+    # p and r computed against tiles_to_search_against
+    # if arbitrary reference (for eg., gt) that does not respect tile boundaries, need to change to mask
+    thresh_min = -200.0
+    thresh_max = 200.0
+    thresh = (thresh_min+thresh_max)/2.0
     p, r = 0, -1
     iterations = 0
     epsilon = 0.125
+
+    if plot_crossover:
+        track = []  # for plotting
+
+    if DEBUG:
+        # used to compute actual prj
+        gt_mask = get_gt_mask(objid)
+        tiles = get_all_worker_tiles(sample_name, objid, cluster_id)
+
     while (iterations <= 100 or p == -1):  # continue iterations below max iterations or if p=-1
-        # stop if p=r or if delta (range in x) gets below a certain threshold
         if (p == r) or (thresh_min + epsilon >= thresh_max):
+            # stop if p==r or if epsilon (range in x) gets below a certain threshold
             break
-        [p, r, j], gt_est_mask = estimate_gt_compute_PRJ_against_MV(sample_name, objid, cluster_id, log_probability_in_mask, log_probability_not_in_mask, MV, thresh, exclude_isovote=exclude_isovote)
-        delta = np.abs(thresh_max - thresh_min)
+        [p, r, j], gt_est_tiles = estimate_gt_compute_PRJ_against_MV(
+            sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, thresh, exclude_isovote=exclude_isovote)
         if p > r:
-            right = thresh_min + 0.75*delta
-            thresh_max = right
+            thresh_max = thresh
         else:
-            left = thresh_min + 0.25*delta
-            thresh_min = left
-        if p == -1:
-            # if p =-1 then it is because the result area is zero, which means nothing was selected for gt
-            # this meant that the threshold has overshot
-            thresh_max = thresh_min+0.2*delta
-        thresh = (thresh_min+thresh_max)/2.
+            thresh_min = thresh
+        thresh = (thresh_min+thresh_max)/2.0
         iterations += 1
+        track.append((p, r, j))
         if DEBUG:
             print "----Trying threshold:", thresh, "-----"
             print p, r, j, thresh_max, thresh_min
-            print "actual prj against GT", faster_compute_prj(gt_est_mask, get_gt_mask(objid))
+            gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
+            print "actual prj against GT", faster_compute_prj(gt_est_mask, gt_mask)
             # plt.figure()
             # plt.title("Iter #"+str(iterations))
             # plt.imshow(gt_est_mask)
             # plt.colorbar()
-    return p, r, j, thresh, gt_est_mask
+
+    if plot_crossover:
+        plt.figure()
+        plt.title('prj crossover')
+        idx = np.argsort(track[:, 1])
+        ths = track[:, 1][idx]
+        ps = track[:, 2][idx]
+        rs = track[:, 3][idx]
+        plt.plot(ths, ps, label="p")
+        plt.plot(ths, rs, label="r")
+        plt.plot(track[-1][1], track[-1][2], '^')
+        plt.show()
+        plt.close()
+
+    return p, r, j, thresh, gt_est_tiles

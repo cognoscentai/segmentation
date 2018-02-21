@@ -175,6 +175,27 @@ def faster_compute_prj(result, gt):
     return precision, recall, jaccard
 
 
+def prj_tile_against_tile(test_tiles, base_tiles, tarea):
+    intersection_area = 0.0
+    union_area = 0.0
+    test_area = 0.0
+    base_area = 0.0
+    for tid in tarea:
+        tile_area = tarea[tid]
+        if tid in test_tiles and tid in base_tiles:
+            intersection_area += tile_area
+        if tid in test_tiles or tid in base_tiles:
+            union_area += tile_area
+        if tid in test_tiles:
+            test_area += tile_area
+        if tid in base_tiles:
+            base_area += tile_area
+    precision = intersection_area / test_area
+    recall = intersection_area / base_area
+    jaccard = intersection_area / union_area
+    return precision, recall, jaccard
+
+
 def TFPNR(result, gt):
     # True False Positive Negative Rates
     # as defined in https://en.wikipedia.org/wiki/Sensitivity_and_specificity#Definitions
