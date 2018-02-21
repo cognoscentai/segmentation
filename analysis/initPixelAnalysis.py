@@ -141,7 +141,7 @@ for objid in small_obj_list:
 '''
 
 from PixelEM_tile import do_GTLSA_EM_for as GTLSA
-small_obj_list=[2]
+small_obj_list = [1]
 print "7. Running tile EM"
 for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
@@ -151,7 +151,7 @@ for objid in small_obj_list:
         GTLSA(
             sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
             dump_output_at_every_iter=False, compute_PR_every_iter=False,
-            PLOT=False, DEBUG=True)
+            PLOT=False, DEBUG=False)
         # GTLSA(
         #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,
