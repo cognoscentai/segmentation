@@ -40,8 +40,8 @@ def vision_baseline_dir(objid, k=500, include_thresh=0.1):
 
 def tile_and_mask_dir(sample, objid, clust_id=''):
     return 'pixel_em/{}/obj{}{}'.format(
-        sample, objid,
-        ('/clust'+clust_id) if clust_id not in ['', '-1', -1] else ''
+        sample, str(objid),
+        ('/clust'+str(clust_id)) if clust_id not in ['', '-1', -1] else ''
     )
 
 
@@ -64,6 +64,12 @@ def get_all_worker_tiles(sample, objid, cluster_id=""):
 def get_mega_mask(sample_name, objid, cluster_id=""):
     indir = tile_and_mask_dir(sample_name, objid, cluster_id)
     return pickle.load(open('{}/mega_mask.pkl'.format(indir)))
+
+
+def get_voted_workers_mask(sample_name, objid, cluster_id=""):
+    # TODO: fix voted_workers_mask in PixelEM to have [] instead of 0 for pixs with no votes
+    indir = tile_and_mask_dir(sample_name, objid, cluster_id)
+    return pickle.load(open('{}/voted_workers_mask.pkl'.format(indir)))
 
 
 def workers_in_sample(sample_name, objid, cluster_id=""):
@@ -99,6 +105,21 @@ def get_worker_mask(objid, worker_id):
 def get_gt_mask(objid):
     indir = '{}obj{}/'.format(PIXEL_EM_DIR, objid)
     return pickle.load(open('{}gt.pkl'.format(indir)))
+
+
+def get_tile_to_area_map(sample, objid, cluster_id=''):
+    indir = tile_and_mask_dir(sample, objid, cluster_id)
+    return pickle.load(open('{}/tile_area.pkl'.format(indir)))
+
+
+def get_tile_to_workers_map(sample, objid, cluster_id=''):
+    indir = tile_and_mask_dir(sample, objid, cluster_id)
+    return pickle.load(open('{}/tile_to_workers.pkl'.format(indir)))
+
+
+def get_worker_to_tiles_map(sample, objid, cluster_id=''):
+    indir = tile_and_mask_dir(sample, objid, cluster_id)
+    return pickle.load(open('{}/worker_to_tiles.pkl'.format(indir)))
 
 
 def create_objid_to_clustid():

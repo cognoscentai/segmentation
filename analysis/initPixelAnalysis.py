@@ -89,31 +89,38 @@ for objid in object_lst:
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
 '''
 
-from PixelEM_tile import create_tile_area_map
+from PixelEM_tile import create_tile_area_map, create_tile_to_worker_list_map_and_inverse, sanity_checks
 from utils import tile_and_mask_dir
-print "6. Creating tile id to area map for all sample-objects"
-
 sample = '25workers_rand0'
-small_obj_list = [1, 2]
+small_obj_list = [1]
+
+print "6. Creating tile related maps for all sample-objects"
 for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-    for clust_id in [''] + cluster_ids:
-        outdir = tile_and_mask_dir
+    for clust_id in ['-1'] + list(cluster_ids):
+        outdir = tile_and_mask_dir(sample, objid, clust_id)
+        ################################################
+        ############### tile to area map ###############
+        ################################################
         filepath = "{}/tile_area.pkl".format(outdir)
-    if os.path.exists(filepath):
-        print '{} already exists.'.format(filepath)
-    else:
-        print sample + ":" + str(objid) + ':' + clust_id
-        create_tile_area_map(sample, objid)
+        if os.path.exists(filepath):
+            print '{} already exists.'.format(filepath)
+        else:
+            print sample + ":" + str(objid) + ':' + str(clust_id)
+            create_tile_area_map(sample, objid, clust_id)
+        ################################################
+        ### tile to workers and worker to tiles maps ###
+        ################################################
+        filepath1 = "{}/tile_to_workers.pkl".format(outdir)
+        filepath2 = "{}/worker_to_tiles.pkl".format(outdir)
+        if os.path.exists(filepath1) and os.path.exists(filepath2):
+            print '{} and {} already exist.'.format(filepath1, filepath2)
+        else:
+            print sample + ":" + str(objid) + ':' + str(clust_id)
+            create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
 
-for objid in small_obj_list:
-    
-    for cluster_id in cluster_ids:
-        # worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
-        # if len(worker_ids) != 1:
-        print sample + ":" + str(objid)+"clust"+str(cluster_id)
-        create_tile_area_map(sample, objid, cluster_id)
-
+        # check for data consistency against pixel version
+        sanity_checks(sample, objid, clust_id)
 
 '''
 ###########################################################
