@@ -365,6 +365,7 @@ def do_GTLSA_EM_for(
     if DEBUG:
         end = time.time()
         print "Time:{}".format(end-start)
+        return end-start
 
 
 def estimate_gt_compute_PRJ_against_MV(
@@ -438,7 +439,6 @@ def binarySearchDeriveBestThresh(
     if DEBUG:
         # TODO: currently overwritten by different algos and iterations
         track = np.array(track)
-        # print track
         plt.figure()
         plt.title('prj_crossover')
         idx = np.argsort(track[:, 0])
