@@ -142,9 +142,9 @@ for objid in small_obj_list:
 
 
 from PixelEM_tile import do_GTLSA_EM_for as GTLSA
-small_obj_list=[1,2,4,10,50]
+small_obj_list = [1]  # ,2,4,10,50]
 print "7. Running tile EM"
-times=[]
+times = []
 for objid in small_obj_list:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for clust_id in ['-1'] + list(cluster_ids):
@@ -154,7 +154,7 @@ for objid in small_obj_list:
         telapsed = GTLSA(
             sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
             dump_output_at_every_iter=False, compute_PR_every_iter=False,
-            PLOT=False, DEBUG=True)
+            PLOT=False, DEBUG=False)
         # GTLSA(
         #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,

@@ -108,7 +108,31 @@ def sanity_checks(sample, objid, clust_id='-1'):
             assert tid in wtiles[wid]
 
 
-def GTLSAworker_prob_correct(gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers, exclude_isovote=False):
+def compute_area_thresh(gt_tiles, tarea):
+    ngt_tiles = set(tarea.keys()) - gt_tiles
+    gt_areas = []
+    for t in gt_tiles:
+        gt_areas.append(tarea[t])
+    ngt_areas = []
+    for t in ngt_tiles:
+        ngt_areas.append(tarea[t])
+    if gt_areas != [] and ngt_areas != []:
+        area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
+        area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
+    else:
+        # TODO: investigate further
+        print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)"
+        gt_areas.extend(ngt_areas)
+        area_thresh_gt = np.mean(gt_areas)
+        area_thresh_ngt = np.mean(gt_areas)
+
+    return area_thresh_gt, area_thresh_ngt
+
+
+def GTLSAworker_prob_correct(
+    gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
+    exclude_isovote=False
+):
     '''
     gt_tiles = set() of tiles in ground truth`
     curr_worker_tiles = set() of tiles voted for by worker whose prob is being calculated
@@ -127,23 +151,6 @@ def GTLSAworker_prob_correct(gt_tiles, curr_worker_tiles, tarea, tworkers, Nwork
     #         gt_tiles.append(t)
     #     else:
     #         ngt_tiles.append(t)
-
-    ngt_tiles = set(tarea.keys()) - gt_tiles
-    gt_areas = []
-    for t in gt_tiles:
-        gt_areas.append(tarea[t])
-    ngt_areas = []
-    for t in ngt_tiles:
-        ngt_areas.append(tarea[t])
-    if gt_areas != [] and ngt_areas != []:
-        area_thresh_gt = (min(gt_areas)+max(gt_areas))/2.
-        area_thresh_ngt = (min(ngt_areas)+max(ngt_areas))/2.
-    else:
-        # TODO: investigate further
-        print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)"
-        gt_areas.extend(ngt_areas)
-        area_thresh_gt = np.mean(gt_areas)
-        area_thresh_ngt = np.mean(gt_areas)
 
     large_gt_Ncorrect, large_gt_total, large_ngt_Ncorrect, large_ngt_total = 0, 0, 0, 0
     small_gt_Ncorrect, small_gt_total, small_ngt_Ncorrect, small_ngt_total = 0, 0, 0, 0
@@ -181,7 +188,7 @@ def GTLSAworker_prob_correct(gt_tiles, curr_worker_tiles, tarea, tworkers, Nwork
     qp2 = float(small_gt_Ncorrect)/float(small_gt_total) if small_gt_total != 0 else 0.6
     qn2 = float(small_ngt_Ncorrect)/float(small_ngt_total) if small_ngt_total != 0 else 0.6
     # print "qp1, qn1, qp2, qn2:", qp1, qn1, qp2, qn2
-    return qp1, qn1, qp2, qn2, area_thresh_gt, area_thresh_ngt
+    return qp1, qn1, qp2, qn2
 
 
 def GTLSAmask_log_probabilities(wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt):
@@ -269,9 +276,10 @@ def do_GTLSA_EM_for(
         mode = 'iso'
     else:
         mode = ''
+
+    start = time.time()
     if DEBUG:
         print "Doing GTLSA mode=", mode
-        start = time.time()
 
     outdir = tile_em_output_dir(sample_name, objid, cluster_id)
 
@@ -311,9 +319,12 @@ def do_GTLSA_EM_for(
         qn2 = dict()
         if DEBUG:
             t0 = time.time()
+
+        area_thresh_gt, area_thresh_ngt = compute_area_thresh(gt_est_tiles, tarea)
         for wid in wtiles.keys():
-            qp1[wid], qn1[wid], qp2[wid], qn2[wid], area_thresh_gt, area_thresh_ngt = GTLSAworker_prob_correct(
-                gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers, exclude_isovote=exclude_isovote)
+            qp1[wid], qn1[wid], qp2[wid], qn2[wid] = GTLSAworker_prob_correct(
+                gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
+                exclude_isovote=exclude_isovote)
         if DEBUG:
             t1 = time.time()
             print "Time for worker prob calculation:", t1-t0
@@ -362,10 +373,11 @@ def do_GTLSA_EM_for(
         plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
         plt.colorbar()
         plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir, mode, thresh))
+
+    end = time.time()
     if DEBUG:
-        end = time.time()
         print "Time:{}".format(end-start)
-        return end-start
+    return end-start
 
 
 def estimate_gt_compute_PRJ_against_MV(
