@@ -8,6 +8,9 @@ sample_lst = sample_specs.keys()
 sample = sys.argv[1]
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
+from qualityBaseline import *
+print "generate baseline comparisons"
+compute_self_BBvals(compute_metrics=['simple','area'])
 '''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
@@ -88,7 +91,7 @@ for objid in object_lst:
             print sample + ":" + str(objid)+"clust"+str(cluster_id)
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
 '''
-
+'''
 from PixelEM_tile import create_tile_area_map, create_tile_to_worker_list_map_and_inverse, sanity_checks
 from utils import tile_and_mask_dir
 sample = '25workers_rand0'
@@ -121,7 +124,7 @@ for objid in small_obj_list:
 
         # check for data consistency against pixel version
         sanity_checks(sample, objid, clust_id)
-
+'''
 '''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
