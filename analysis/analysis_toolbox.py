@@ -42,11 +42,12 @@ def load_info(eliminate_self_intersection_bb=True):
     from shapely.validation import explain_validity
     old_path = os.getcwd()
     os.chdir(DATA_DIR)
-    img_info = pd.read_csv("image.csv",skipfooter=1)
-    object_info = pd.read_csv("object.csv",skipfooter=1)
-    object_location = pd.read_csv("object_location.csv",skipfooter=1)
+    img_info = pd.read_csv("image.csv")
+    object_info = pd.read_csv("object.csv")
+    object_location = pd.read_csv("object_location.csv")
     object_tbl = object_info.merge(object_location,how="inner",left_on="id",right_on="object_id")
-    bb_info = pd.read_csv("bounding_box.csv",skipfooter=1)
+    bb_info = pd.read_csv("bounding_box.csv")
+    bb_info=bb_info[bb_info["worker_id"]!=3]
     if eliminate_self_intersection_bb:
         for bb in bb_info.iterrows():
             bb=bb[1]
