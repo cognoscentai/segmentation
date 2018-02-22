@@ -151,8 +151,8 @@ for objid in object_lst:
         if len(worker_ids) > 1:
             outdir = tile_and_mask_dir(sample, objid, clust_id)
             print sample + ':' + str(objid) + ':' + str(clust_id)
-            for algo in ['GTLSA']:
-                for excl_iso in [True]:
+            for algo in ['basic','GT','GTLSA']:
+                for excl_iso in [True,False]:
                     telapsed = EM(
                         sample, objid, clust_id, algo=algo,
                         rerun_existing=False, exclude_isovote=excl_iso,
