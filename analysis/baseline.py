@@ -1,7 +1,10 @@
 from sample_worker_seeds import *
 from utils import * 
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-def compute_best_average_heuristics_workers_baselines():
+def compute_best_average_heuristics_workers_baselines(rerun_existing=False):
+    outfile = "pixel_em/individual_worker_performance.csv"
+    if os.path.exists(outfile) and not rerun_existing:
+        return pd.read_csv(outfile)
     metric_keys = ['Precision [Self]', u'Recall [Self]','Jaccard [Self]','FPR [Self]','FNR [Self]']
     computed_wrt_gt = pd.read_csv("../data/computed_my_COCO_BBvals.csv",index_col=0)
     sample_lst = sample_specs.keys()
@@ -36,5 +39,7 @@ def compute_best_average_heuristics_workers_baselines():
                     "P [AvrgWorker]","R [AvrgWorker]","J [AvrgWorker]","FNR% [AvrgWorker]","FPR% [AvrgWorker]",
                     "P [BestWorker]","R [BestWorker]","J [BestWorker]","FNR% [BestWorker]","FPR% [BestWorker]"])
     df["num_workers"]=df["sample"].apply(lambda x: int(x.split("workers")[0]))
-    df.to_csv("pixel_em/individual_worker_performance.csv",index=None)
+    df.to_csv(outfile,index=None)
     return df
+if __name__ =="__main__":
+    df = compute_best_average_heuristics_workers_baselines()

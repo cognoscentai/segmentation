@@ -877,6 +877,7 @@ def do_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_i
 def compile_PR(mode="", ground_truth=False):
     import glob
     import csv
+    from utils import tiles_to_mask
     if ground_truth:
         fname = '{}{}_ground_truth_full_PRJ_table.csv'.format(PIXEL_EM_DIR, mode)
     else:
@@ -926,14 +927,23 @@ def compile_PR(mode="", ground_truth=False):
                     if os.path.isfile(fpnr_file):
                         [fpr, fnr] = json.load(open(fpnr_file))
                     else:
-                        gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path, mode)
-                        if mode == "basic":
-                            gt_fname = "{}/gt_est_mask_best_thresh.pkl".format(clust_path)
-                        elif mode == "MV":
+                        #gt_fname = "{}/{}_gt_est_mask_best_thresh.pkl".format(clust_path, mode)
+                        #if mode == "basic":
+                        #    gt_fname = "{}/gt_est_mask_best_thresh.pkl".format(clust_path)
+                        if mode == "MV":
                             gt_fname = "{}/MV_mask.pkl".format(clust_path)
+                        else:
+                            gt_fname = "{}{}_gt_est_tiles_best_thresh.pkl".format(clust_path,mode)
+                            tiles = "{}/tiles.pkl".format(clust_path)
                         if os.path.isfile(gt_fname):
-                            result = pickle.load(open(gt_fname))
                             gt = get_gt_mask(objid)
+                            if mode=="MV":
+                                result = pickle.load(open(gt_fname))
+                            else:
+                                gt_est_tiles =pickle.load(open(gt_fname))
+                                tiles = pickle.load(open(tiles))
+                                result = tiles_to_mask(gt_est_tiles, tiles, gt)
+                               
                             [fpr, fnr] = TFPNR(result, gt)
                             with open(fpnr_file, 'w') as fp:
                                 fp.write(json.dumps([fpr, fnr]))
