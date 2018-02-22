@@ -1,7 +1,7 @@
 import pickle as pkl
 import json
 from utils import get_gt_mask, get_all_worker_tiles, get_mega_mask, tiles_to_mask, \
-    num_workers, faster_compute_prj, read_tile_log_probabilities, tile_and_mask_dir
+    num_workers, read_tile_log_probabilities, tile_and_mask_dir, all_metrics
 import os.path
 import numpy as np
 from collections import defaultdict
@@ -113,7 +113,7 @@ def run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False):
 
 def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output="prj", rerun_existing=False):
     outdir = tile_and_mask_dir(sample, objid, cluster_id)
-    outfile = '{}/{}_greedy_prj.json'.format(outdir, algo)
+    outfile = '{}/{}_greedy_metrics.json'.format(outdir, algo)
     if (not rerun_existing) and os.path.exists(outfile):
         print outfile + " already exist, read from file"
         p, r, j = json.load(open(outfile))
@@ -136,12 +136,14 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
         return gt_est_mask
     elif output == "prj":
         gt_est_mask = tiles_to_mask(gt_est_tiles, pixels_in_tile, gt_mask)
-        [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
+        # [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
+        # [fpr, fnr] = TFPNR(gt_est_mask, gt_mask)
+        p, r, j, fpr, fnr = all_metrics(gt_est_mask, gt_mask)
         with open(outfile, 'w') as fp:
-            fp.write(json.dumps([p, r, j]))
+            fp.write(json.dumps([p, r, j, fpr, fnr]))
         if j <= 0.5:  # in the case where we are aggregating a semantic error cluster
             pkl.dump(gt_est_mask, open('{}{}_gt_est_mask_greedy.pkl'.format(outdir, algo), 'w'))
-        return p, r, j
+        return p, r, j, fpr, fnr
 
 
 if __name__ == '__main__':
@@ -163,12 +165,14 @@ if __name__ == '__main__':
                 modes = [''] if algo in ['worker_fraction', 'ground_truth'] else ['iso', '']
                 for mode in modes:
                     start = time.time()
-                    p, r, j = greedy(sample, objid, algo, cluster_id='', mode='', output="prj", rerun_existing=False)
+                    p, r, j, fpr, fnr = greedy(
+                        sample, objid, algo, cluster_id='', mode='',
+                        output="prj", rerun_existing=False)
                     end = time.time()
                     print "Time Elapsed:", end-start
-                    df_data.append([sample, objid, mode+algo, p, r, j])
+                    df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
                     print mode+algo, sample, objid, p, r, j
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j'])
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
 
     '''

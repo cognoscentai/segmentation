@@ -230,14 +230,39 @@ def TFPNR(result, gt):
     FN = gt_area - intersection
     TN = np.product(np.shape(result)) - (gt_area+result_area-intersection)
 
-    #TPR = TP/float(TP+FN)
     FPR = FP/float(FP+TN)
     FNR = FN/float(TP+FN)
-    #TNR = TN/float(TN+FP)
-    #assert TPR+FNR==1 and TNR+FPR==1
 
-    #return  TPR,TNR#,FNR,TNR,FPR
     return FPR*100, FNR*100
+
+
+def all_metrics(result, gt):
+    # result and gt are pixel masks
+    # p, r, j, fpr, fnr
+    intersection = len(np.where(((result == 1) | (gt == 1)) & (result == gt))[0])
+    gt_area = float(len(np.where(gt == 1)[0]))
+    result_area = float(len(np.where(result == 1)[0]))
+    try:
+        precision = intersection / result_area
+    except(ZeroDivisionError):
+        precision = -1
+    try:
+        recall = intersection / gt_area
+    except(ZeroDivisionError):
+        recall = -1
+    try:
+        jaccard = intersection / (gt_area + result_area - intersection)
+    except(ZeroDivisionError):
+        jaccard = -1
+    TP = intersection
+    FP = result_area - intersection
+    FN = gt_area - intersection
+    TN = np.product(np.shape(result)) - (gt_area+result_area-intersection)
+
+    #TPR = TP/float(TP+FN)
+    FPR = (FP/float(FP+TN)) * 100
+    FNR = (FN/float(TP+FN)) * 100
+    return precision, recall, jaccard, FPR, FNR
 
 
 def tiles_to_mask(tile_id_list, tile_to_pix_dict, base_mask):
