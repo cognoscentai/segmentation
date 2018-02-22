@@ -401,7 +401,7 @@ def tiles2AreaMask(tiles, mega_mask):
     return mask
 
 
-def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False, dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False):
+def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False, dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False, DEBUG=False):
     if exclude_isovote:
         mode = 'iso'
     else:
@@ -489,7 +489,7 @@ def do_GTLSA_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exc
     if DEBUG:
         end = time.time()
         print "Time:{}".format(end-start)
-
+        return end-start
 
 def GT_EM_Qjinit(sample_name, objid, num_iterations=5, load_p_in_mask=False, thresh=0, rerun_existing=False, exclude_isovote=False, compute_PR_every_iter=False):
     print "Doing GT EM (Qj=0.6 initialization)"

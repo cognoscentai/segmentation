@@ -97,8 +97,8 @@ from PixelEM_tile import create_MV_tiles, create_tile_area_map, \
     create_tile_to_worker_list_map_and_inverse, sanity_checks
 
 from utils import tile_and_mask_dir
-sample = '25workers_rand0'
-small_obj_list = [1]
+#sample = '25workers_rand0'
+#small_obj_list = [1]
 
 '''
 print "6. Creating tile related maps for all sample-objects"
@@ -140,28 +140,32 @@ for objid in small_obj_list:
         sanity_checks(sample, objid, clust_id)
 '''
 
-
 from PixelEM_tile import do_GTLSA_EM_for as GTLSA
 small_obj_list = [1]  # ,2,4,10,50]
 print "7. Running tile EM"
 times = []
-for objid in small_obj_list:
+
+small_obj_list = [1]  # , 2, 4, 10]
+print "7. Running tile EM"
+for objid in object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for clust_id in ['-1'] + list(cluster_ids):
         outdir = tile_and_mask_dir(sample, objid, clust_id)
         print sample + ':' + str(objid) + ':' + str(clust_id)
 
         telapsed = GTLSA(
-            sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
+            sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
             dump_output_at_every_iter=False, compute_PR_every_iter=False,
             PLOT=False, DEBUG=False)
-        # GTLSA(
-        #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=True,
+        # telapsed = GTLSA(
+        #     sample, objid, clust_id, rerun_existing=True, exclude_isovote=False,
         #     dump_output_at_every_iter=False, compute_PR_every_iter=False,
         #     PLOT=False, DEBUG=False)
+
         times.append(telapsed)
 print times
 print np.mean(times)
+
 '''
 ###########################################################
 # DEBUG PIXTILE OUTPUT (VISUALLY INSPECT)
