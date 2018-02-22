@@ -166,6 +166,8 @@ def clusters(rerun=True):
 
 
 def faster_compute_prj(result, gt):
+    # TODO: handle ZeroDivisionErrors properly
+    # setting -1 leads to downstream issues
     intersection = len(np.where(((result == 1) | (gt == 1)) & (result == gt))[0])
     gt_area = float(len(np.where(gt == 1)[0]))
     result_area = float(len(np.where(result == 1)[0]))
@@ -185,6 +187,8 @@ def faster_compute_prj(result, gt):
 
 
 def prj_tile_against_tile(test_tiles, base_tiles, tarea):
+    # TODO: handle ZeroDivisionErrors properly
+    # setting -1 leads to downstream issues
     intersection_area = 0.0
     union_area = 0.0
     test_area = 0.0

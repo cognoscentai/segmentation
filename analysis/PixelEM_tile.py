@@ -241,6 +241,7 @@ def compute_area_thresh(gt_tiles, tarea):
     else:
         # TODO: investigate further
         print "Case where one of gt or ngt area list is empty, probably due to low number of datapoints (from one of the smaller , possibly mistaken, clusters)"
+        # print len(gt_tiles), len(ngt_tiles), len(tarea.keys())
         gt_areas.extend(ngt_areas)
         area_thresh_gt = np.mean(gt_areas)
         area_thresh_ngt = np.mean(gt_areas)
@@ -449,6 +450,10 @@ def do_EM_for(
         if DEBUG:
             t1 = time.time()
             print "Time for worker prob calculation:", t1-t0
+            # print 'qp1:', qp1
+            # print 'qp2:', qp2
+            # print 'qn1:', qn1
+            # print 'qn2:', qn2
 
         # Compute pInMask and pNotInMask
         if algo == 'basic':
@@ -569,7 +574,7 @@ def binarySearchDeriveBestThresh(
             break
         [p, r, j], gt_est_tiles = estimate_gt_compute_PRJ_against_MV(
             sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, thresh, exclude_isovote=exclude_isovote)
-        if p > r:
+        if p > r or p <= 0:
             thresh_max = thresh
         else:
             thresh_min = thresh
