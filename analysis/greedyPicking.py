@@ -1,13 +1,13 @@
 import pickle as pkl
 import json
 from utils import get_gt_mask, get_all_worker_tiles, get_mega_mask, tiles_to_mask, \
-    num_workers, read_tile_log_probabilities, tile_and_mask_dir, all_metrics
+    num_workers, read_tile_log_probabilities, tile_and_mask_dir, all_metrics, clusters
 import os.path
 import numpy as np
 from collections import defaultdict
 
 
-def process_all_worker_tiles(sample, objid, algo, cluster_id="", mode='', DEBUG=False):
+def process_all_worker_tiles(sample, objid, algo, pixels_in_tile, cluster_id="", mode='', DEBUG=False):
     '''
     returns:
         1) num_votes[tid] = number of votes given to tid
@@ -25,21 +25,15 @@ def process_all_worker_tiles(sample, objid, algo, cluster_id="", mode='', DEBUG=
     else:
         assert mode == ''
 
-    pixels_in_tile = get_all_worker_tiles(sample, objid, cluster_id)
+    # pixels_in_tile = get_all_worker_tiles(sample, objid, cluster_id)
     gt_mask = get_gt_mask(objid)
     worker_mega_mask = get_mega_mask(sample, objid, cluster_id)
     nworkers = num_workers(sample, objid, cluster_id)
-    # mv_mask = get_MV_mask(sample, objid)
-    if DEBUG:
-        print 'Num tiles: ', len(pixels_in_tile)
 
     num_votes = defaultdict(int)
     tile_area = defaultdict(int)
     tile_int_area = defaultdict(int)
 
-    pix_frequency = defaultdict(int)
-
-    num_pixs_total = 0
     for tid in range(len(pixels_in_tile)):
         pixs = list(pixels_in_tile[tid])
         # num_votes[tid] = worker_mega_mask[next(iter(pixs))]
@@ -60,11 +54,6 @@ def process_all_worker_tiles(sample, objid, algo, cluster_id="", mode='', DEBUG=
                 norm_pInT = 1.
             assert norm_pInT <= 1 and norm_pInT >= 0
             tile_int_area[tid] = norm_pInT * tile_area[tid]
-
-    if DEBUG:
-        print 'Max number of tiles any pixel belongs to: ', max(pix_frequency.values())
-        print 'Height x width of gt_mask = {}, num pixs accounted for: {}'.format(
-            len(gt_mask)*len(gt_mask[0]), num_pixs_total)
 
     return num_votes, tile_area, tile_int_area
 
@@ -111,7 +100,7 @@ def run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False):
     return sorted_order_tids, tile_added, est_jacc_list
 
 
-def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output="prj", rerun_existing=False):
+def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output="prj", rerun_existing=False, DEBUG=False):
     outdir = tile_and_mask_dir(sample, objid, cluster_id)
     outfile = '{}/{}_greedy_metrics.json'.format(outdir, algo)
     if (not rerun_existing) and os.path.exists(outfile):
@@ -119,10 +108,19 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
         p, r, j, fpr, fnr = json.load(open(outfile))
         return p, r, j, fpr, fnr
 
-    num_votes, tile_area, tile_int_area = process_all_worker_tiles(sample, objid, algo, cluster_id, mode, DEBUG=False)
-    sorted_order_tids, tile_added, est_jacc_list = run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False)
-
+    start_read_tiles_time = time.time()
     pixels_in_tile = get_all_worker_tiles(sample, objid, cluster_id)
+    start_process_time = time.time()
+    num_votes, tile_area, tile_int_area = process_all_worker_tiles(sample, objid, algo, pixels_in_tile, cluster_id, mode, DEBUG=DEBUG)
+    end_process_time = time.time()
+    sorted_order_tids, tile_added, est_jacc_list = run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False)
+    end_greedy_time = time.time()
+
+    if DEBUG:
+        print 'get_all_worker_tiles time:', start_process_time - start_read_tiles_time
+        print 'process_all_worker_tiles time:', end_process_time - start_process_time
+        print 'run_greedy_jaccard time:', end_greedy_time - end_process_time
+
     gt_mask = get_gt_mask(objid)
     gt_est_tiles = set()
     for tid in sorted_order_tids:
@@ -135,10 +133,14 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
         gt_est_mask = tiles_to_mask(gt_est_tiles, pixels_in_tile, gt_mask)
         return gt_est_mask
     elif output == "prj":
+        start_metrics_time = time.time()
         gt_est_mask = tiles_to_mask(gt_est_tiles, pixels_in_tile, gt_mask)
         # [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
         # [fpr, fnr] = TFPNR(gt_est_mask, gt_mask)
         p, r, j, fpr, fnr = all_metrics(gt_est_mask, gt_mask)
+        end_metrics_time = time.time()
+        if DEBUG:
+            print 'tiles_to_mask and all_metrics time:', end_metrics_time - start_metrics_time
         with open(outfile, 'w') as fp:
             fp.write(json.dumps([p, r, j, fpr, fnr]))
         if j <= 0.5:  # in the case where we are aggregating a semantic error cluster
@@ -148,30 +150,37 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
 
 if __name__ == '__main__':
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-    object_lst = [1]
+    # object_lst = [1]
     from sample_worker_seeds import sample_specs
     import time
     import pandas as pd
-    DEBUG = False
+    DEBUG = True
 
     # test sample: '25workers_rand0', obj1, 2, 3, 4, 5, 15, 20
 
     df_data = []
+    obj_clusters = clusters()
     for sample in sample_specs.keys():
         if sample != '5workers_rand0':
             continue
         for objid in object_lst:
-            for algo in ['basic']:
-                modes = [''] if algo in ['worker_fraction', 'ground_truth'] else ['iso', '']
-                for mode in modes:
-                    start = time.time()
-                    p, r, j, fpr, fnr = greedy(
-                        sample, objid, algo, cluster_id='', mode='',
-                        output="prj", rerun_existing=False)
-                    end = time.time()
-                    print "Time Elapsed:", end-start
-                    df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
-                    print mode+algo, sample, objid, p, r, j, fpr, fnr
+            if str(objid) in obj_clusters[sample]:
+                clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
+            else:
+                clusts = ["-1"]
+            for clust in clusts:
+                for algo in ['GTLSA']:
+                    modes = [''] if algo in ['worker_fraction', 'ground_truth'] else ['iso', '']
+                    for mode in modes:
+                        start = time.time()
+                        p, r, j, fpr, fnr = greedy(
+                            sample, objid, algo, cluster_id='', mode='',
+                            output="prj", rerun_existing=True, DEBUG=DEBUG)
+                        end = time.time()
+                        df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
+                        if DEBUG:
+                            print "Time Elapsed:", end-start
+                            print mode+algo, sample, objid, p, r, j, fpr, fnr
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
 

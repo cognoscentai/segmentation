@@ -137,7 +137,8 @@ for objid in object_lst:
                 create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
 
             # check for data consistency against pixel version
-            #sanity_checks(sample, objid, clust_id)
+            # sanity_checks(sample, objid, clust_id)
+
 from PixelEM_tile import do_EM_for as EM
 print "7. Running tile EM"
 for objid in object_lst:
