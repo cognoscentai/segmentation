@@ -883,10 +883,10 @@ def compile_PR(mode="", ground_truth=False):
     else:
         fname = '{}{}_full_PRJ_table.csv'.format(PIXEL_EM_DIR, mode)
     with open(fname, 'w') as csvfile:
-        fieldnames = ['num_workers', 'sample_num', 'objid', 'thresh', 'clust', 'precision', 'recall', 'jaccard', 'FPR%', 'FNR%']
+        fieldnames = ['num_workers', 'actualNworkers','sample_num', 'objid', 'clust', 'precision', 'recall', 'jaccard', 'FPR%', 'FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR))[::-1]:
             sample_name = sample_path.split('/')[-2]
             print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
@@ -899,25 +899,25 @@ def compile_PR(mode="", ground_truth=False):
                         cluster_id = -1  # unclustered flag
                     else:
                         cluster_id = int(clust_path.split("/clust")[-1][:-1])
+                    worker_ids = json.load(open("{}/worker_ids.json".format(clust_path)))
+                    actualNworkers=len(worker_ids)
+                    #if actualNworkers<1: 
+                    #    #since we only ran algo on clusters with more than 1 workers, we ignore even MV cases that has these ran (will result in p={0,1}, r=0,j=0) 
+                    #    continue
                     # print "----clust path:",clust_path
                     # print cluster_id
                     p = None
                     r = None
                     j = None
-                    fpr = None
-                    fnr = None
-                    thresh = "best"
+                    fpr = -1 
+                    fnr = -1 
                     if ground_truth:
                         pr_file = '{}{}_ground_truth_EM_prj_best_thresh.json'.format(clust_path, mode)
-                        # pr_file = '{}{}_ground_truth_EM_prj_thresh{}.json'.format(clust_path,mode,thresh)
                     else:
                         # GT_EM_prj_best_thresh.json
                         pr_file = '{}{}_EM_prj_best_thresh.json'.format(clust_path, mode)
                         fpnr_file = '{}{}_EM_fpnr_best_thresh.json'.format(clust_path, mode)
-                        if mode == "basic":
-                            pr_file = '{}EM_prj_best_thresh.json'.format(clust_path)
-                            fpnr_file = '{}EM_fpnr_best_thresh.json'.format(clust_path)
-                        elif mode == "MV":
+                        if mode == "MV":
                             pr_file = '{}MV_prj.json'.format(clust_path)
                             fpnr_file = '{}MV_fpnr.json'.format(clust_path)
                     #print pr_file
@@ -935,7 +935,7 @@ def compile_PR(mode="", ground_truth=False):
                         else:
                             gt_fname = "{}{}_gt_est_tiles_best_thresh.pkl".format(clust_path,mode)
                             tiles = "{}/tiles.pkl".format(clust_path)
-                        if os.path.isfile(gt_fname):
+                        if False:#os.path.isfile(gt_fname):
                             gt = get_gt_mask(objid)
                             if mode=="MV":
                                 result = pickle.load(open(gt_fname))
@@ -953,9 +953,9 @@ def compile_PR(mode="", ground_truth=False):
                     if any([prj is not None for prj in [p, r, j]]):
                         writer.writerow({
                             'num_workers': num_workers,
+                            'actualNworkers':actualNworkers,
                             'sample_num': sample_num,
                             'objid': objid,
-                            'thresh': thresh,
                             'clust': cluster_id,
                             'precision': p,
                             'recall': r,

@@ -98,7 +98,7 @@ from PixelEM_tile import create_MV_tiles, create_tile_area_map, \
     create_tile_to_worker_list_map_and_inverse, sanity_checks
 
 from utils import tile_and_mask_dir
-
+'''
 print "6. Creating tile related maps for all sample-objects"
 # for objid in object_lst:
 for objid in small_object_lst:
@@ -138,8 +138,8 @@ for objid in small_object_lst:
                 create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
 
             # check for data consistency against pixel version
-            # sanity_checks(sample, objid, clust_id)
-
+            #sanity_checks(sample, objid, clust_id)
+'''
 from PixelEM_tile import do_EM_for as EM
 print "7. Running tile EM"
 # for objid in object_lst:
