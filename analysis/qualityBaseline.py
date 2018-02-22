@@ -76,6 +76,27 @@ def recall(obj_x_locs,obj_y_locs):
     truth_bb = Polygon(zip(obj_x_locs[1],obj_y_locs[1]))
     truth_bb_area  = truth_bb.area
     return intersection(obj_x_locs,obj_y_locs)/float(truth_bb_area)  
+
+def TFPNR(img_name,obj_x_locs,obj_y_locs):
+    # True False Positive Negative Rates
+    # as defined in https://en.wikipedia.org/wiki/Sensitivity_and_specificity#Definitions
+    polygon1 = Polygon(zip(obj_x_locs[0],obj_y_locs[0])).buffer(0)
+    polygon2 = Polygon(zip(obj_x_locs[1],obj_y_locs[1])).buffer(0)
+    img_name = "../web-app/app/static/"+img_name+".png"
+    intersection_area = intersection(obj_x_locs,obj_y_locs)
+    result_area = polygon1.area    
+    gt_area = polygon2.area
+
+
+    TP = intersection_area
+    FP = result_area - intersection_area
+    FN = gt_area - intersection_area
+    TN = np.product(get_size(img_name)) - (gt_area+result_area-intersection_area)
+
+    FPR = FP/float(FP+TN)
+    FNR = FN/float(TP+FN)
+    return FPR*100, FNR*100
+
 ################################################
 ##                                            ##
 ##          BOUNDARY-BASED METHODS            ##
@@ -266,6 +287,9 @@ def compute_self_BBvals(compute_metrics=['simple','area','dist']):
                 bb_info = bb_info.set_value(bb[0],"Jaccard [Self]",jaccard(obj_x_locs,obj_y_locs))
                 bb_info = bb_info.set_value(bb[0],"Precision [Self]",precision(obj_x_locs,obj_y_locs))
                 bb_info = bb_info.set_value(bb[0],"Recall [Self]",recall(obj_x_locs,obj_y_locs))
+                FPR,FNR = TFPNR(img_name,obj_x_locs,obj_y_locs)
+                bb_info = bb_info.set_value(bb[0],"FPR% [Self]",FPR)
+                bb_info = bb_info.set_value(bb[0],"FNR% [Self]",FNR)
     #Drop Unnamed columns (index from rewriting same file)
     bb_info = bb_info[bb_info.columns[~bb_info.columns.str.contains('Unnamed:')]]
     # replace all NAN values with -1, these are entries for which we don't have COCO ground truth
