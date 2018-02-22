@@ -108,6 +108,39 @@ def sanity_checks(sample, objid, clust_id='-1'):
             assert tid in wtiles[wid]
 
 
+def basic_worker_prob_correct(
+    gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers,
+    exclude_isovote=False
+):
+    '''
+    gt_tiles = set() of tiles in ground truth`
+    curr_worker_tiles = set() of tiles voted for by worker whose prob is being calculated
+    tarea = {tid: area of tile}
+    tworkers: {tid: [workers voted 1 for tile]}
+    '''
+
+    ncorrect, ntotal = 0, 0
+
+    for tid in tarea:
+        gt = (tid in gt_tiles)
+        w = (tid in curr_worker_tiles)
+        m = len(tworkers[tid])  # num workers voted for tile
+        a = tarea[tid]
+        if exclude_isovote:
+            not_agreement = False
+            if m != 0 and m != Nworkers:
+                not_agreement = True
+        else:
+            not_agreement = True
+        if not_agreement:
+            if gt == w:
+                ncorrect += a
+            ntotal += a
+
+    q = float(ncorrect)/float(ntotal) if ntotal != 0 else 0.6
+    return q
+
+
 def basic_mask_log_probabilities(wtiles, q, tarea):
     '''
     input wtiles: {wid: [list of tiles voted yes for]}
@@ -130,7 +163,7 @@ def basic_mask_log_probabilities(wtiles, q, tarea):
     return log_probability_in, log_probability_not_in
 
 
-def basic_worker_prob_correct(
+def GT_worker_prob_correct(
     gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers,
     exclude_isovote=False
 ):
@@ -141,12 +174,13 @@ def basic_worker_prob_correct(
     tworkers: {tid: [workers voted 1 for tile]}
     '''
 
-    ncorrect, ntotal = 0, 0
+    gt_Ncorrect, gt_total, ngt_Ncorrect, ngt_total = 0, 0, 0, 0
 
     for tid in tarea:
         gt = (tid in gt_tiles)
         w = (tid in curr_worker_tiles)
         m = len(tworkers[tid])  # num workers voted for tile
+        a = tarea[tid]
         if exclude_isovote:
             not_agreement = False
             if m != 0 and m != Nworkers:
@@ -154,12 +188,28 @@ def basic_worker_prob_correct(
         else:
             not_agreement = True
         if not_agreement:
-            if gt == w:
-                ncorrect += 1
-            ntotal += 1
-
-    q = float(ncorrect)/float(ntotal) if ntotal != 0 else 0.6
-    return q
+            if gt is True:
+                gt_total += a
+                if w is True:
+                    large_gt_Ncorrect += a
+            if gt is False and (a >= area_thresh_ngt):
+                large_ngt_total += a
+                if w is False:
+                    large_ngt_Ncorrect += a
+            if gt is True and (a < area_thresh_gt):
+                small_gt_total += a
+                if w is True:
+                    small_gt_Ncorrect += a
+            if gt is False and (a < area_thresh_ngt):
+                small_ngt_total += a
+                if w is False:
+                    small_ngt_Ncorrect += a
+    qp1 = float(large_gt_Ncorrect)/float(large_gt_total) if large_gt_total != 0 else 0.6
+    qn1 = float(large_ngt_Ncorrect)/float(large_ngt_total) if large_ngt_total != 0 else 0.6
+    qp2 = float(small_gt_Ncorrect)/float(small_gt_total) if small_gt_total != 0 else 0.6
+    qn2 = float(small_ngt_Ncorrect)/float(small_ngt_total) if small_ngt_total != 0 else 0.6
+    # print "qp1, qn1, qp2, qn2:", qp1, qn1, qp2, qn2
+    return qp1, qn1, qp2, qn2
 
 
 def compute_area_thresh(gt_tiles, tarea):
