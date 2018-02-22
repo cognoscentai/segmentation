@@ -142,21 +142,23 @@ for objid in small_object_lst:
 from PixelEM_tile import do_EM_for as EM
 print "7. Running tile EM"
 times = []
-# for objid in object_lst:
-for objid in small_object_lst:
+#small_object_lst =[27]
+for objid in object_lst:
+#for objid in small_object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-    for clust_id in ['-1'] + list(cluster_ids):
-        outdir = tile_and_mask_dir(sample, objid, clust_id)
-        print sample + ':' + str(objid) + ':' + str(clust_id)
-        for algo in ['GT']:
-            for excl_iso in [True]:
-                telapsed = EM(
-                    sample, objid, clust_id, algo=algo,
-                    rerun_existing=True, exclude_isovote=excl_iso,
-                    dump_output_at_every_iter=False, compute_PR_every_iter=False,
-                    PLOT=False, DEBUG=True)
-
-                times.append(telapsed)
+    for clust_id in [-1] + list(cluster_ids):
+        worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == clust_id)].wid)
+        if len(worker_ids) > 1:
+            outdir = tile_and_mask_dir(sample, objid, clust_id)
+            print sample + ':' + str(objid) + ':' + str(clust_id)
+            for algo in ['GTLSA']:
+                for excl_iso in [True]:
+                    telapsed = EM(
+                        sample, objid, clust_id, algo=algo,
+                        rerun_existing=False, exclude_isovote=excl_iso,
+                        dump_output_at_every_iter=False, compute_PR_every_iter=False,
+                        PLOT=False, DEBUG=True)
+                    times.append(telapsed)
 print times
 print np.mean(times)
 
