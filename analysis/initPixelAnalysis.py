@@ -148,13 +148,13 @@ for objid in small_object_lst:
     for clust_id in ['-1'] + list(cluster_ids):
         outdir = tile_and_mask_dir(sample, objid, clust_id)
         print sample + ':' + str(objid) + ':' + str(clust_id)
-        for algo in ['basic', 'GTLSA']:
+        for algo in ['basic', 'GT', 'GTLSA']:
             for excl_iso in [True]:
                 telapsed = EM(
                     sample, objid, clust_id, algo=algo,
                     rerun_existing=True, exclude_isovote=excl_iso,
                     dump_output_at_every_iter=False, compute_PR_every_iter=False,
-                    PLOT=False, DEBUG=True)
+                    PLOT=False, DEBUG=False)
 
                 times.append(telapsed)
 print times

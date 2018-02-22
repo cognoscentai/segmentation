@@ -141,7 +141,7 @@ def basic_worker_prob_correct(
     return q
 
 
-def basic_mask_log_probabilities(wtiles, q, tarea):
+def basic_log_probabilities(wtiles, q, tarea):
     '''
     input wtiles: {wid: [list of tiles voted yes for]}
     output log_probability_in[tid] = log_prob  of each pixel in tile (all pixels identical)
@@ -191,25 +191,40 @@ def GT_worker_prob_correct(
             if gt is True:
                 gt_total += a
                 if w is True:
-                    large_gt_Ncorrect += a
-            if gt is False and (a >= area_thresh_ngt):
-                large_ngt_total += a
+                    gt_Ncorrect += a
+            if gt is False:
+                ngt_total += a
                 if w is False:
-                    large_ngt_Ncorrect += a
-            if gt is True and (a < area_thresh_gt):
-                small_gt_total += a
-                if w is True:
-                    small_gt_Ncorrect += a
-            if gt is False and (a < area_thresh_ngt):
-                small_ngt_total += a
-                if w is False:
-                    small_ngt_Ncorrect += a
-    qp1 = float(large_gt_Ncorrect)/float(large_gt_total) if large_gt_total != 0 else 0.6
-    qn1 = float(large_ngt_Ncorrect)/float(large_ngt_total) if large_ngt_total != 0 else 0.6
-    qp2 = float(small_gt_Ncorrect)/float(small_gt_total) if small_gt_total != 0 else 0.6
-    qn2 = float(small_ngt_Ncorrect)/float(small_ngt_total) if small_ngt_total != 0 else 0.6
-    # print "qp1, qn1, qp2, qn2:", qp1, qn1, qp2, qn2
-    return qp1, qn1, qp2, qn2
+                    ngt_Ncorrect += a
+
+    qp = float(gt_Ncorrect)/float(gt_total) if gt_total != 0 else 0.6
+    qn = float(ngt_Ncorrect)/float(ngt_total) if ngt_total != 0 else 0.6
+    return qp, qn
+
+
+def GT_log_probabilities(wtiles, qp, qn, tarea):
+    '''
+    input wtiles: {wid: [list of tiles voted yes for]}
+    output log_probability_in[tid] = log_prob  of each pixel in tile (all pixels identical)
+    output log_probability_not_in[tid] = log_prob  of each pixel not in tile (all pixels identical)
+    '''
+    worker_ids = qp.keys()
+    log_probability_in = defaultdict(float)
+    log_probability_not_in = defaultdict(float)
+
+    for tid in tarea:
+        for wid in worker_ids:
+            qpi = qp[wid]
+            qni = qn[wid]
+            ljk = (tid in wtiles[wid])
+            if ljk is True:
+                log_probability_in[tid] += np.log(qpi)
+                log_probability_not_in[tid] += np.log(1.0 - qni)
+            else:
+                log_probability_in[tid] += np.log(1.0 - qpi)
+                log_probability_not_in[tid] += np.log(qni)
+
+    return log_probability_in, log_probability_not_in
 
 
 def compute_area_thresh(gt_tiles, tarea):
@@ -283,7 +298,7 @@ def GTLSA_worker_prob_correct(
     return qp1, qn1, qp2, qn2
 
 
-def GTLSA_mask_log_probabilities(wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt):
+def GTLSA_log_probabilities(wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt):
     '''
     input wtiles: {wid: [list of tiles voted yes for]}
     output log_probability_in[tid] = log_prob  of each pixel in tile (all pixels identical)
@@ -406,7 +421,8 @@ def do_EM_for(
         if algo == 'basic':
             q = dict()
         elif algo == 'GT':
-            raise NotImplementedError
+            qp = dict()
+            qn = dict()
         elif algo == 'GTLSA':
             qp1 = dict()
             qn1 = dict()
@@ -423,7 +439,9 @@ def do_EM_for(
                     gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers,
                     exclude_isovote=exclude_isovote)
             elif algo == 'GT':
-                raise NotImplementedError
+                qp[wid], qn[wid] = GT_worker_prob_correct(
+                    gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers,
+                    exclude_isovote=False)
             elif algo == 'GTLSA':
                 qp1[wid], qn1[wid], qp2[wid], qn2[wid] = GTLSA_worker_prob_correct(
                     gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
@@ -434,12 +452,11 @@ def do_EM_for(
 
         # Compute pInMask and pNotInMask
         if algo == 'basic':
-            log_probability_in, log_probability_not_in = basic_mask_log_probabilities(
-                wtiles, q, tarea)
+            log_probability_in, log_probability_not_in = basic_log_probabilities(wtiles, q, tarea)
         elif algo == 'GT':
-            raise NotImplementedError
+            log_probability_in, log_probability_not_in = GT_log_probabilities(wtiles, qp, qn, tarea)
         elif algo == 'GTLSA':
-            log_probability_in, log_probability_not_in = GTLSA_mask_log_probabilities(
+            log_probability_in, log_probability_not_in = GTLSA_log_probabilities(
                 wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt)
 
         if DEBUG:
@@ -484,7 +501,8 @@ def do_EM_for(
     if algo == 'basic':
         pickle.dump(q, open('{}{}{}_q_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
     elif algo == 'GT':
-        raise NotImplementedError
+        pickle.dump(qp, open('{}{}{}_qp_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+        pickle.dump(qn, open('{}{}{}_qn_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
     elif algo == 'GTLSA':
         pickle.dump(qp1, open('{}{}{}_qp1_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
         pickle.dump(qn1, open('{}{}{}_qn1_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
