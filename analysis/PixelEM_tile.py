@@ -388,7 +388,7 @@ def do_EM_for(
     start = time.time()
     outdir = tile_em_output_dir(sample_name, objid, cluster_id)
 
-    print "Doing {} mode = {}".format(algo, mode)
+    if DEBUG: print "Doing {} mode = {}".format(algo, mode)
     if not rerun_existing:
         if os.path.isfile('{}{}{}_EM_prj_best_thresh.json'.format(outdir, mode, algo)):
             print "Already ran {}, skipped".format(algo)

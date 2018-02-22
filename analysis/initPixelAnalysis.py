@@ -101,66 +101,66 @@ from utils import tile_and_mask_dir
 
 '''
 print "6. Creating tile related maps for all sample-objects"
-for objid in small_object_lst:
-    cluster_ids = df[(df["objid"] == objid)].cluster.unique()
-    for clust_id in ['-1'] + list(cluster_ids):
-        outdir = tile_and_mask_dir(sample, objid, clust_id)
-        print sample + ':' + str(objid) + ':' + str(clust_id)
-        ################################################
-        ################### MV tiles ###################
-        ################################################
-        filepath = "{}/MV_tiles.pkl".format(outdir)
-        if os.path.exists(filepath):
-            print '{} already exists.'.format(filepath)
-        else:
-            print 'Creating {}.'.format(filepath)
-            create_MV_tiles(sample, objid, clust_id)
-        ################################################
-        ############### tile to area map ###############
-        ################################################
-        filepath = "{}/tile_area.pkl".format(outdir)
-        if os.path.exists(filepath):
-            print '{} already exists.'.format(filepath)
-        else:
-            print 'Creating {}.'.format(filepath)
-            create_tile_area_map(sample, objid, clust_id)
-        ################################################
-        ### tile to workers and worker to tiles maps ###
-        ################################################
-        filepath1 = "{}/tile_to_workers.pkl".format(outdir)
-        filepath2 = "{}/worker_to_tiles.pkl".format(outdir)
-        if os.path.exists(filepath1) and os.path.exists(filepath2):
-            print '{} and {} already exist.'.format(filepath1, filepath2)
-        else:
-            print 'Creating {} and {}.'.format(filepath1, filepath2)
-            create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
-
-        # check for data consistency against pixel version
-        sanity_checks(sample, objid, clust_id)
-'''
-
-from PixelEM_tile import do_EM_for as EM
-print "7. Running tile EM"
-times = []
-# small_object_lst =[27]
 for objid in object_lst:
-# for objid in small_object_lst:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for clust_id in [-1] + list(cluster_ids):
         worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == clust_id)].wid)
         if len(worker_ids) > 1:
             outdir = tile_and_mask_dir(sample, objid, clust_id)
             print sample + ':' + str(objid) + ':' + str(clust_id)
+            ################################################
+            ################### MV tiles ###################
+            ################################################
+            filepath = "{}/MV_tiles.pkl".format(outdir)
+            if os.path.exists(filepath):
+                print '{} already exists.'.format(filepath)
+            else:
+                print 'Creating {}.'.format(filepath)
+                create_MV_tiles(sample, objid, clust_id)
+            ################################################
+            ############### tile to area map ###############
+            ################################################
+            filepath = "{}/tile_area.pkl".format(outdir)
+            if os.path.exists(filepath):
+                print '{} already exists.'.format(filepath)
+            else:
+                print 'Creating {}.'.format(filepath)
+                create_tile_area_map(sample, objid, clust_id)
+            ################################################
+            ### tile to workers and worker to tiles maps ###
+            ################################################
+            filepath1 = "{}/tile_to_workers.pkl".format(outdir)
+            filepath2 = "{}/worker_to_tiles.pkl".format(outdir)
+            if os.path.exists(filepath1) and os.path.exists(filepath2):
+                print '{} and {} already exist.'.format(filepath1, filepath2)
+            else:
+                print 'Creating {} and {}.'.format(filepath1, filepath2)
+                create_tile_to_worker_list_map_and_inverse(sample, objid, clust_id)
+
+            # check for data consistency against pixel version
+            #sanity_checks(sample, objid, clust_id)
+'''
+from PixelEM_tile import do_EM_for as EM
+print "7. Running tile EM"
+for objid in object_lst:
+    cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+    for clust_id in ["-1"] + list(cluster_ids):
+        worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == int(clust_id))].wid)
+        if len(worker_ids) > 1 or clust_id == "-1":
+            outdir = tile_and_mask_dir(sample, objid, clust_id)
+            print sample + ':' + str(objid) + ':' + str(clust_id)
             for algo in ['basic', 'GT', 'GTLSA']:
                 for excl_iso in [True, False]:
-                    telapsed = EM(
-                        sample, objid, clust_id, algo=algo,
-                        rerun_existing=False, exclude_isovote=excl_iso,
-                        dump_output_at_every_iter=False, compute_PR_every_iter=False,
-                        PLOT=False, DEBUG=True)
-                    times.append(telapsed)
-print times
-print np.mean(times)
+                    try:
+                        EM(
+                            sample, objid, clust_id, algo=algo,
+                            rerun_existing=False, exclude_isovote=excl_iso,
+                            dump_output_at_every_iter=False, compute_PR_every_iter=False,
+                            PLOT=False, DEBUG=False)
+                    except:
+                        f=open("failed_obj.log",'a')
+                        f.write(sample+","+str(objid)+","+str(clust_id)+","+algo+","+str(excl_iso)+"\n")
+                        f.close()
 
 '''
 ###########################################################
