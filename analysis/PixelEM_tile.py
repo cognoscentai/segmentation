@@ -108,6 +108,60 @@ def sanity_checks(sample, objid, clust_id='-1'):
             assert tid in wtiles[wid]
 
 
+def basic_mask_log_probabilities(wtiles, q, tarea):
+    '''
+    input wtiles: {wid: [list of tiles voted yes for]}
+    output log_probability_in[tid] = log_prob  of each pixel in tile (all pixels identical)
+    output log_probability_not_in[tid] = log_prob  of each pixel not in tile (all pixels identical)
+    '''
+    worker_ids = q.keys()
+    log_probability_in = defaultdict(float)
+    log_probability_not_in = defaultdict(float)
+
+    for tid in tarea:
+        for wid in worker_ids:
+            ljk = (tid in wtiles[wid])
+            if ljk is True:
+                log_probability_in[tid] += np.log(q[wid])
+                log_probability_not_in[tid] += np.log(1.0 - q[wid])
+            else:
+                log_probability_in[tid] += np.log(1.0 - q[wid])
+                log_probability_not_in[tid] += np.log(q[wid])
+    return log_probability_in, log_probability_not_in
+
+
+def basic_worker_prob_correct(
+    gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers,
+    exclude_isovote=False
+):
+    '''
+    gt_tiles = set() of tiles in ground truth`
+    curr_worker_tiles = set() of tiles voted for by worker whose prob is being calculated
+    tarea = {tid: area of tile}
+    tworkers: {tid: [workers voted 1 for tile]}
+    '''
+
+    ncorrect, ntotal = 0, 0
+
+    for tid in tarea:
+        gt = (tid in gt_tiles)
+        w = (tid in curr_worker_tiles)
+        m = len(tworkers[tid])  # num workers voted for tile
+        if exclude_isovote:
+            not_agreement = False
+            if m != 0 and m != Nworkers:
+                not_agreement = True
+        else:
+            not_agreement = True
+        if not_agreement:
+            if gt == w:
+                ncorrect += 1
+            ntotal += 1
+
+    q = float(ncorrect)/float(ntotal) if ntotal != 0 else 0.6
+    return q
+
+
 def compute_area_thresh(gt_tiles, tarea):
     ngt_tiles = set(tarea.keys()) - gt_tiles
     gt_areas = []
@@ -129,7 +183,7 @@ def compute_area_thresh(gt_tiles, tarea):
     return area_thresh_gt, area_thresh_ngt
 
 
-def GTLSAworker_prob_correct(
+def GTLSA_worker_prob_correct(
     gt_tiles, curr_worker_tiles, tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
     exclude_isovote=False
 ):
@@ -139,18 +193,6 @@ def GTLSAworker_prob_correct(
     tarea = {tid: area of tile}
     tworkers: {tid: [workers voted 1 for tile]}
     '''
-
-    # TODO: why was the following commented section in the code?
-    # for t in tiles:
-    #     numerator = 0
-    #     for tidx in t:
-    #         numerator += gt_mask[tidx]
-    #     if len(tidx) != 0:
-    #         gt_percentage = numerator / float(len(t))
-    #     if gt_percentage > 0.6:
-    #         gt_tiles.append(t)
-    #     else:
-    #         ngt_tiles.append(t)
 
     large_gt_Ncorrect, large_gt_total, large_ngt_Ncorrect, large_ngt_total = 0, 0, 0, 0
     small_gt_Ncorrect, small_gt_total, small_ngt_Ncorrect, small_ngt_total = 0, 0, 0, 0
@@ -191,7 +233,7 @@ def GTLSAworker_prob_correct(
     return qp1, qn1, qp2, qn2
 
 
-def GTLSAmask_log_probabilities(wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt):
+def GTLSA_mask_log_probabilities(wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt):
     '''
     input wtiles: {wid: [list of tiles voted yes for]}
     output log_probability_in[tid] = log_prob  of each pixel in tile (all pixels identical)
@@ -268,8 +310,8 @@ def estimate_gt_from(log_probability_in, log_probability_not_in, thresh=0):
 #     return A_thres
 
 
-def do_GTLSA_EM_for(
-    sample_name, objid, cluster_id="", rerun_existing=False, exclude_isovote=False,
+def do_EM_for(
+    sample_name, objid, cluster_id="", algo='GTLSA', rerun_existing=False, exclude_isovote=False,
     dump_output_at_every_iter=False, compute_PR_every_iter=False, PLOT=False, DEBUG=False
 ):
     if exclude_isovote:
@@ -278,15 +320,12 @@ def do_GTLSA_EM_for(
         mode = ''
 
     start = time.time()
-    if DEBUG:
-        print "Doing GTLSA mode=", mode
-
     outdir = tile_em_output_dir(sample_name, objid, cluster_id)
 
-    print "Doing GTLSA mode=", mode
+    print "Doing {} mode = {}".format(algo, mode)
     if not rerun_existing:
-        if os.path.isfile('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode)):
-            print "Already ran GTLSA, Skipped"
+        if os.path.isfile('{}{}{}_EM_prj_best_thresh.json'.format(outdir, mode, algo)):
+            print "Already ran {}, skipped".format(algo)
             return
 
     tarea = get_tile_to_area_map(sample_name, objid, cluster_id)
@@ -305,44 +344,68 @@ def do_GTLSA_EM_for(
     prev_gt_est = gt_est_tiles.copy()
     jaccard_against_prev_gt_est = 0
     it = 0
-    # for it in range(num_iterations):
     max_iter = 6
     while (jaccard_against_prev_gt_est < 0.999 or it <= 1):
         if (it >= max_iter):
             break
         if DEBUG:
             print "iteration:", it
+
         it += 1
-        qp1 = dict()
-        qn1 = dict()
-        qp2 = dict()
-        qn2 = dict()
+
+        if algo == 'basic':
+            q = dict()
+        elif algo == 'GT':
+            raise NotImplementedError
+        elif algo == 'GTLSA':
+            qp1 = dict()
+            qn1 = dict()
+            qp2 = dict()
+            qn2 = dict()
+            area_thresh_gt, area_thresh_ngt = compute_area_thresh(gt_est_tiles, tarea)
+
         if DEBUG:
             t0 = time.time()
 
-        area_thresh_gt, area_thresh_ngt = compute_area_thresh(gt_est_tiles, tarea)
         for wid in wtiles.keys():
-            qp1[wid], qn1[wid], qp2[wid], qn2[wid] = GTLSAworker_prob_correct(
-                gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
-                exclude_isovote=exclude_isovote)
+            if algo == 'basic':
+                q[wid] = basic_worker_prob_correct(
+                    gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers,
+                    exclude_isovote=exclude_isovote)
+            elif algo == 'GT':
+                raise NotImplementedError
+            elif algo == 'GTLSA':
+                qp1[wid], qn1[wid], qp2[wid], qn2[wid] = GTLSA_worker_prob_correct(
+                    gt_est_tiles, wtiles[wid], tarea, tworkers, Nworkers, area_thresh_gt, area_thresh_ngt,
+                    exclude_isovote=exclude_isovote)
         if DEBUG:
             t1 = time.time()
             print "Time for worker prob calculation:", t1-t0
+
         # Compute pInMask and pNotInMask
-        log_probability_in, log_probability_not_in = GTLSAmask_log_probabilities(
-            wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt)
+        if algo == 'basic':
+            log_probability_in, log_probability_not_in = basic_mask_log_probabilities(
+                wtiles, q, tarea)
+        elif algo == 'GT':
+            raise NotImplementedError
+        elif algo == 'GTLSA':
+            log_probability_in, log_probability_not_in = GTLSA_mask_log_probabilities(
+                wtiles, qp1, qn1, qp2, qn2, tarea, area_thresh_gt, area_thresh_ngt)
+
         if DEBUG:
             t2 = time.time()
             print "Time for mask log prob calculation:", t2-t1
+
         # gt_est_mask = estimate_gt_from(log_probability_in_mask, log_probability_not_in_mask,thresh=thresh)
         p, r, j, thresh, gt_est_tiles = binarySearchDeriveBestThresh(
             sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, MV_tiles,
             exclude_isovote=exclude_isovote, rerun_existing=rerun_existing, DEBUG=DEBUG)
+
         # Compute PR mask based on the EM estimate mask from every iteration
         if compute_PR_every_iter:
             gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
             [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
-            with open('{}{}GTLSA_EM_prj_iter{}_thresh{}.json'.format(outdir, mode, it, thresh), 'w') as fp:
+            with open('{}{}{}_EM_prj_iter{}_thresh{}.json'.format(outdir, mode, algo, it, thresh), 'w') as fp:
                 fp.write(json.dumps([p, r, j]))
 
             if DEBUG:
@@ -358,25 +421,35 @@ def do_GTLSA_EM_for(
 
     gt_est_mask = tiles_to_mask(gt_est_tiles, tiles, gt_mask)
     [p, r, j] = faster_compute_prj(gt_est_mask, gt_mask)
-    if DEBUG: print 'Final prj:', [p, r, j]
-    with open('{}{}GTLSA_EM_prj_best_thresh.json'.format(outdir, mode), 'w') as fp:
+    if DEBUG:
+        print 'Final prj:', [p, r, j]
+
+    with open('{}{}{}_EM_prj_best_thresh.json'.format(outdir, mode, algo), 'w') as fp:
         fp.write(json.dumps([p, r, j]))
-    pickle.dump(gt_est_tiles, open('{}{}GTLSA_gt_est_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(log_probability_in, open('{}{}GTLSA_p_in_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(log_probability_not_in, open('{}{}GTLSA_p_not_in_tiles_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(qp1, open('{}{}GTLSA_qp1_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(qn1, open('{}{}GTLSA_qn1_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(qp2, open('{}{}GTLSA_qp2_best_thresh.pkl'.format(outdir, mode), 'w'))
-    pickle.dump(qn2, open('{}{}GTLSA_qn2_best_thresh.pkl'.format(outdir, mode), 'w'))
+
+    pickle.dump(gt_est_tiles, open('{}{}{}_gt_est_tiles_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+    pickle.dump(log_probability_in, open('{}{}{}_p_in_tiles_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+    pickle.dump(log_probability_not_in, open('{}{}{}_p_not_in_tiles_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+
+    if algo == 'basic':
+        pickle.dump(q, open('{}{}{}_q_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+    elif algo == 'GT':
+        raise NotImplementedError
+    elif algo == 'GTLSA':
+        pickle.dump(qp1, open('{}{}{}_qp1_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+        pickle.dump(qn1, open('{}{}{}_qn1_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+        pickle.dump(qp2, open('{}{}{}_qp2_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
+        pickle.dump(qn2, open('{}{}{}_qn2_best_thresh.pkl'.format(outdir, mode, algo), 'w'))
     if PLOT:
         plt.figure()
         plt.imshow(gt_est_mask, interpolation="none")  # ,cmap="rainbow")
         plt.colorbar()
-        plt.savefig('{}{}GTLSA_EM_mask_thresh{}.png'.format(outdir, mode, thresh))
+        plt.savefig('{}{}{}_EM_mask_thresh{}.png'.format(outdir, mode, algo, thresh))
 
     end = time.time()
     if DEBUG:
         print "Time:{}".format(end-start)
+
     return end-start
 
 
@@ -448,7 +521,7 @@ def binarySearchDeriveBestThresh(
         thresh = (thresh_min+thresh_max)/2.0
         iterations += 1
 
-    if DEBUG:
+    if False:
         # TODO: currently overwritten by different algos and iterations
         track = np.array(track)
         plt.figure()
