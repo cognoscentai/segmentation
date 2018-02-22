@@ -150,7 +150,7 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
 
 if __name__ == '__main__':
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-    # object_lst = [1]
+    object_lst = [1]
     from sample_worker_seeds import sample_specs
     import time
     import pandas as pd
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     df_data = []
     obj_clusters = clusters()
     for sample in sample_specs.keys():
-        if sample != '5workers_rand0':
+        if sample != '25workers_rand0':
             continue
         for objid in object_lst:
             if str(objid) in obj_clusters[sample]:
@@ -169,18 +169,18 @@ if __name__ == '__main__':
             else:
                 clusts = ["-1"]
             for clust in clusts:
-                for algo in ['GTLSA']:
+                for algo in ['basic']:
                     modes = [''] if algo in ['worker_fraction', 'ground_truth'] else ['iso', '']
                     for mode in modes:
                         start = time.time()
                         p, r, j, fpr, fnr = greedy(
-                            sample, objid, algo, cluster_id='', mode='',
+                            sample, objid, algo, cluster_id=clust, mode=mode,
                             output="prj", rerun_existing=True, DEBUG=DEBUG)
                         end = time.time()
                         df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
                         if DEBUG:
                             print "Time Elapsed:", end-start
-                            print mode+algo, sample, objid, p, r, j, fpr, fnr
+                            print mode+algo, sample, objid, clust, p, r, j, fpr, fnr
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
 

@@ -573,7 +573,8 @@ def binarySearchDeriveBestThresh(
             # stop if p==r or if epsilon (range in x) gets below a certain threshold
             break
         [p, r, j], gt_est_tiles = estimate_gt_compute_PRJ_against_MV(
-            sample_name, objid, cluster_id, log_probability_in, log_probability_not_in, tiles_to_search_against, thresh, exclude_isovote=exclude_isovote)
+            sample_name, objid, cluster_id, log_probability_in, log_probability_not_in,
+            tiles_to_search_against, thresh, exclude_isovote=exclude_isovote)
         if p > r or p <= 0:
             thresh_max = thresh
         else:
