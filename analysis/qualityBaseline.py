@@ -290,6 +290,15 @@ def compute_self_BBvals(compute_metrics=['simple','area','dist']):
                 FPR,FNR = TFPNR(img_name,obj_x_locs,obj_y_locs)
                 bb_info = bb_info.set_value(bb[0],"FPR% [Self]",FPR)
                 bb_info = bb_info.set_value(bb[0],"FNR% [Self]",FNR)
+    DEBUG=False
+    if DEBUG: 
+        from calc_Tstar import plot_coords
+        plt.figure()
+        FPR,FNR = TFPNR(img_name,obj_x_locs,obj_y_locs)
+        plt.title("FPR={};FNR={}".format(FPR,FNR))
+        print "red : worker ; blue: ground truth"
+        plot_coords(Polygon(zip(obj_x_locs[0],obj_y_locs[0])).buffer(0))
+        plot_coords(Polygon(zip(obj_x_locs[1],obj_y_locs[1])).buffer(0),color="blue")
     #Drop Unnamed columns (index from rewriting same file)
     bb_info = bb_info[bb_info.columns[~bb_info.columns.str.contains('Unnamed:')]]
     # replace all NAN values with -1, these are entries for which we don't have COCO ground truth

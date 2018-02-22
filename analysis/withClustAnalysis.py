@@ -29,18 +29,19 @@ def compute_best_worker_picking():
     # pick the best MV performing cluster as the cluster to run
     # we store -1 for the rest of the unclustered objects 
 
-    MV_clust = pd.read_csv("pixel_em/MV_full_PRJ_table.csv",index_col=0)
-    MV_clust["num_workers"] = MV_clust["sample"].apply(lambda x: int(x.split("workers")[0]))
-    MV_clust["sample_num"] = MV_clust["sample"].apply(lambda x: int(x.split("rand")[-1]))
-    clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+    MV_clust = pd.read_csv("pixel_em/MV_full_PRJ_table.csv")
+    #MV_clust["num_workers"] = MV_clust["sample"].apply(lambda x: int(x.split("workers")[0]))
+    #MV_clust["sample_num"] = MV_clust["sample"].apply(lambda x: int(x.split("rand")[-1]))
+    #clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 
     # pick the cluster with the highest MV
-    best_clust_df = MV_clust.loc[MV_clust.groupby(["sample","objid"])["MV_jaccard"].idxmax()]
-    best_clust_df = best_clust_df.drop(['MV_precision','MV_recall','MV_jaccard'],axis=1)
+    best_clust_df = MV_clust.loc[MV_clust.groupby(["num_workers","sample_num","objid"])["jaccard"].idxmax()]
+    best_clust_df = best_clust_df.drop(['precision','recall','jaccard'],axis=1)
     best_clust_df = best_clust_df.rename(columns={'cluster':'clust'})
     # There can only be one best cluster for every sample objid
-    assert int(best_clust_df.groupby(["sample","objid"]).count()["clust"].unique())==1
+    assert int(best_clust_df.groupby(["num_workers","sample_num","objid"]).count()["clust"].unique())==1
     best_clust_df.to_csv("best_clust_picking.csv")
+    return best_clust_df
 def compile_all_algo_PRJs(ground_truth=False):
     if ground_truth:
 	gt = "_ground_truth"

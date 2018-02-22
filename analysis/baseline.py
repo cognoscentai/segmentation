@@ -5,7 +5,7 @@ def compute_best_average_heuristics_workers_baselines(rerun_existing=False):
     outfile = "pixel_em/individual_worker_performance.csv"
     if os.path.exists(outfile) and not rerun_existing:
         return pd.read_csv(outfile)
-    metric_keys = ['Precision [Self]', u'Recall [Self]','Jaccard [Self]','FPR [Self]','FNR [Self]']
+    metric_keys = ['Precision [Self]', u'Recall [Self]','Jaccard [Self]','FPR% [Self]','FNR% [Self]']
     computed_wrt_gt = pd.read_csv("../data/computed_my_COCO_BBvals.csv",index_col=0)
     sample_lst = sample_specs.keys()
     obj_clusters = clusters()
