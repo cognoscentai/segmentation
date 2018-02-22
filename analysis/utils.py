@@ -47,7 +47,7 @@ def tile_and_mask_dir(sample, objid, clust_id=''):
 
 def tile_em_output_dir(sample, objid, clust_id=''):
     outdir = tile_and_mask_dir(sample, objid, clust_id)
-    outdir +="/"
+    outdir += "/"
     #outdir += '/tile_output/'
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -419,3 +419,28 @@ def visualize_test_gt_vision_overlay(batch, objid, k, test_mask, outdir=None):
     plt.close()
 
     return zoomed_viz_mask, zoomed_test_mask, zoomed_gt_mask, zoomed_mega_mask
+
+
+def get_worker_quals(sample, objid, clust_id='', algo='basic', mode='', gt=False):
+    '''
+    returns ground truth worker quals if gt is True
+    else inferred worker quals from final iteration
+    '''
+    assert mode in ['iso', '']
+    raise NotImplementedError
+
+
+def read_tile_log_probabilities(sample, objid, cluster_id='', algo='basic', mode='', gt=False):
+    '''
+    returns ground truth log probabilities after one M step if gt is True
+    else inferred log probabilities from final iteration
+    '''
+    assert mode in ['iso', '']
+    indir = tile_em_output_dir(sample, objid, cluster_id)
+    if gt is True:
+        # gt log probs not computed
+        raise NotImplementedError
+    else:
+        log_probability_in = pickle.load(open('{}{}{}_p_in_tiles_best_thresh.pkl'.format(indir, mode, algo)))
+        log_probability_not_in = pickle.load(open('{}{}{}_p_not_in_tiles_best_thresh.pkl'.format(indir, mode, algo)))
+    return log_probability_in, log_probability_not_in
