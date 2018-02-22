@@ -4,8 +4,9 @@ object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 metric_keys=[ u'P [GT]', u'R [GT]', u'J [GT]', u'P [isoGT]',
        u'R [isoGT]', u'J [isoGT]', u'P [GTLSA]', u'R [GTLSA]', u'J [GTLSA]',
        u'P [isoGTLSA]', u'R [isoGTLSA]', u'J [isoGTLSA]', u'P [basic]',
-       u'R [basic]', u'J [basic]','P [MV]',u'R [MV]', u'J [MV]']
-metric_J= [u'J [MV]', u'J [GT]', u'J [isoGT]', u'J [GTLSA]', u'J [isoGTLSA]', u'J [basic]']
+       u'R [basic]', u'J [basic]','P [MV]',u'R [MV]', u'J [MV]',
+       'P [isobasic]','R [isobasic]', u'J [isobasic]']
+metric_J= [u'J [MV]', u'J [GT]', u'J [isoGT]', u'J [GTLSA]', u'J [isoGTLSA]', u'J [basic]','J [isobasic]']
 #include only the "whole" MV PRJ of objects that were unclustered
 clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 noClust_obj =[obj for obj in object_lst if obj not in clust_df.objid.unique() ]
@@ -42,59 +43,6 @@ def compute_best_worker_picking():
     assert int(best_clust_df.groupby(["num_workers","sample_num","objid"]).count()["clust"].unique())==1
     best_clust_df.to_csv("best_clust_picking.csv")
     return best_clust_df
-def compile_all_algo_PRJs(ground_truth=False):
-    if ground_truth:
-	gt = "_ground_truth"
-    else :
-	gt = ""
-    df = pd.read_csv("pixel_em/all_MV_PRJ_table.csv")
-    df = df.rename(columns={"MV_precision":"P [MV]",
-                           "MV_recall":"R [MV]",
-                           "MV_jaccard":"J [MV]"})
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-    for mode in  ["basic","GT","isoGT","GTLSA","isoGTLSA"]:
-        data =  pd.read_csv("pixel_em/{}{}_full_PRJ_table.csv".format(gt,mode))
-        data = data.rename(columns={"EM_precision":"P [{}]".format(mode),
-                           "EM_recall":"R [{}]".format(mode),
-                           "EM_jaccard":"J [{}]".format(mode),})
-        data = data.drop("thresh",1)
-        df = df.merge(data,on=['clust', 'num_workers', 'objid','sample_num'],how="right")
-    df.to_csv("pixel_em/all_PRJ_table.csv")
-    return df
-def compile_best_thresh_all_algo_PRJs():
-    #using base tables create one algo for each row
-    df = pd.read_csv("pixel_em/all_MV_PRJ_table.csv",index_col=0)
-    df["algo"]='MV'
-    df["thresh"]=0 #dummy value
-    df = df.rename(columns={"MV_precision":"p",
-                           "MV_recall":"r",
-                           "MV_jaccard":"j"})
-    for mode in  ["GT","isoGT","GTLSA","isoGTLSA","basic"]:
-        data =  pd.read_csv("pixel_em/{}_ground_truth_full_PRJ_table.csv".format(mode))
-        data["algo"]=mode
-        data = data.rename(columns={"EM_precision":"p",
-                           "EM_recall":"r",
-                           "EM_jaccard":"j"})
-        df = pd.concat([df,data]) 
-    # get entry with the best threshold jaccard
-    df_best_thresh = df.sort("j",ascending=False).groupby(["sample_num","num_workers","objid","clust","algo"], as_index=False).first()
-
-    #df_best_thresh = df.loc[df.groupby(["sample_num","num_workers","objid","clust","algo"])["j"].idxmax()]
-
-    #check that for some sample, the number of best threshold values is the same as the number of objects 
-    assert len(df_best_thresh[(df_best_thresh["num_workers"]==5)&(df_best_thresh["sample_num"]==1)].objid.unique())==len(object_lst)
-    # Check: in the unfiltered case there should be a whole array of thresholds (x5)
-    #df[(df["num_workers"]==25)&(df["sample_num"]==1)&(df["objid"]==1)&(df["clust"]==0)&(df["algo"]=="isoGTLSA")]
-    # visually check that only one best jaccard result gets returned
-    assert len(df_best_thresh[(df_best_thresh["num_workers"]==25)&(df_best_thresh["sample_num"]==1)&(df_best_thresh["objid"]==1)&(df_best_thresh["clust"]==0)&(df_best_thresh["algo"]=="isoGTLSA")])==1
-    # removing the -1 clusters for objects that are clustered
-    df_best_thresh = df_best_thresh[(df_best_thresh.objid.isin(noClust_obj))|(df_best_thresh.clust!=-1)]
-    # visually inspect that -1 clusters do not exist for objects that are clustered
-    # df_best_thresh[(df_best_thresh["num_workers"]==30)&(df_best_thresh["objid"]==1)]
-    # df[(df["num_workers"]==30)&(df["objid"]==1)]
-    # best_clust_no_thresh_df[(best_clust_no_thresh_df["num_workers"]==30)&(best_clust_no_thresh_df["objid"]==7)]
-    # best_clust_best_thresh_df[(best_clust_best_thresh_df["num_workers"]==30)&(best_clust_best_thresh_df["objid"]==7)]
-    return df_best_thresh
 def filter_best_clust(df,best_clust_df):
     # given a df to be filtered with clust_df (list of best clusters), 
     # pick rows based on whether it is in clust_df or not
@@ -115,6 +63,35 @@ def filter_best_clust(df,best_clust_df):
     # # check that the chosen cluster coincide with the chosen cluster in best_clust_df
     # best_clust_df[(best_clust_df["sample"]=="30workers_rand0")&(best_clust_df["objid"]==47)]
     return best_clust_no_thresh_df 
+def compile_all_algo_PRJs(filter_best =False):
+    clustObj = clust_df.objid.unique()
+    df = pd.read_csv("pixel_em/MV_full_PRJ_table.csv")
+    if filter_best:
+        best_clust_df = compute_best_worker_picking()
+        df = filter_best_clust(df,best_clust_df)
+    df = df.rename(columns={"precision":"P [MV]",
+                           "recall":"R [MV]",
+                           "jaccard":"J [MV]",
+                           "FPR%":"FPR% [MV]",
+                           "FNR%":"FNR% [MV]"})
+    df= df[((df["clust"]==-1) &(df["objid"].isin(noClust_obj)))|((df["clust"]!=-1) & df["objid"].isin(clustObj))]
+    #MV contains rows that have only 0 or 1 annotations per cluster, we did not ran the algos on this
+    # the merge (inner join) removes these elements
+    for mode in ["basic","GT","isoGT","GTLSA","isoGTLSA","isobasic"]:
+        data =  pd.read_csv("pixel_em/{}_full_PRJ_table.csv".format(mode))
+        data = data.rename(columns={"precision":"P [{}]".format(mode),
+                               "recall":"R [{}]".format(mode),
+                               "jaccard":"J [{}]".format(mode),
+                               "FPR%":"FPR% [{}]".format(mode),
+                               "FNR%":"FNR% [{}]".format(mode)})
+        if filter_best: data = filter_best_clust(data,best_clust_df)
+        df = df.merge(data,on=['clust', 'num_workers','actualNworkers', 'objid','sample_num'])#,how="outer")
+    #assert pd.isnull(df).sum().sum()==0
+    if filter_best:
+        df.to_csv("pixel_em/all_PRJ_table_filter_best.csv")
+    else:
+        df.to_csv("pixel_em/all_PRJ_table.csv")
+    return df
 def plot_PRcurve(objid,num_worker,sample_num=0):
     objdf = df[(df["num_workers"]==num_worker)&(df["sample_num"]==sample_num)&(df["objid"]==objid)]
     plt.figure()
