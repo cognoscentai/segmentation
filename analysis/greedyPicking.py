@@ -101,8 +101,9 @@ def run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False):
 
 
 def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output="prj", rerun_existing=False, DEBUG=False):
+    print "do greedy {}, obj{},clust{} [{}]".format(sample, objid,cluster_id,mode+algo)
     outdir = tile_and_mask_dir(sample, objid, cluster_id)
-    outfile = '{}/{}_greedy_metrics.json'.format(outdir, algo)
+    outfile = '{}/{}{}_greedy_metrics.json'.format(outdir,mode, algo)
     if (not rerun_existing) and os.path.exists(outfile):
         print outfile + " already exist, read from file"
         p, r, j, fpr, fnr = json.load(open(outfile))
@@ -150,39 +151,39 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
 
 if __name__ == '__main__':
     object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
-    object_lst = [1]
     from sample_worker_seeds import sample_specs
     import time
+    import sys
     import pandas as pd
-    DEBUG = True
+    DEBUG = False
 
     # test sample: '25workers_rand0', obj1, 2, 3, 4, 5, 15, 20
 
     df_data = []
     obj_clusters = clusters()
-    for sample in sample_specs.keys():
-        if sample != '25workers_rand0':
-            continue
+    sample_lst = [sys.argv[1]]
+    #for sample in sample_specs.keys():
+    for sample in sample_lst:
         for objid in object_lst:
             if str(objid) in obj_clusters[sample]:
                 clusts = ["-1"] + [obj_clusters[sample][str(objid)]]
             else:
                 clusts = ["-1"]
             for clust in clusts:
-                for algo in ['basic']:
+                for algo in ['basic','worker_fraction', 'ground_truth','GTLSA','GT']:
                     modes = [''] if algo in ['worker_fraction', 'ground_truth'] else ['iso', '']
                     for mode in modes:
-                        start = time.time()
+                        #start = time.time()
                         p, r, j, fpr, fnr = greedy(
                             sample, objid, algo, cluster_id=clust, mode=mode,
-                            output="prj", rerun_existing=True, DEBUG=DEBUG)
-                        end = time.time()
+                            output="prj", rerun_existing=False, DEBUG=DEBUG)
+                        #end = time.time()
                         df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
                         if DEBUG:
                             print "Time Elapsed:", end-start
                             print mode+algo, sample, objid, clust, p, r, j, fpr, fnr
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
-    df.to_csv("greedy_result_ground_truth.csv", index=None)
+    df.to_csv("all_greedy_result.csv", index=None)
 
     '''
     # Takes about 2.5~3hrs to run

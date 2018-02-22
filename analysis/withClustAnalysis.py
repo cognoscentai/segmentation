@@ -37,10 +37,11 @@ def compute_best_worker_picking():
 
     # pick the cluster with the highest MV
     best_clust_df = MV_clust.loc[MV_clust.groupby(["num_workers","sample_num","objid"])["jaccard"].idxmax()]
-    best_clust_df = best_clust_df.drop(['precision','recall','jaccard'],axis=1)
+    best_clust_df = best_clust_df.drop(['precision','recall','jaccard','FPR%','FNR%','actualNworkers'],axis=1)
     best_clust_df = best_clust_df.rename(columns={'cluster':'clust'})
     # There can only be one best cluster for every sample objid
     assert int(best_clust_df.groupby(["num_workers","sample_num","objid"]).count()["clust"].unique())==1
+    best_clust_df["sample"]=best_clust_df.apply(lambda x: "{}workers_rand{}".format(int(x["num_workers"]),int(x["sample_num"])),axis=1)
     best_clust_df.to_csv("best_clust_picking.csv")
     return best_clust_df
 def filter_best_clust(df,best_clust_df):

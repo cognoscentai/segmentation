@@ -156,7 +156,7 @@ def create_objid_to_clustid():
         fp.write(json.dumps(clust_ids))
 
 
-def clusters(rerun=True):
+def clusters(rerun=False):
     # return all valid cluster ids for a given obj
     if rerun or not os.path.isfile('objid_to_clustid.json'):
         create_objid_to_clustid()
