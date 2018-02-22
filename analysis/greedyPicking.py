@@ -116,8 +116,8 @@ def greedy(sample, objid, algo='worker_fraction', cluster_id="", mode='', output
     outfile = '{}/{}_greedy_metrics.json'.format(outdir, algo)
     if (not rerun_existing) and os.path.exists(outfile):
         print outfile + " already exist, read from file"
-        p, r, j = json.load(open(outfile))
-        return p, r, j
+        p, r, j, fpr, fnr = json.load(open(outfile))
+        return p, r, j, fpr, fnr
 
     num_votes, tile_area, tile_int_area = process_all_worker_tiles(sample, objid, algo, cluster_id, mode, DEBUG=False)
     sorted_order_tids, tile_added, est_jacc_list = run_greedy_jaccard(tile_area, tile_int_area, DEBUG=False)
@@ -171,7 +171,7 @@ if __name__ == '__main__':
                     end = time.time()
                     print "Time Elapsed:", end-start
                     df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
-                    print mode+algo, sample, objid, p, r, j
+                    print mode+algo, sample, objid, p, r, j, fpr, fnr
     df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
     df.to_csv("greedy_result_ground_truth.csv", index=None)
 
