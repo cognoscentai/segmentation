@@ -38,3 +38,5 @@ def compute_best_average_heuristics_workers_baselines():
     df["num_workers"]=df["sample"].apply(lambda x: int(x.split("workers")[0]))
     df.to_csv("pixel_em/individual_worker_performance.csv",index=None)
     return df
+if __name__ =="__main__":
+    df = compute_best_average_heuristics_workers_baselines()
