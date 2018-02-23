@@ -78,6 +78,7 @@ def compile_all_algo_PRJs(filter_best =False):
     df= df[((df["clust"]==-1) &(df["objid"].isin(noClust_obj)))|((df["clust"]!=-1) & df["objid"].isin(clustObj))]
     #MV contains rows that have only 0 or 1 annotations per cluster, we did not ran the algos on this
     # the merge (inner join) removes these elements
+    df = df[df["actualNworkers"]>1]
     for mode in ["basic","GT","isoGT","GTLSA","isoGTLSA","isobasic"]:
         data =  pd.read_csv("pixel_em/{}_full_PRJ_table.csv".format(mode))
         data = data.rename(columns={"precision":"P [{}]".format(mode),
