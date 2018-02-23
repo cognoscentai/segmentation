@@ -124,7 +124,7 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, r
     if not rerun_existing and os.path.exists(outfile):
         print "already ran "+outdir
         return
-    agg_vision_mask, _ = get_pixtiles(objid)
+    agg_vision_mask, _ = get_pixtiles(objid, k)
     gt_mask = get_gt_mask(objid)
 
     vision_only_mask = compute_hybrid_mask(gt_mask, agg_vision_mask, expand_thresh=include_thresh, contract_thresh=0, vision_only=True)
@@ -238,7 +238,7 @@ if __name__ == '__main__':
                 if DEBUG:
                     print '*****************************************************************'
                     print 'Compute vision baseline for obj{}, k={}, incl_thresh={}'.format(objid, k, include_thresh)
-                create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=False)
+                create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=True)
     compile_vision_only_performance()
 
     '''
