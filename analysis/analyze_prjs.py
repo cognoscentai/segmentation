@@ -76,6 +76,7 @@ def clust_vs_noclust(algo='MV', filtered=False, PLOT=True):
                 best = best_clust[nworkers][sample_num][objid]
                 if filtered and (best == -1 or -1 not in all_data[nworkers][sample_num][objid].keys()):
                     continue
+                # TODO: handle metric==-1 or None?
                 noclust_MV = float(all_data[nworkers][sample_num][objid][-1]['jaccard'])
                 jacc_noclust[nworkers].append(noclust_MV)
                 bestclust_MV = float(all_data[nworkers][sample_num][objid][best]['jaccard'])
