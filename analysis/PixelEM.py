@@ -886,7 +886,7 @@ def compile_PR(mode="", ground_truth=False):
         fieldnames = ['num_workers', 'actualNworkers','sample_num', 'objid', 'clust', 'precision', 'recall', 'jaccard', 'FPR%', 'FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR))[::-1]:
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR))[20:50]:
             sample_name = sample_path.split('/')[-2]
             print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
@@ -935,7 +935,7 @@ def compile_PR(mode="", ground_truth=False):
                         else:
                             gt_fname = "{}{}_gt_est_tiles_best_thresh.pkl".format(clust_path,mode)
                             tiles = "{}/tiles.pkl".format(clust_path)
-                        if False:#os.path.isfile(gt_fname):
+                        if os.path.isfile(gt_fname):
                             gt = get_gt_mask(objid)
                             if mode=="MV":
                                 result = pickle.load(open(gt_fname))

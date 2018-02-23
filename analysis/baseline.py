@@ -41,6 +41,59 @@ def compute_best_average_heuristics_workers_baselines(rerun_existing=False):
     df["num_workers"]=df["sample"].apply(lambda x: int(x.split("workers")[0]))
     df.to_csv(outfile,index=None)
     return df
-
+def compute_worker_qualities_against_real_performance():
+    import pickle as pkl
+    from tqdm import tqdm
+    sample_lst = sample_specs.keys()
+    clust_df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+    df =pd.read_csv("../data/computed_my_COCO_BBvals.csv",index_col=0)
+    df_data = []
+    for sample_name in tqdm(sample_lst):
+        for objid in object_lst:
+            cluster_ids = clust_df[(clust_df["objid"] == objid)].cluster.unique()
+            for cluster_id in ["-1"] + list(cluster_ids):
+                worker_ids = np.array(clust_df[(clust_df["objid"] == objid) & (clust_df["cluster"] == int(cluster_id))].wid)
+                if len(worker_ids) > 1 or cluster_id == "-1":
+                    if cluster_id!="" and cluster_id!="-1"  :
+                        outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid,cluster_id)
+                    else:
+                        outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
+                    # worker qualities
+                    qj,qp,qn,qp1,qn1,qp2,qn2 = None,None,None,None,None,None,None
+                    #iso cases
+                    iqj,iqp,iqn,iqp1,iqn1,iqp2,iqn2 = None,None,None,None,None,None,None
+                    try:
+                        qj = pkl.load(open("{}basic_q_best_thresh.pkl".format(outdir)))
+                        iqj = pkl.load(open("{}isobasic_q_best_thresh.pkl".format(outdir)))
+                        qp = pkl.load(open("{}GT_qp_best_thresh.pkl".format(outdir)))
+                        qn = pkl.load(open("{}GT_qn_best_thresh.pkl".format(outdir)))
+                        iqp = pkl.load(open("{}isoGT_qp_best_thresh.pkl".format(outdir)))
+                        iqn = pkl.load(open("{}isoGT_qn_best_thresh.pkl".format(outdir)))
+                        qp1 = pkl.load(open("{}GTLSA_qp1_best_thresh.pkl".format(outdir)))
+                        qn1 = pkl.load(open("{}GTLSA_qn1_best_thresh.pkl".format(outdir)))
+                        iqp1 = pkl.load(open("{}isoGTLSA_qp1_best_thresh.pkl".format(outdir)))
+                        iqn1 = pkl.load(open("{}isoGTLSA_qn1_best_thresh.pkl".format(outdir)))
+                        qp2 = pkl.load(open("{}GTLSA_qp2_best_thresh.pkl".format(outdir)))
+                        qn2 = pkl.load(open("{}GTLSA_qn2_best_thresh.pkl".format(outdir)))
+                        iqp2 = pkl.load(open("{}isoGTLSA_qp2_best_thresh.pkl".format(outdir)))
+                        iqn2 = pkl.load(open("{}isoGTLSA_qn2_best_thresh.pkl".format(outdir)))
+                    except(IOError):
+                        print "can not find:",outdir
+                    for wid in qj.keys():
+                        q = qj[wid],qp[wid],qn[wid],qp1[wid],qn1[wid],qp2[wid],qn2[wid],iqj[wid],iqp[wid],iqn[wid],iqp1[wid],iqn1[wid],iqp2[wid],iqn2[wid]
+                        if len(df[(df["object_id"]==objid)&(df["worker_id"]==wid)])==0:
+                            print "can not find in df:",objid,"; worker:",wid
+                        else:
+                            worker_performance = df[(df["object_id"]==objid)&(df["worker_id"]==wid)][["Jaccard [Self]","Precision [Self]","Recall [Self]","FPR% [Self]","FNR% [Self]"]].values[0]
+                        data = [sample_name,objid,cluster_id,wid]
+                        data.extend(q) #worker qualities
+                        data.extend(worker_performance) #actual worker performance against GT
+                        df_data.append(data)
+    df = pd.DataFrame(df_data,columns=["sample","objid","clust","wid",\
+           "qj","qp","qn","qp1","qn1","qp2","qn2","iqj","iqp","iqn","iqp1","iqn1","iqp2","iqn2",\
+           "Jaccard [Self]","Precision [Self]","Recall [Self]","FPR% [Self]","FNR% [Self]"])
+    df.to_csv("EM_worker_qualities_against_real_performance.csv")
+    return df
 if __name__ =="__main__":
     df = compute_best_average_heuristics_workers_baselines()
+    qj_df = compute_worker_qualities_against_real_performance()
