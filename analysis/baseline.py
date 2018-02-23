@@ -1,6 +1,6 @@
 from sample_worker_seeds import *
 from utils import * 
-object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
+object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,41,42, 43, 44, 45, 46, 47]
 def compute_best_average_heuristics_workers_baselines(rerun_existing=False):
     outfile = "pixel_em/individual_worker_performance.csv"
     if os.path.exists(outfile) and not rerun_existing:

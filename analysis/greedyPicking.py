@@ -162,7 +162,7 @@ if __name__ == '__main__':
     df_data = []
     obj_clusters = clusters()
     #sample_lst = [sample_specs.keys()[int(sys.argv[1])]]
-    for sample in sample_specs.keys():
+    for sample in sample_specs.keys()[::-1]:
     #for sample in sample_lst:
         for objid in object_lst:
             if str(objid) in obj_clusters[sample]:
