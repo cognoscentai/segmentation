@@ -75,20 +75,25 @@ def compile_all_algo_PRJs(filter_best =False):
                            "jaccard":"J [MV]",
                            "FPR%":"FPR% [MV]",
                            "FNR%":"FNR% [MV]"})
-    df= df[((df["clust"]==-1) &(df["objid"].isin(noClust_obj)))|((df["clust"]!=-1) & df["objid"].isin(clustObj))]
+    #df= df[((df["clust"]==-1) &(df["objid"].isin(noClust_obj)))|((df["clust"]!=-1) & df["objid"].isin(clustObj))]
     #MV contains rows that have only 0 or 1 annotations per cluster, we did not ran the algos on this
     # the merge (inner join) removes these elements
-    df = df[df["actualNworkers"]>1]
-    for mode in ["basic","GT","isoGT","GTLSA","isoGTLSA","isobasic"]:
+    #df = df[df["actualNworkers"]>1]
+    print "MV len:",len(df)
+    for mode in ["basic","isobasic","GT","isoGT","GTLSA","isoGTLSA"]:
         data =  pd.read_csv("pixel_em/{}_full_PRJ_table.csv".format(mode))
         data = data.rename(columns={"precision":"P [{}]".format(mode),
                                "recall":"R [{}]".format(mode),
                                "jaccard":"J [{}]".format(mode),
                                "FPR%":"FPR% [{}]".format(mode),
                                "FNR%":"FNR% [{}]".format(mode)})
-        if filter_best: data = filter_best_clust(data,best_clust_df)
-        data= data[((data["clust"]==-1) &(data["objid"].isin(noClust_obj)))|((data["clust"]!=-1) & data["objid"].isin(clustObj))]
-        df = df.merge(data,on=['clust', 'num_workers','actualNworkers', 'objid','sample_num'],how="outer")
+        #if filter_best: data = filter_best_clust(data,best_clust_df)
+        print mode
+        print "before:",len(df),len(data)
+        #data= data[((data["clust"]==-1) &(data["objid"].isin(noClust_obj)))|((data["clust"]!=-1) & data["objid"].isin(clustObj))]
+        #data = data[data["actualNworkers"]>1]
+        print len(df),len(data)
+        df = df.merge(data,on=['clust', 'num_workers','actualNworkers', 'objid','sample_num'])
     df = df[df["actualNworkers"]>1]
     assert pd.isnull(df).sum().sum()==0
     if filter_best:
