@@ -206,7 +206,7 @@ def compile_vision_only_performance():
             k = splits[3]
             thresh = splits[4].split('v')[0]
 
-            print objid, k, thresh
+            # print objid, k, thresh
 
             with open(path, 'r') as fp:
                 [p, r, j, fpr, fnr] = json.loads(fp.read())
