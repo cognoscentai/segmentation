@@ -1,6 +1,7 @@
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import csv
 
 
@@ -94,12 +95,14 @@ def clust_vs_noclust(algo='MV', filtered=False, PLOT=True):
     assert set(x) == set([5, 10, 15, 20, 25, 30])
 
     if PLOT:
+        if not os.path.isdir('temp_plots'):
+            os.makedirs('temp_plots')
         plt.figure()
         plt.title('{}_{}_noclust_vs_bestclust'.format(algo, 'filtered' if filtered else 'unfiltered'))
         plt.plot(x, y_noclust, color='blue', label='noclust')
         plt.plot(x, y_bestclust, color='orange', label='bestclust')
         plt.legend()
-        plt.savefig('{}_{}_noclust_vs_bestclust.png'.format(algo, 'filtered' if filtered else 'unfiltered'))
+        plt.savefig('{}/{}_{}_noclust_vs_bestclust.png'.format('temp_plots', algo, 'filtered' if filtered else 'unfiltered'))
         plt.close()
 
     return x, y_noclust, y_bestclust
