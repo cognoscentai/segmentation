@@ -26,6 +26,7 @@ def read_algo_prj_table(algo):
             clust = int(float(row['clust']))
             # print nworkers, sample_num, objid, clust
             all_data[nworkers][sample_num][objid][clust] = row
+    return all_data
 
 
 def read_best_clust():
@@ -39,6 +40,7 @@ def read_best_clust():
             clust = int(row['clust'])
             # print nworkers, sample_num, objid, clust
             best_clust[nworkers][sample_num][objid] = clust
+    return best_clust
 
 
 def sanity_check(algo):
@@ -71,7 +73,7 @@ def clust_vs_noclust(algo='MV', filtered=False, PLOT=True):
             for objid in all_data[algo][nworkers][sample_num]:
                 # print nworkers, sample_num, objid
                 best = best_clust[nworkers][sample_num][objid]
-                if filtered and best == -1 or -1 not in all_data[algo][nworkers][sample_num][objid].keys():
+                if filtered and (best == -1 or -1 not in all_data[algo][nworkers][sample_num][objid].keys()):
                     continue
                 noclust_MV = float(all_data[algo][nworkers][sample_num][objid][-1]['jaccard'])
                 jacc_noclust[nworkers].append(noclust_MV)
@@ -88,7 +90,8 @@ def clust_vs_noclust(algo='MV', filtered=False, PLOT=True):
         y_noclust.append(np.mean(jacc_noclust[nworkers]))
         y_bestclust.append(np.mean(jacc_bestclust[nworkers]))
 
-    assert x == [5, 10, 15, 20, 25, 30]
+    print x
+    assert set(x) == set([5, 10, 15, 20, 25, 30])
 
     if PLOT:
         plt.figure()
