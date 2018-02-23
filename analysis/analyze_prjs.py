@@ -68,21 +68,21 @@ def clust_vs_noclust(algo='MV', filtered=False, PLOT=True):
     best_clust = read_best_clust()
     jacc_noclust = defaultdict(list)  # jacc[nworkers] = []
     jacc_bestclust = defaultdict(list)
-    for nworkers in all_data[algo].keys():
-        for sample_num in all_data[algo][nworkers]:
-            for objid in all_data[algo][nworkers][sample_num]:
+    for nworkers in all_data.keys():
+        for sample_num in all_data[nworkers]:
+            for objid in all_data[nworkers][sample_num]:
                 # print nworkers, sample_num, objid
                 best = best_clust[nworkers][sample_num][objid]
-                if filtered and (best == -1 or -1 not in all_data[algo][nworkers][sample_num][objid].keys()):
+                if filtered and (best == -1 or -1 not in all_data[nworkers][sample_num][objid].keys()):
                     continue
-                noclust_MV = float(all_data[algo][nworkers][sample_num][objid][-1]['jaccard'])
+                noclust_MV = float(all_data[nworkers][sample_num][objid][-1]['jaccard'])
                 jacc_noclust[nworkers].append(noclust_MV)
-                bestclust_MV = float(all_data[algo][nworkers][sample_num][objid][best]['jaccard'])
+                bestclust_MV = float(all_data[nworkers][sample_num][objid][best]['jaccard'])
                 jacc_bestclust[nworkers].append(bestclust_MV)
 
     x = []
-    y_noclust = defaultdict(list)
-    y_bestclust = defaultdict(list)
+    y_noclust = []
+    y_bestclust = []
     for nworkers in jacc_noclust.keys():
         x.append(nworkers)
         # print jacc_noclust[nworkers]
