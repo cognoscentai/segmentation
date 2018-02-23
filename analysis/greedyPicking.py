@@ -178,11 +178,11 @@ if __name__ == '__main__':
                             sample, objid, algo, cluster_id=clust, mode=mode,
                             output="prj", rerun_existing=False, DEBUG=DEBUG)
                         #end = time.time()
-                        df_data.append([sample, objid, mode+algo, p, r, j, fpr, fnr])
+                        df_data.append([sample, objid,clust, mode+algo, p, r, j, fpr, fnr])
                         if DEBUG:
                             print "Time Elapsed:", end-start
                             print mode+algo, sample, objid, clust, p, r, j, fpr, fnr
-    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'algo', 'p', 'r', 'j', 'fpr', 'fnr'])
+    df = pd.DataFrame(df_data, columns=['sample', 'objid', 'clust','algo', 'p', 'r', 'j', 'fpr', 'fnr'])
     df.to_csv("all_greedy_result.csv", index=None)
 
     '''

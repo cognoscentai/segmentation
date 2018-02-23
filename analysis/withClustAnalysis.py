@@ -86,8 +86,9 @@ def compile_all_algo_PRJs(filter_best =False):
                                "FPR%":"FPR% [{}]".format(mode),
                                "FNR%":"FNR% [{}]".format(mode)})
         if filter_best: data = filter_best_clust(data,best_clust_df)
+        data= data[((data["clust"]==-1) &(data["objid"].isin(noClust_obj)))|((data["clust"]!=-1) & data["objid"].isin(clustObj))]
         df = df.merge(data,on=['clust', 'num_workers','actualNworkers', 'objid','sample_num'],how="outer")
-    assert pd.isnull(df).sum().sum()==0
+    #assert pd.isnull(df).sum().sum()==0
     if filter_best:
         df.to_csv("pixel_em/all_PRJ_table_filter_best.csv")
     else:
