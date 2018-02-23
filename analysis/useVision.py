@@ -230,7 +230,7 @@ if __name__ == '__main__':
     DEBUG = True
 
     # For Computing Vision Baseline
-    for k in [500, 100]:
+    for k in [100]:
         for objid in range(1, 48):  # range(1, 2):
             if objid == 35:
                 continue
