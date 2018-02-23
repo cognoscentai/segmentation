@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
+object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,41 ,42, 43, 44, 45, 46, 47]
 metric_keys=[ u'P [GT]', u'R [GT]', u'J [GT]', u'P [isoGT]',
        u'R [isoGT]', u'J [isoGT]', u'P [GTLSA]', u'R [GTLSA]', u'J [GTLSA]',
        u'P [isoGTLSA]', u'R [isoGTLSA]', u'J [isoGTLSA]', u'P [basic]',
@@ -37,10 +37,11 @@ def compute_best_worker_picking():
 
     # pick the cluster with the highest MV
     best_clust_df = MV_clust.loc[MV_clust.groupby(["num_workers","sample_num","objid"])["jaccard"].idxmax()]
-    best_clust_df = best_clust_df.drop(['precision','recall','jaccard'],axis=1)
+    best_clust_df = best_clust_df.drop(['precision','recall','jaccard','FPR%','FNR%','actualNworkers'],axis=1)
     best_clust_df = best_clust_df.rename(columns={'cluster':'clust'})
     # There can only be one best cluster for every sample objid
     assert int(best_clust_df.groupby(["num_workers","sample_num","objid"]).count()["clust"].unique())==1
+    best_clust_df["sample"]=best_clust_df.apply(lambda x: "{}workers_rand{}".format(int(x["num_workers"]),int(x["sample_num"])),axis=1)
     best_clust_df.to_csv("best_clust_picking.csv")
     return best_clust_df
 def filter_best_clust(df,best_clust_df):
@@ -86,7 +87,7 @@ def compile_all_algo_PRJs(filter_best =False):
                                "FNR%":"FNR% [{}]".format(mode)})
         if filter_best: data = filter_best_clust(data,best_clust_df)
         df = df.merge(data,on=['clust', 'num_workers','actualNworkers', 'objid','sample_num'])#,how="outer")
-    #assert pd.isnull(df).sum().sum()==0
+    assert pd.isnull(df).sum().sum()==0
     if filter_best:
         df.to_csv("pixel_em/all_PRJ_table_filter_best.csv")
     else:
