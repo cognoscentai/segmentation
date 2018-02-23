@@ -1,6 +1,6 @@
 *.pyc
 *.out
-analysis/pixel_em/
+analysis/pixel_em/*/
 ipynb/.ipynb_checkpoints/
 *.txt
 analysis/sendmail.py
