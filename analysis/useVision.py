@@ -1,6 +1,6 @@
 from utils import get_pixtiles, get_gt_mask, get_MV_mask, \
     hybrid_dir, vision_baseline_dir, faster_compute_prj, clusters, \
-    discrete_cmap
+    discrete_cmap, all_metrics
 from collections import defaultdict
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
@@ -120,7 +120,8 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
 
 def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
     outdir = vision_baseline_dir(objid, k, include_thresh)
-    if not rerun_existing and os.path.exists('{}vision_prj.json'.format(outdir)):
+    outfile = '{}vision_only_metrics.json'.format(outdir)
+    if not rerun_existing and os.path.exists(outfile):
         print "already ran "+outdir
         return
     agg_vision_mask, _ = get_pixtiles(objid)
@@ -138,9 +139,9 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, r
     plt.savefig('{}/vision_with_gt_viz.png'.format(outdir))
     plt.close()
 
-    p, r, j = faster_compute_prj(vision_only_mask, gt_mask)
-    with open('{}vision_prj.json'.format(outdir), 'w') as fp:
-        fp.write(json.dumps([p, r, j]))
+    p, r, j, fpr, fnr = all_metrics(vision_only_mask, gt_mask)
+    with open(outfile, 'w') as fp:
+        fp.write(json.dumps([p, r, j, fpr, fnr]))
 
 
 def compile_PR():
@@ -184,19 +185,62 @@ def compile_PR():
                 })
 
 
+def compile_vision_only_performance():
+    import glob
+    import csv
+    # compiles a PRJ table for all vision only masks
+    # dir structure:
+    # pixel_em/batch_name/objid/hybrid/k/(expand_thresh,contract_thresh)/base_clust_hybrid_prj.json
+
+    fname = 'pixel_em/vision_only_performance.csv'
+    with open(fname, 'w') as csvfile:
+        fieldnames = ['objid', 'k', 'thresh', 'p', 'r', 'j', 'fpr', 'fnr']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for path in glob.glob('pixel_em/*/vision-only/*/*vision_only_metrics.json'):
+            print path
+            splits = path.split('/')
+            # print splits
+            objid = splits[1].split('j')[1]
+            k = splits[3]
+            thresh = splits[4].split('v')[0]
+
+            print objid, k, thresh
+
+            with open(path, 'r') as fp:
+                [p, r, j, fpr, fnr] = json.loads(fp.read())
+
+                writer.writerow({
+                    'objid': objid,
+                    'k': k,
+                    'thresh': thresh,
+                    'p': p,
+                    'r': r,
+                    'j': j,
+                    'fpr': fpr,
+                    'fnr': fnr
+                })
+
+
 if __name__ == '__main__':
     import time
     import sys
     from sample_worker_seeds import sample_specs
-    DEBUG = False 
-    '''
+    DEBUG = True
+
     # For Computing Vision Baseline
-    for k in range(100, 550, 50):
-        for objid in object_lst:  # range(1, 2):
-            if DEBUG:
-                print '*****************************************************************'
-                print 'Compute vision baseline for obj', objid
-            create_and_store_vision_plus_gt_baseline(objid, k, include_thresh=0.5)
+    for k in [500, 100]:
+        for objid in range(1, 48):  # range(1, 2):
+            if objid == 35:
+                continue
+            for include_thresh in [0.2, 0.5, 0.8]:
+                if DEBUG:
+                    print '*****************************************************************'
+                    print 'Compute vision baseline for obj{}, k={}, incl_thresh={}'.format(objid, k, include_thresh)
+                create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=False)
+    compile_vision_only_performance()
+
     '''
     batch = sys.argv[1]
     #expand_thresh = float(sys.argv[2])
@@ -226,3 +270,4 @@ if __name__ == '__main__':
 	    	        end = time.time()
                         print "Time elapsed:", end-start
     compile_PR()
+    '''

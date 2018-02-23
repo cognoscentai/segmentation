@@ -13,7 +13,6 @@ noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
 # print "generate baseline comparisons"
 # compute_self_BBvals(compute_metrics=['simple','area'])
 
-'''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
 if not os.path.exists("pixel_em"):
@@ -23,6 +22,7 @@ print "2. Creating all worker and GT pixel masks (2-3 min)"
 for objid in object_lst:
     create_all_gt_and_worker_masks(objid)
 
+'''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
 for sample in sample_lst:
@@ -140,6 +140,8 @@ for objid in small_object_lst:
             # check for data consistency against pixel version
             #sanity_checks(sample, objid, clust_id)
 '''
+
+'''
 from PixelEM_tile import do_EM_for as EM
 print "7. Running tile EM"
 # for objid in object_lst:
@@ -162,6 +164,7 @@ for objid in small_object_lst:
                     #    f=open("failed_obj.log",'a')
                     #    f.write(sample+","+str(objid)+","+str(clust_id)+","+algo+","+str(excl_iso)+"\n")
                     #    f.close()
+'''
 
 '''
 ###########################################################

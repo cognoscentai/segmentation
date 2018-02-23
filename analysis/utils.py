@@ -275,6 +275,7 @@ def tiles_to_mask(tile_id_list, tile_to_pix_dict, base_mask):
 
 
 def get_pixtiles(objid, k=500):
+    # vision pixel mask and tiles
     obj_to_img_id = get_obj_to_img_id()
     img_id = obj_to_img_id[objid]
     vdir = vision_pixtile_dir(img_id, k)
