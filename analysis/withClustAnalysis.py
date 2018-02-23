@@ -128,7 +128,7 @@ def compile_noClust_greedy_algos_to_csv():
     worker_frac_greedy_df = pd.read_csv("greedy_old_results/greedy_result_worker_fraction.csv")
     greedy_df = greedy_df.append(worker_frac_greedy_df)
 
-    ereedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
+    greedy_df["num_workers"] = greedy_df["sample"].apply(lambda x: int(x.split("workers")[0]))
     return greedy_df 
 def compile_withClust_greedy_algos_to_csv():
     globfnames = glob("withClust_greedy_result_*.csv")

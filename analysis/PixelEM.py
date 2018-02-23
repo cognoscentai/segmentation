@@ -886,7 +886,7 @@ def compile_PR(mode="", ground_truth=False):
         fieldnames = ['num_workers', 'actualNworkers','sample_num', 'objid', 'clust', 'precision', 'recall', 'jaccard', 'FPR%', 'FNR%']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR))[20:50]:
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
             sample_name = sample_path.split('/')[-2]
             print "Working on ", sample_path
             num_workers = int(sample_name.split('w')[0])
