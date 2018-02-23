@@ -64,7 +64,7 @@ def sanity_check(algo):
     print 'num total in {}: {}'.format(algo, num_total)
 
 
-def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=True):
+def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False):
     all_data = read_algo_prj_table(algo)
     best_clust = read_best_clust()
     jacc_noclust = defaultdict(list)  # jacc[nworkers] = []
