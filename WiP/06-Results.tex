@@ -2,27 +2,9 @@
 \section{Results and Discussion\label{sec:results}}
 
   \subsection{Experimental Setup}
-    \par  A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses\techreport{, based on Table~\ref{batch_sample}}.
-    \papertext{Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).} The number of workers plotted indicates the number of distinct worker segmentation used in the algorithm, note that in the clustered cases, the actual number of segmentation in the cluster may be less than what is cited in the sample. \techreport{In the subsequent section, we will refer to objects specific to a sample synonymously as objects.
-      \begin{table}[ht]
-      \centering
-      \begin{tabular}{l|llllll}
-      \# of workers & 5  & 10 & 15 & 20 & 25 & 30 \\ \hline
-      \# of batches & 10 & 8  & 6  & 4  & 2  & 1 
-      \end{tabular}
-      \caption{Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
-      \label{batch_sample}
-      \end{table} }
-  \subsection{Evaluation Metrics}
-   \par Evaluation metrics used in our experiment measures how well the final segmentation (S) produced by these algorithms compare against ground truth (GT). The most common evaluation metric used in literature are area-based methods which take into account the intersection, $IA=area(S\cup GT)$, or union, $UA=area(S\cap GT)$, between the user and the ground truth segmentations. Specifically, we use
-    $\text{Precision (P)} = \frac{IA(S)}{area(S)}$, 
-    $\text{Recall (R)} = \frac{IA(S)}{area(GT)}$, and 
-    $\text{Jaccard (J)} = \frac{UA(S)}{IA(S)}$
-    metrics to evaluate our algorithms.
-    % \\
-    % $$\text{False Positive Rate (FPR)}= \frac{area(S)-IA}{area(GT)}$$\\
-    % $$\text{False Negative Rate (FNR)}= \frac{area(GT)-IA}{(area(S)-IA)+(area(Image)-UA)}$$
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \par  A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses\techreport{, based on Table~\ref{batch_sample}}. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   \subsection{What is the difference in performance between retrieval and aggregation-based methods?}
     Figure~\ref{retreival_vs_aggregation} shows the comparisons between the best performing algorithm amongst aggregation-based (greedy, EM) and retrieval-based (num points) algorithms. The solid line in Figure~\ref{retreival_vs_aggregation} shows algorithms that does not make use of ground truth information as part of the inference, while the dotted line shows the corresponding algorithm that makes use of ground truth information. Amongst the algorithms that do not make use of ground truth information, the performance of the greedy and EM algorithms exceeds the best achievable through existing retrieval-based method via the \texttt{num points} scoring heuristic and the vision-based algorithms. 
     \par By examining the dotted ground-truth algorithms, we learn the best achievable aggregation-based algorithm performs far better than the best worker segmentation. This result demonstrates since aggregation-based methods performs inference at a finer \textit{tile} granularity, it is able to achieve better performance than compared to retrieval-methods.
