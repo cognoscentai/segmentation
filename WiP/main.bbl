@@ -1,11 +1,5 @@
 \begin{thebibliography}{}
 
-\bibitem[\protect\citeauthoryear{Anonymous}{2018}]{segmentation-tr}
-Anonymous.
-\newblock Tile-based quality evaluation methods for crowdsourcing image
-  segmentation: Extended technical report.
-\newblock 2018.
-
 \bibitem[\protect\citeauthoryear{Bell \bgroup \em et al.\egroup
   }{2014}]{bell14intrinsic}
 Sean Bell, Kavita Bala, and Noah Snavely.

@@ -7,6 +7,8 @@
 \usepackage{courier}  %Required
 \usepackage{url}  %Required
 \usepackage{graphicx}  %Required
+\usepackage{mwe} %minipage
+\usepackage{floatrow}
 \frenchspacing  %Required
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
@@ -27,6 +29,8 @@
 \usepackage[table]{xcolor}
 \usepackage[draft]{todonotes}   % notes showed
 % \newcommand{\todo}[2][]{}
+% \usepackage{titling}
+% \setlength{\droptitle}{-10pt}
 
 \usepackage[]{algorithm2e}
 \usepackage{framed}
@@ -62,7 +66,7 @@
 
 
 \title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
-
+\setlength\titlebox{1.5in}   %squish author title height 
            % The \author macro works with any number of authors. There are two
            % commands used to separate the names and addresses of multiple
            % authors: \And and \AND.
@@ -72,18 +76,14 @@
            % if LaTeX puts 3 of 4 authors names on the first line, and the last
            % on the second line, try using \AND instead of \And before the third
            % author name.
-
-           \author{Authors Removed for Anonymity}
-
            \begin{document}
-
-
            \title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
-           \author{Authors removed for anonymity}
+           \author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
            \maketitle
            \begin{abstract}
            Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications, such as robotics and surveillance. In this paper we propose and evaluate several crowdsourced algorithms, including novel worker-aggregation based algorithms and retrieval-based methods based on prior work, for the image segmentation problem. We also characterize the different types of worker errors observed, and present a clustering algorithm that is able to capture semantic errors and filter workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attains better performance than existing retrieval-based approaches, while scaling better with increasing numbers of collected worker segmentations. 
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
+           \vspace{-10pt}
           \end{abstract}
                
           \input{01-Introduction}
