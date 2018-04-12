@@ -24,28 +24,28 @@ Pick the worker segmentation with the largest number of control points around th
 
 \stitle{Aggregation-based methods performs significantly better than retrieval-based methods}
 
-Figure~\ref{noGT_retrieval_vs_aggregation} shows that amongst the algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best achievable through the existing retrieval-based method (num pts) and the vision-based algorithms. 
-By making use of ground truth information, the best aggregation-based algorith can achieve a close-to-perfect average Jaccard score of 0.983 as an upper bound with the 30 workers sample, far exceeding the results achievable by any single `best' worker (J=0.91 for 30 workers in Figure~\ref{GT_retrieval_vs_aggregation}). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the \textit{tile} granularity, which is guaranteed to be finer than any worker's segmentations. 
+Figure~\ref{retrieval_vs_aggregation} left shows that amongst the algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best achievable through the existing retrieval-based method (num pts) and the vision-based algorithms. 
+By making use of ground truth information, the best aggregation-based algorith can achieve a close-to-perfect average Jaccard score of 0.983 as an upper bound with the 30 workers sample, far exceeding the results achievable by any single `best' worker (J=0.91 for 30 workers in Figure~\ref{retrieval_vs_aggregation} right). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the \textit{tile} granularity, which is guaranteed to be finer than any worker's segmentations. 
  \begin{figure}[h!]
    \centering
-   \includegraphics[width=\textwidth]{plots/Retreival_vs_Aggregation.pdf}
-   \caption{Jaccard performance comparison between best-performing algorithms from retrieval and aggregation-based methods, with clustering as a preprocessing step where possible. Color denotes the type of algorithm used.}
-   \label{retreival_vs_aggregation}
+   \includegraphics[width=\textwidth]{plots/Retrieval_vs_Aggregation.pdf}
+   \caption{Jaccard performance comparison between best-performing algorithms from retrieval and aggregation-based methods with clustering as a preprocessing step where possible. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right).}
+   \label{retrieval_vs_aggregation}
  \end{figure}
-\dor{We should split w/ GT and no GT information into two plots side by side with same color scheme. Also consider merging greedy and EM into just one that says aggregation based method, and renaming num points as retrevial based methods.}
 
 \stitle{Performance of aggregation-based methods scales well as more workers segmentation are added.}
 
-Intuitively, larger worker samples results in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentation used in the sample and performance evident in Table~\ref{workerScaling}. However, worker scaling for retrieval-based methods are not guaranteed.
+Intuitively, larger worker samples results in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentation used in the sample and performance evident in Table~\ref{statsTable}. Howev er, worker scaling for retrieval-based methods are not guaranteed.
    \begin{table}
    \small
      \setlength\tabcolsep{1.5pt}
-      \begin{tabular}{l|l|llll}
-      \multicolumn{2}{c|}{Retrieval-based} & \multicolumn{4}{c}{Aggregation-based}                                                             \\ \hline
-      num pts         & best worker        & \multicolumn{1}{l|}{MV}   & \multicolumn{1}{l|}{EM}   & \multicolumn{1}{l|}{greedy} & best greedy \\ \hline
-      -6.30           & 2.58               & \multicolumn{1}{l|}{1.63} & \multicolumn{1}{l|}{1.64} & \multicolumn{1}{l|}{2.16}   & 5.59       
+      \begin{tabular}{l|l|l|l|l|l|l}
+         & \multicolumn{2}{c|}{Retrieval-based} & \multicolumn{4}{l}{Aggregation-based} \\ \hline
+      Algorithm         & num pts         & best worker        & MV    & EM    & greedy  & best greedy  \\ \hline
+      Worker Scaling    & -6.30           & 2.58               & 1.63  & 1.64  & 2.16    & 5.59         \\ \hline
+      Clustering Effect & 5.92            & -0.02              & 2.05  & 1.38  & 5.55    & -0.06       
       \end{tabular}
-      \caption{Percentage change in Jaccard between 5 workers samples and 30 workers sample averages.}
-      \label{workerScaling}
-      \vspace{-10pt}
+      \caption{The first row lists the average percentage change in Jaccard between 5 workers samples and 30 workers sample. The second row lists the average percentage change between the no clustering and clustering results.}
+      \label{statsTable}
+      \vspace{-15pt}
    \end{table}
