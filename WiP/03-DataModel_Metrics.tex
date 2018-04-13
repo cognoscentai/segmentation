@@ -1,18 +1,18 @@
 \begin{figure*}[ht!]
     \centering
     \RawFloats
-    \begin{minipage}{0.65\textwidth}
+    \begin{minipage}[t]{0.65\textwidth}
     	\vspace{-20pt}
-        \includegraphics[width=\textwidth]{plots/error_examples.pdf} % second figure itself
+        \includegraphics[width=\textwidth]{plots/error_examples.png} % second figure itself
         \caption{Pink is the segmentation from individual workers. Blue solid line delineates the ground truth. The red boxed pointer indicates the task of interest shown to users.}
         \vspace{-15pt}
         \label{error_examples}
     \end{minipage}
-    \begin{minipage}{0.35\textwidth}
+    \begin{minipage}[t]{0.35\textwidth}
     	\vspace{-25pt}
         \includegraphics[width=\textwidth]{plots/tile_demo.pdf}
         \vspace{-35pt}
-        \caption{Left: Segmentation boundaries drawn by five workers in red. Right: Overlaid segmentation creates a masks where the color indicates the number of workers who voted for the tile region.}
+        \caption{Segmentation boundaries drawn by five workers in red. Right: Overlaid segmentation creates a masks where the color indicates the number of workers whose segmentation includes the tile region.}
         \vspace{-20pt}
         \label{tile_demo}
     \end{minipage}\hfill
@@ -29,6 +29,6 @@ We collected crowdsourced segmentation data from Amazon Mechanical Turk where ea
  \techreport{\par A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
 
 \subsection{Error Analysis}
-\par As shown in Figure \ref{error_examples} (left to right), common worker errors can be classified into three types: (1) \textbf{Boundary Imprecision:} unintentional mistakes while drawing the boundaries, either due to low precision of the image, small area of the object, or lack of drawing skills , (2) \textbf{Semantic Ambiguity:} have differing opinions about whether particular regions belong to part of an object; or (3) \textbf{Semantic Mistakes:} annotate the wrong object entirely.
+\par As shown in Figure \ref{error_examples} (left to right), common worker errors can be classified into three types: (1) \textbf{Boundary Imprecision:} unintentional mistakes while drawing the boundaries, either due to low image resolution, small area of the object, or lack of drawing skills , (2) \textbf{Semantic Ambiguity:} differing opinions on whether particular regions belong to part of an object; or (3) \textbf{Semantic Mistakes:} annotate the wrong object entirely.
 \par %Out of the 46 objects in our dataset, 9 objects suffer from semantic ambiguity, 18 objects from semantic mistakes, and almost all objects suffer from some form of boundary imprecision to varying degrees. 
 Since the main focus for quality evaluation in past literature have been focused on finding worker segmentation with minimal boundary precision issues, we will first describe novel aggregation-based algorithms that we have developed and compare them with existing retrieval-based methods for addressing boundary imprecision. In the following section, we will discuss a preprocessing method that we have developed to resolve the semantic ambiguity and mistakes, which have been observed in prior work~\cite{Sorokin2008,Lin2014,Gurari2018}.

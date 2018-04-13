@@ -28,6 +28,7 @@
 \usepackage{floatrow}
 \usepackage[table]{xcolor}
 \usepackage[draft]{todonotes}   % notes showed
+
 % \newcommand{\todo}[2][]{}
 % \usepackage{titling}
 % \setlength{\droptitle}{-10pt}
@@ -53,7 +54,7 @@
 
 \newcommand{\ta}[1]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{\underline{Takeaway:} #1}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 % usage:   \ta{takeaway text}
-\newcommand{\stitle}[1]{\par \noindent \textbf{#1}}
+\newcommand{\stitle}[1]{\noindent \textbf{#1}}
 \newcommand{\takeawaywithqn}[2][]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{{\bf #1} #2}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 % usage:    \ta[question]{takeaway}
 
@@ -81,7 +82,7 @@
            \author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
            \maketitle
            \begin{abstract}
-           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications, such as robotics and surveillance. In this paper we propose and evaluate several crowdsourced algorithms, including novel worker-aggregation based algorithms and retrieval-based methods based on prior work, for the image segmentation problem. We also characterize the different types of worker errors observed, and present a clustering algorithm that is able to capture semantic errors and filter workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attains better performance than existing retrieval-based approaches, while scaling better with increasing numbers of collected worker segmentations. 
+           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper we propose and evaluate several crowdsourced algorithms, including novel worker-aggregation based algorithms and retrieval-based methods based on prior work, for the image segmentation problem. We characterize the different types of worker errors observed, and present a clustering algorithm that is able to capture semantic errors and filter workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attain better performance than existing retrieval-based approaches, while scaling better with increasing numbers of collected worker segmentations. 
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
            \vspace{-10pt}
           \end{abstract}
