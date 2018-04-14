@@ -25,17 +25,6 @@
     \label{error_examples}
 \end{figure}
 \vspace{-10pt}
-\section{Preliminaries}
-\subsection{Dataset Description}
-We collected crowdsourced segmentations from Amazon Mechanical Turk where each HIT consisted of one segmentation task for a specific pre-labeled object in the image. There were a total of 46 objects in 9 images from the MSCOCO dataset~\cite{Lin2014}. For each object, we collected segmentation masks from a total of 40 workers. Each task contains a semantic keyword and a pointer indicating the object to be segmented. %These tasks represent a diverse set of task difficulty (different levels of clutteredness, occlusion, lighting) and levels of task ambiguity. 
-\subsection{Evaluation Metrics}
-\par Evaluation metrics used in our experiment measures how well the final segmentation (S) produced by these algorithms compare against ground truth (GT). The most common evaluation metric used in literature are area-based methods which take into account the intersection, $IA=area(S\cap GT)$, or union, $UA=area(S\cup GT)$, between the user and the ground truth segmentations. Specifically, we use
-    $\text{Precision (P)} = \frac{IA(S)}{area(S)}$, 
-    $\text{Recall (R)} = \frac{IA(S)}{area(GT)}$, and 
-    $\text{Jaccard (J)} = \frac{UA(S)}{IA(S)}$
-    metrics to evaluate our algorithms.
- \techreport{\par A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
-
-\subsection{Error Analysis}
+\section{Error Analysis}
 \par Common worker errors can be classified into three types: (1) \textbf{Semantic Ambiguity:} differing opinions on whether particular regions belong to part of an object (Figure \ref{error_examples} Left); or (2) \textbf{Semantic Mistakes:} annotate the wrong object entirely (Figure \ref{error_examples} right); or (3) \textbf{Boundary Imprecision:} unintentional mistakes while drawing the boundaries, either due to low image resolution, small area of the object, or lack of drawing skills (Figure \ref{tile_demo} Left). In the following section, we will discuss a preprocessing method that we have developed to resolve semantic ambiguity and errors observed in prior work~\cite{Sorokin2008,Lin2014,Gurari2018}. Since quality evaluation in past literature have been largely focused on minimizing boundary precision issues, we will then describe novel aggregation-based algorithms that we have developed for this purpose and compare them with existing retrieval-based methods.% for addressing boundary imprecision. 
 %\par %Out of the 46 objects in our dataset, 9 objects suffer from semantic ambiguity, 18 objects from semantic mistakes, and almost all objects suffer from some form of boundary imprecision to varying degrees. 
