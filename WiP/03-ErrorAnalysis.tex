@@ -26,7 +26,7 @@
 \end{figure}
 \vspace{-10pt}
 \section{Preliminaries}
-\subsection{Data \& Goals}
+\subsection{Dataset Description}
 We collected crowdsourced segmentations from Amazon Mechanical Turk where each HIT consisted of one segmentation task for a specific pre-labeled object in the image. There were a total of 46 objects in 9 images from the MSCOCO dataset~\cite{Lin2014}. For each object, we collected segmentation masks from a total of 40 workers. Each task contains a semantic keyword and a pointer indicating the object to be segmented. %These tasks represent a diverse set of task difficulty (different levels of clutteredness, occlusion, lighting) and levels of task ambiguity. 
 \subsection{Evaluation Metrics}
 \par Evaluation metrics used in our experiment measures how well the final segmentation (S) produced by these algorithms compare against ground truth (GT). The most common evaluation metric used in literature are area-based methods which take into account the intersection, $IA=area(S\cap GT)$, or union, $UA=area(S\cup GT)$, between the user and the ground truth segmentations. Specifically, we use
