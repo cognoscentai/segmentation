@@ -1,3 +1,4 @@
+\section{Experimental Evaluation}
 \subsection{Dataset Description}
 We collected crowdsourced segmentations from Amazon Mechanical Turk where each HIT consisted of one segmentation task for a specific pre-labeled object in the image. There were a total of 46 objects in 9 images from the MSCOCO dataset~\cite{Lin2014}. For each object, we collected segmentation masks from a total of 40 workers. Each task contains a semantic keyword and a pointer indicating the object to be segmented. %These tasks represent a diverse set of task difficulty (different levels of clutteredness, occlusion, lighting) and levels of task ambiguity. 
 \subsection{Evaluation Metrics}
@@ -17,7 +18,7 @@ We collected crowdsourced segmentations from Amazon Mechanical Turk where each H
    \caption{Jaccard performance comparison between best-performing algorithms from retrieval and aggregation-based methods with clustering as a preprocessing step where possible. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). Note that MV and EM results are so close that they overlay on each other.}
    \label{retrieval_vs_aggregation}   
 \end{figure} 
-\vspace{-10pt}
+% \vspace{-10pt}
 
 \stitle{Performance of aggregation-based methods scales well as more workers segmentation are added.}
 \par \noindent Intuitively, larger worker samples results in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentation used in the sample and performance evident in Table~\ref{statsTable}. However, worker scaling for retrieval-based methods are not guaranteed.
