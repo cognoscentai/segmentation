@@ -11,7 +11,7 @@ all :
 	$(BIBTEX) $(DOC)
 	$(TEX) $(DOC) 
 	$(TEX) $(DOC)
- 
+  
 figs :
 	mkdir -p figs
 clean: 

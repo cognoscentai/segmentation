@@ -114,12 +114,19 @@ Sirion Vittayakorn and James Hays.
 \newblock {\em Procedings of the British Machine Vision Conference 2011}, pages
   109.1--109.11, 2011.
 
+\bibitem[\protect\citeauthoryear{Welinder and Perona}{2010a}]{OCWelinder2010}
+Peter Welinder and Pietro Perona.
+\newblock {Online crowdsourcing: Rating annotators and obtaining cost-effective
+  labels}.
+\newblock {\em 2010 IEEE Computer Society Conference on Computer Vision and
+  Pattern Recognition - Workshops, CVPRW 2010}, pages 25--32, 2010a.
+
 \bibitem[\protect\citeauthoryear{Welinder \bgroup \em et al.\egroup
-  }{2010b}]{MDWWelinder2010}
+  }{2010}]{MDWWelinder2010}
 Peter Welinder, Steve Branson, Serge Belongie, and Pietro Perona.
 \newblock {The Multidimensional Wisdom of Crowds}.
 \newblock {\em NIPS (Conference on Neural Information Processing Systems)},
-  6:1--9, 2010b.
+  6:1--9, 2010.
 
 \bibitem[\protect\citeauthoryear{Yamaguchi}{2012}]{Yamaguchi2012}
 Kota Yamaguchi.
