@@ -1,3 +1,4 @@
+%!TEX root = main.tex
 \section{Experimental Evaluation}
 
 \stitle{Dataset Description\label{dataset}}
@@ -12,16 +13,16 @@
  \techreport{\par A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
 
 \begin{figure}[h!]
-   \vspace{-10pt}
+   \vspace{-7pt}
    \centering
-   \includegraphics[width=0.9\textwidth]{plots/Retrieval_vs_Aggregation.pdf}
-   \caption{Jaccard performance comparison between best-performing algorithms from retrieval and aggregation-based methods with clustering as a preprocessing step where possible. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). Note that MV and EM results are so close that they overlay on each other.}
+   \includegraphics[width=0.8\textwidth]{plots/Retrieval_vs_Aggregation.pdf}
+   \caption{Performance comparison between best-performing retrieval and aggregation-based methods. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). MV and EM results are so close that they overlay on each other.}
    \label{retrieval_vs_aggregation}   
-   \setlength{\belowcaptionskip}{-10pt}
+   \setlength{\belowcaptionskip}{-15pt}
 \end{figure} 
 
 \stitle{Aggregation-based methods perform significantly better than retrieval-based methods}
-\par \noindent Figure~\ref{retrieval_vs_aggregation} left shows that amongst the algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best achievable through the existing retrieval-based method (num pts). By making use of ground truth information (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer than any individual worker segmentation. 
+\par \noindent Figure~\ref{retrieval_vs_aggregation} left shows that amongst algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best achievable through the existing retrieval-based method (num pts). By making use of ground truth information (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer than any individual worker segmentation. 
 
 \stitle{Performance of aggregation-based methods scales well as more worker segmentations are added.}
 \par \noindent Intuitively, larger worker samples results in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentation used in the sample and performance evident in Table~\ref{statsTable}. However, worker scaling for retrieval-based methods are not guaranteed.
@@ -41,4 +42,3 @@
       \caption{The first row lists the average percentage change in Jaccard between 5 workers samples and 30 workers sample. The second row lists the average percentage change between the no clustering and clustering results. Algorithms with * makes use of ground truth information.}
       \label{statsTable}
 \end{table}
-\vspace{-15pt}

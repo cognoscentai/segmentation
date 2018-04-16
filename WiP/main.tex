@@ -1,11 +1,4 @@
 \def\year{2018}\relax
-% * <akashds.iitk@gmail.com> 2018-04-14T00:10:32.826Z:
-%
-% * <dorisjunglinlee@gmail.com> 2018-04-14T18:16:53.961Z:
-%
-% ^.
-% ^.
-%File: formatting-instruction.tex
 \documentclass[letterpaper]{article} %DO NOT CHANGE THIS
 \usepackage{aaai18}  %Required
 \usepackage{times}  %Required
@@ -35,7 +28,8 @@
 \usepackage{floatrow}
 \usepackage[table]{xcolor}
 \usepackage[draft]{todonotes}   % notes showed
-
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{0.5ex}{0.5ex}
 % \newcommand{\todo}[2][]{}
 % \usepackage{titling}
 % \setlength{\droptitle}{-10pt}
@@ -74,6 +68,8 @@
 % \setlength{\intextsep}{-5pt}  % makes space after figure go away
 % \setlength{\belowcaptionskip}{-10pt}
 % \setlength{\abovecaptionskip}{-10pt}
+\setlength{\textfloatsep}{{10pt plus 0.5pt minus 4.0pt}}
+\setlength{\intextsep}{{10pt plus 0.5pt minus 4.0pt}}
 \newskip\smallskipamount \smallskipamount=3pt plus 1pt minus 1pt
 \newskip\medskipamount   \medskipamount=6pt plus 2pt minus 2pt
 \newskip\bigskipamount   \bigskipamount=12pt plus 4pt minus 4pt
@@ -94,9 +90,9 @@
            \author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
            \maketitle
            \begin{abstract}
+           
            Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we propose and evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation based algorithms and retrieval-based methods based on prior work. We characterize the different types of worker errors observed, and present a clustering algorithm as a preprocessing step that is able to capture semantic errors and filter workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attain better performance than existing retrieval-based approaches, while scaling better with increasing numbers of collected worker segmentations. 
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
-           \vspace{-10pt}
           \end{abstract}
                
           \input{01-Introduction}
