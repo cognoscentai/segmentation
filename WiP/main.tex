@@ -27,6 +27,7 @@
 
 \usepackage{amsmath}
 \usepackage{subcaption}
+\usepackage[font=small,belowskip=-30pt,aboveskip=-20pt]{caption}
 \usepackage{mathrsfs} 
 \usepackage{cancel}
 \usepackage{amsfonts}
@@ -70,7 +71,12 @@
   \pdfinfo{
       /Title (2018 Formatting Instructions for Authors Using LaTeX)
           /Author (AAAI Press Staff)}
-
+% \setlength{\intextsep}{-5pt}  % makes space after figure go away
+% \setlength{\belowcaptionskip}{-10pt}
+% \setlength{\abovecaptionskip}{-10pt}
+\newskip\smallskipamount \smallskipamount=3pt plus 1pt minus 1pt
+\newskip\medskipamount   \medskipamount=6pt plus 2pt minus 2pt
+\newskip\bigskipamount   \bigskipamount=12pt plus 4pt minus 4pt
 
 \title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
 \setlength\titlebox{1.5in}   %squish author title height 

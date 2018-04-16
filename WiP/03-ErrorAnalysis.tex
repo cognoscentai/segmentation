@@ -1,3 +1,7 @@
+\vspace{-5pt}
+\section{Error Analysis\label{sec:error}}
+\par After analyzing our collected crowdsourced segmentation data (described Section~\ref{dataset}), we found that common worker errors can be classified into three types: (1) \textbf{Semantic Ambiguity:} workers have differing opinions on whether particular regions belong to part of an object (Figure~\ref{error_examples} left: some workers annotated around `flower and vase' when task requested `vase'); (2) \textbf{Semantic Mistake:} workers annotate the wrong object entirely (Figure~\ref{error_examples} right: annotating around `turtle' and `monitor' when task requested `computer'.); and (3) \textbf{Boundary Imperfection:} workers make unintentional mistakes while drawing the boundaries, either due to low image resolution, small area of the object, or lack of drawing skills (Figure~\ref{tile_demo} left: imprecision around the outline of the `dog'). Since quality evaluation methods in past literature have largely focused on minimizing boundary imperfection issues, we first describe our novel aggregation-based algorithms designed to reduce boundary imperfections and compare them with existing retrieval-based methods in Section~\ref{precision}. Next, in Section~\ref{perspective}, we discuss a preprocessing method that we have developed to resolve semantic ambiguity and errors observed in prior work~\cite{Sorokin2008,Lin2014,Gurari2018}. 
+%\par %Out of the 46 objects in our dataset, 9 objects suffer from semantic ambiguity, 18 objects from semantic mistakes, and almost all objects suffer from some form of boundary imprecision to varying degrees. 
 % \begin{figure*}[ht!]
 %     \centering
 %     \RawFloats
@@ -19,14 +23,9 @@
 % \end{figure*}
 \begin{figure}[h!]
     \centering
-	\vspace{-20pt}
-    \includegraphics[width=\textwidth]{plots/semantic_error_clust.png}
+    \includegraphics[width=0.8\textwidth]{plots/semantic_error_clust.pdf}
     \caption{Top: Pink is the segmentation from individual workers. Blue solid line delineates the ground truth. The red boxed pointer is the interface icon indicating the semantic object to be segmented. Bottom: Boundary colors highlight different worker perspectives resulting from clustering.}
     \label{error_examples}
+    \setlength{\abovecaptionskip}{-10pt}
+    \setlength{\belowcaptionskip}{-5pt}
 \end{figure}
-\vspace{-10pt}
-\section{Error Analysis}
-\par Common worker errors can be classified into three types: (1) \textbf{Semantic Ambiguity:} workers have differing opinions on whether particular regions belong to part of an object (Figure~\ref{error_examples} left); (2) \textbf{Semantic Mistakes:} workers annotate the wrong object entirely (Figure~\ref{error_examples} right); and (3) \textbf{Boundary Imperfection:} workers make unintentional mistakes while drawing the boundaries, either due to low image resolution, small area of the object, or lack of drawing skills (Figure~\ref{tile_demo} left).
-Since quality evaluation methods in past literature have largely focused on minimizing boundary imperfection issues, we first describe our novel aggregation-based algorithms designed to reduce boundary imprecision and compare them with existing retrieval-based methods in Section~\ref{sec:precision}.% for addressing boundary imprecision. 
-Next, in Section~\ref{sec:perspective}, we discuss a preprocessing method that we have developed to resolve semantic ambiguity and errors observed in prior work~\cite{Sorokin2008,Lin2014,Gurari2018}. 
-%\par %Out of the 46 objects in our dataset, 9 objects suffer from semantic ambiguity, 18 objects from semantic mistakes, and almost all objects suffer from some form of boundary imprecision to varying degrees. 
