@@ -1,8 +1,8 @@
 %!TEX root = main.tex
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.75\linewidth]{plots/flowchart.pdf}
-\caption{Flowchart summarizing the classes of existing algorithms for image segmentation (blue) and a novel class of algorithms proposed in this paper (yellow).} %Majority-vote (MV) is colored both blue and yellow, since a common algorithm in crowdsourcing literature, but have not been extensively applied to crowdsourced image segmentation.}
+\includegraphics[width=0.75\linewidth]{plots/flowchart.png}
+\caption{Taxonomy of existing algorithms for crowdsourced segmentation (blue) and a novel class of algorithms proposed in this paper (yellow).} %Majority-vote (MV) is colored both blue and yellow, since a common algorithm in crowdsourcing literature, but have not been extensively applied to crowdsourced image segmentation.}
 %The crowdsourced approach can be largely classified as retrieval or aggregation-based methods. We further explore hybrid algorithms that makes use of signals that span over multiple categories, described in our technical report.
 \label{flowchart}
 \setlength{\belowcaptionskip}{-15pt}
@@ -11,11 +11,11 @@
 \end{figure}
 \section{Related Work\label{sec:related}}
 %Many large-scale efforts in crowdsourced image segmentation contain little to no information on the quality characterization and evaluation of the collected dataset~\cite{Torralba2010,MartinFTM01,Li2009,Gurari2015}, which in dicate the lack of standardized approaches for quality evaluation. 
-As shown in Figure \ref{flowchart}, quality evaluation methods for crowdsourced segmentation can be largely classified into two categories:
+As shown in Figure \ref{flowchart}, quality evaluation methods for crowdsourced segmentation can be classified into two categories:
 
-\stitle{Retrieval-based methods} seek to pick the ``best'' worker segmentation based on some scoring criteria that evaluates the quality of each segmentation, including the use of vision information~\cite{Vittayakorn2011,Russakovsky2015}, expectation-maximization (EM) based approaches for bounding box quality estimation~\cite{OCWelinder2010}, and click-stream behavior \cite{Cabezas2015,Sameki2015,Sorokin2008}.
+\stitle{Retrieval-based methods} pick the ``best'' worker segmentation based on some scoring criteria that evaluates the quality of each segmentation, including vision information~\cite{Vittayakorn2011,Russakovsky2015}, and click-stream behavior \cite{Cabezas2015,Sameki2015,Sorokin2008}.%expectation-maximization (EM) based approaches for bounding box quality estimation~\cite{OCWelinder2010}, 
 
-\stitle{Aggregation-based methods} combine multiple worker segmentations to produce a final segmentation that are not restricted by any single worker segmentation. An aggregation-based majority vote approach was employed in Sameki et al. (\citeyear{Sameki2015}) as a way to create expert-established gold standard for dataset characterizing, rather than for segmentation quality evaluation as described in this paper.
+\stitle{Aggregation-based methods} combine multiple worker segmentations to produce a final segmentation that are not restricted by any single worker segmentation. An aggregation-based majority vote approach was employed in Sameki et al. (\citeyear{Sameki2015}) as a way to create an expert-established gold standard for characterizing their dataset and algorithmic accuracies, rather than for segmentation quality evaluation as described in this paper.
 %specialized segmentation interfaces or workflows that ensures that the annotations collected are of high quality, including 
 
 \stitle{Orthogonal methods} to improve segmentation quality include periodic verification~\cite{Lin2014,Everingham15}, specialized segmentation interfaces~\cite{Song2018}, and vision-based supervision~\cite{Russakovsky2015,Gurari2016}. These methods could be used for quality improvement on top of any of the algorithms described in this paper.  %Since these policy-based methods are interface-dependent, require expensive expert-drawn ground-truth annotations or vision information, the results are not easily reproducible. In addition, the segmentations collected by the simple click-and-draw interface in many of the large scale segmentation efforts can not be improved with this technique as a post-processing method. Due to the lack of reproducibility, our paper do not compare against these policy-based methods in extensive details.

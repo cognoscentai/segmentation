@@ -41,6 +41,7 @@
 \newcommand{\agp}[1]{\textcolor{magenta}{Aditya: #1}}
 \newcommand{\dor}[1]{\textcolor{blue}{Doris: #1}}
 \newcommand{\ads}[1]{\textcolor{green}{Akash: #1}}
+\newcommand{\changes}[1]{\textcolor{red}{#1}}
 % Hide
 % \newcommand{\agp}[1]{\textcolor{magenta}{}}
 % \newcommand{\dor}[1]{\textcolor{blue}{}}
@@ -90,8 +91,7 @@
            \author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
            \maketitle
            \begin{abstract}
-           
-           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we propose and evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation based algorithms and retrieval-based methods based on prior work. We characterize the different types of worker errors observed, and present a clustering algorithm as a preprocessing step that is able to capture semantic errors and filter workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attain better performance than existing retrieval-based approaches, while scaling better with increasing numbers of collected worker segmentations. 
+           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation-based methods and retrieval-based methods from prior work. We characterize the different types of worker errors observed in crowdsourced segmentation, and present a clustering algorithm as a preprocessing step that is able to capture and eliminate semantic errors arising due to workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attain higher accuracies than existing retrieval-based approaches, while scaling better with increasing numbers of worker segmentations. 
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
           \end{abstract}
                
