@@ -2,34 +2,35 @@
 \section{Experimental Evaluation\label{sec:experiment}}
 
 \stitle{Dataset Description\label{dataset}}
-\par \noindent We collected crowdsourced segmentations from Amazon Mechanical Turk where each HIT consisted of one segmentation task for a specific pre-labeled object in the image. There were a total of 46 objects in 9 images from the MSCOCO dataset~\cite{Lin2014}. For each object, we collected segmentation masks from a total of 40 workers. Each task contains a semantic keyword and a pointer indicating the object to be segmented. %These tasks represent a diverse set of task difficulty (different levels of clutteredness, occlusion, lighting) and levels of task ambiguity. 
+\par \noindent We collected crowdsourced segmentations from Amazon Mechanical Turk where each HIT consisted of one segmentation task for a specific pre-labeled object in the image. There were a total of 46 objects in 9 images from the MSCOCO dataset~\cite{Lin2014}, resulting in a total of 1840 segmentations. For each object, we collected segmentations from 40 different workers. Each task contains a keyword for the object and a pointer indicating the object to be segmented. \agp{How did you get GT?} \dor{I just annotated very carefully to draw around the object as the GT, could not use the COCO annotations because of the semantic segmentation they used were different, so there ends up being a lot of semantic ambiguity. We should probably not get into the details here.}%These tasks represent a diverse set of task difficulty (different levels of clutteredness, occlusion, lighting) and levels of task ambiguity. 
+\techreport{\par A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
 
 \stitle{Evaluation Metrics}
-\par \noindent Evaluation metrics used in our experiment measures how well the final segmentation (S) produced by these algorithms compare against ground truth (GT). The most common evaluation metric used in literature are area-based methods which take into account the intersection, $IA=area(S\cap GT)$, or union, $UA=area(S\cup GT)$, between the user and the ground truth segmentations. Specifically, we use
+\par \noindent Evaluation metrics used in our experiments measure how well the final segmentation (S) produced by these algorithms compare against ground truth (GT). The most common evaluation metrics used in the literature are area-based methods which take into account the intersection area, $IA=area(S\cap GT)$, or union area, $UA=area(S\cup GT)$, between the worker and ground truth segmentations, including %. Specifically, we use
     $\text{Precision (P)} = \frac{IA(S)}{area(S)}$, 
     $\text{Recall (R)} = \frac{IA(S)}{area(GT)}$, and 
-    $\text{Jaccard (J)} = \frac{UA(S)}{IA(S)}$
-    metrics to evaluate our algorithms.
- \techreport{\par A sub-sampled dataset was created from the full dataset to determine the efficacy of these algorithms on varying number of worker responses. Every object was randomly sampled worker with replacement. For small worker samples, we average our results over larger number of batches than for large worker samples (which have lower variance, since the sample size is close to the original data size).}
+    $\text{Jaccard (J)} = \frac{UA(S)}{IA(S)}$.
+    %metrics to evaluate our algorithms.
+
+\stitle{Experiment 1: Aggregation-based methods perform significantly better than retrieval-based methods}
+\par \noindent Figure~\ref{retrieval_vs_aggregation} (left) shows that amongst algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best-achievable through existing retrieval-based method (num pts). By making use of ground truth information\agp{Explain what that means?}  (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer than any individual worker segmentation. 
 
 \begin{figure}[h!]
    \vspace{-7pt}
    \centering
    \includegraphics[width=0.8\textwidth]{plots/Retrieval_vs_Aggregation.pdf}
-   \caption{Performance comparison between best-performing retrieval and aggregation-based methods. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). MV and EM results are so close that they overlay on each other.}
+   \caption{Performance comparison between best-performing retrieval and aggregation-based methods. We compare between the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). MV and EM results are so close that they overlay on each other. \agp{Explain setup for this. How did you generate this?} \dor{not sure what aditya means?}}
    \label{retrieval_vs_aggregation}   
    \setlength{\belowcaptionskip}{-15pt}
 \end{figure} 
 
-\stitle{Aggregation-based methods perform significantly better than retrieval-based methods}
-\par \noindent Figure~\ref{retrieval_vs_aggregation} left shows that amongst algorithms that do not make use of ground truth information, the performance of aggregation-based algorithms (greedy, EM) exceeds the best achievable through the existing retrieval-based method (num pts). By making use of ground truth information (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer than any individual worker segmentation. 
 
-\stitle{Performance of aggregation-based methods scales well as more worker segmentations are added.}
-\par \noindent Intuitively, larger worker samples results in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentation used in the sample and performance evident in Table~\ref{statsTable}. However, worker scaling for retrieval-based methods are not guaranteed.
+\stitle{The performance of aggregation-based methods scale well as more worker segmentations are added.}
+\par \noindent Intuitively, larger numbers of worker segmentations result in finer granularity tiles for the aggregation-based methods, resulting in an monotonically increasing relationship between number of worker segmentations used and the performance as seen in Table~\ref{statsTable}. However, retrieval-based methods do not benefit from more segmentation.
 
-\stitle{Clustering as preprocessing improves algorithmic performance.}
-\par \noindent As shown in Table~\ref{statsTable}, on average, clustering generally results in an increase the resulting algorithmic performance. Since the ground-truth supervised variants are already free of semantic ambiguity and errors, there is minimal improvement resulting from clustering. %In particular, we see a greater improvement with clustering preprocessing for algorithms that are not very robust in resolving semantic errors or ambiguity, such as for the \texttt{num pts} retrieval algorithm, than compared to the aggregation-based methods. 
-
+\stitle{Experiment 2: Clustering as preprocessing improves algorithmic performance.}
+\par \noindent As shown in Table~\ref{statsTable}, clustering generally results in an accuracy increase. Since the ground-truth supervised variants\agp{what is this?} are already free of semantic ambiguity and errors, clustering does not results in further improvement. %In particular, we see a greater improvement with clustering preprocessing for algorithms that are not very robust in resolving semantic errors or ambiguity, such as for the \texttt{num pts} retrieval algorithm, than compared to the aggregation-based methods. 
+\agp{Weird, this is experiment 2. Divide this up into two parts. (Right now it seems as if all findings are from Fig 4, so this comes as a surprise.)}
 \begin{table}[h!]
    \small
      \setlength\tabcolsep{1.5pt}
