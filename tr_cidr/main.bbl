@@ -1,0 +1,131 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Bell \bgroup \em et al.\egroup
+  }{2014}]{bell14intrinsic}
+Sean Bell, Kavita Bala, and Noah Snavely.
+\newblock Intrinsic images in the wild.
+\newblock {\em ACM Trans. on Graphics (SIGGRAPH)}, 33(4), 2014.
+
+\bibitem[\protect\citeauthoryear{Bell \bgroup \em et al.\egroup
+  }{2015}]{bell15minc}
+Sean Bell, Paul Upchurch, Noah Snavely, and Kavita Bala.
+\newblock Material recognition in the wild with the materials in context
+  database.
+\newblock {\em Computer Vision and Pattern Recognition (CVPR)}, 2015.
+
+\bibitem[\protect\citeauthoryear{Cabezas \bgroup \em et al.\egroup
+  }{2015}]{Cabezas2015}
+Ferran Cabezas, Axel Carlier, Vincent Charvillat, Amaia Salvador, and Xavier
+  Giro-I-Nieto.
+\newblock {Quality control in crowdsourced object segmentation}.
+\newblock {\em Proceedings of International Conference on Image Processing,
+  ICIP}, 2015-Decem:4243--4247, 2015.
+
+\bibitem[\protect\citeauthoryear{Everingham \bgroup \em et al.\egroup
+  }{2015}]{Everingham15}
+M.~Everingham, S.~M.~A. Eslami, L.~Van~Gool, C.~K.~I. Williams, J.~Winn, and
+  A.~Zisserman.
+\newblock The pascal visual object classes challenge: A retrospective.
+\newblock {\em International Journal of Computer Vision}, 111(1):98--136,
+  January 2015.
+
+\bibitem[\protect\citeauthoryear{Gurari \bgroup \em et al.\egroup
+  }{2016}]{Gurari2016}
+Danna Gurari, Mehrnoosh Sameki, Zheng Wu, and Margrit Betke.
+\newblock {Mixing Crowd and Algorithm Efforts to Segment Objects in Biomedical
+  Images}.
+\newblock {\em Medical Image Computing and Computer Assisted Intervention
+  Interactive Medical Image Computation Workshop}, pages 1--8, 2016.
+
+\bibitem[\protect\citeauthoryear{Gurari \bgroup \em et al.\egroup
+  }{2018}]{Gurari2018}
+Danna Gurari, Kun He, Bo~Xiong, Jianming Zhang, Mehrnoosh Sameki, Suyog~Dutt
+  Jain, Stan Sclaroff, Margrit Betke, and Kristen Grauman.
+\newblock {Predicting Foreground Object Ambiguity and Efficiently Crowdsourcing
+  the Segmentation(s)}.
+\newblock {\em International Journal of Computer Vision (IJCV)}, 2018.
+
+\bibitem[\protect\citeauthoryear{Irshad and et. al.}{2014}]{Irshad2014}
+H~Irshad and Montaser-Kouhsari et. al.
+\newblock {Crowdsourcing Image Annotation for Nucleus Detection and
+  Segmentation in Computational Pathology: Evaluating Experts, Automated
+  Methods, and the Crowd}.
+\newblock {\em Biocomputing 2015}, pages 294--305, 2014.
+
+\bibitem[\protect\citeauthoryear{Lin \bgroup \em et al.\egroup
+  }{2012}]{Lin2012}
+Christopher~H Lin, Mausam, and Daniel~S Weld.
+\newblock {Crowdsourcing control : Moving beyond multiple choice}.
+\newblock {\em AAAI Conference on Human Computation and Crowdsourcing (HCOMP)},
+  pages 491--500, 2012.
+
+\bibitem[\protect\citeauthoryear{Lin \bgroup \em et al.\egroup
+  }{2014}]{Lin2014}
+Tsung~Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva
+  Ramanan, Piotr Doll{\'{a}}r, and C.~Lawrence Zitnick.
+\newblock {Microsoft COCO: Common objects in context}.
+\newblock {\em European Conference on Computer Vision (ECCV)}, 8693 LNCS(PART
+  5):740--755, 2014.
+
+\bibitem[\protect\citeauthoryear{Natonek}{1998}]{Natonek1998}
+E.~Natonek.
+\newblock Fast range image segmentation for servicing robots.
+\newblock In {\em Proceedings. 1998 IEEE International Conference on Robotics
+  and Automation (Cat. No.98CH36146)}, volume~1, pages 406--411 vol.1, May
+  1998.
+
+\bibitem[\protect\citeauthoryear{Russakovsky \bgroup \em et al.\egroup
+  }{2015}]{Russakovsky2015}
+Olga Russakovsky, Li-Jia Li, and Li~Fei-Fei.
+\newblock {Best of Both Worlds: Human-Machine Collaboration for Object
+  Annotation}.
+\newblock pages 2121--2131, 2015.
+
+\bibitem[\protect\citeauthoryear{Sameki \bgroup \em et al.\egroup
+  }{2015}]{Sameki2015}
+Mehrnoosh Sameki, Danna Gurari, and Margrit Betke.
+\newblock {Characterizing Image Segmentation Behavior of the Crowd}.
+\newblock pages 1--4, 2015.
+
+\bibitem[\protect\citeauthoryear{Song \bgroup \em et al.\egroup
+  }{2018}]{Song2018}
+Jean~Y. Song, Raymond Fok, Alan Lundgard, Fang Yang, Juho Kim, and Walter~S.
+  Lasecki.
+\newblock {Two Tools are Better Than One : Tool Diversity as a Means of
+  Improving Aggregate Crowd Performance}.
+\newblock {\em Proceedings of the International Conference on Intelligent User
+  Interfaces}, 2018.
+
+\bibitem[\protect\citeauthoryear{Sorokin and Forsyth}{2008}]{Sorokin2008}
+Alexander Sorokin and David Forsyth.
+\newblock {Utility data annotaton with Amazon Mechanical Turk}.
+\newblock {\em Proceedings of the 1st IEEE Workshop on Internet Vision at CVPR
+  08}, (c):1--8, 2008.
+
+\bibitem[\protect\citeauthoryear{Torralba \bgroup \em et al.\egroup
+  }{2010}]{Torralba2010}
+Antonio Torralba, Bryan~C. Russell, and Jenny Yuen.
+\newblock {LabelMe: Online image annotation and applications}.
+\newblock {\em Proceedings of the IEEE}, 98(8):1467--1484, 2010.
+
+\bibitem[\protect\citeauthoryear{Vittayakorn and Hays}{2011}]{Vittayakorn2011}
+Sirion Vittayakorn and James Hays.
+\newblock {Quality Assessment for Crowdsourced Object Annotations}.
+\newblock {\em Procedings of the British Machine Vision Conference}, pages
+  109.1--109.11, 2011.
+
+\bibitem[\protect\citeauthoryear{Welinder \bgroup \em et al.\egroup
+  }{2010}]{MDWWelinder2010}
+Peter Welinder, Steve Branson, Serge Belongie, and Pietro Perona.
+\newblock {The Multidimensional Wisdom of Crowds}.
+\newblock {\em NIPS (Conference on Neural Information Processing Systems)},
+  6:1--9, 2010.
+
+\bibitem[\protect\citeauthoryear{Yamaguchi}{2012}]{Yamaguchi2012}
+Kota Yamaguchi.
+\newblock Parsing clothing in fashion photographs.
+\newblock In {\em Proceedings of the 2012 IEEE Conference on Computer Vision
+  and Pattern Recognition (CVPR)}, CVPR '12, pages 3570--3577, Washington, DC,
+  USA, 2012. IEEE Computer Society.
+
+\end{thebibliography}
