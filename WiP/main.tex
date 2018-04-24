@@ -41,7 +41,8 @@
 \newcommand{\agp}[1]{\textcolor{magenta}{Aditya: #1}}
 \newcommand{\dor}[1]{\textcolor{blue}{Doris: #1}}
 \newcommand{\ads}[1]{\textcolor{green}{Akash: #1}}
-\newcommand{\changes}[1]{\textcolor{red}{#1}}
+% \newcommand{\changes}[1]{\textcolor{red}{#1}}
+\newcommand{\changes}[1]{#1}
 % Hide
 % \newcommand{\agp}[1]{\textcolor{magenta}{}}
 % \newcommand{\dor}[1]{\textcolor{blue}{}}
@@ -53,7 +54,7 @@
 
 \newcommand{\sampar}[1]{\vspace{3pt}\noindent{\bf #1}}
 \newcommand{\subheading}[1]{\vspace{3pt}\noindent{\bf #1}\\\noindent}
-
+\newcommand{\npar}{\par \noindent}
 \newcommand{\ta}[1]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{\underline{Takeaway:} #1}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 % usage:   \ta{takeaway text}
 \newcommand{\stitle}[1]{\noindent \textbf{#1}}
@@ -87,14 +88,31 @@
 % on the second line, try using \AND instead of \And before the third
 % author name.
 \begin{document}
-           \title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
-           \author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
+           %\title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
+           \title{Aggregating Crowdsourced Image Segmentations}
+           %\author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
+           % \numberofauthors{3}
+            \author{%
+              Doris Jung-Lin Lee\\
+              University of Illinois, Urbana-Champaign\\
+              jlee782@illinois.edu\\
+            \And
+              Akash Das Sarma\\
+              Facebook, Inc.\\
+              akashds@fb.com\\
+            \And 
+              Aditya Parameswaran\\
+              University of Illinois, Urbana-Champaign\\
+              adityagp@illinois.edu\\
+            }
            \maketitle
+           \vspace{-8pt}
            \begin{abstract}
-           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation-based methods and retrieval-based methods from prior work. We characterize the different types of worker errors observed in crowdsourced segmentation, and present a clustering algorithm as a preprocessing step that is able to capture and eliminate semantic errors arising due to workers with different semantic perspectives. We demonstrate that aggregation-based algorithms attain higher accuracies than existing retrieval-based approaches, while scaling better with increasing numbers of worker segmentations. 
+           \vspace{-7pt}
+           Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation-based methods and retrieval-based methods from prior work. We characterize the different types of worker errors observed in crowdsourced segmentation, and present a clustering algorithm as a preprocessing step that is able to capture and eliminate errors arising due to workers having different semantic perspectives. We demonstrate that aggregation-based algorithms attain higher accuracies than existing retrieval-based approaches, while scaling better with increasing numbers of worker segmentations. 
+           \vspace{-2pt}
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
           \end{abstract}
-               
           \input{01-Introduction}
           \input{02-RelatedWorks}
           \input{03-ErrorAnalysis}
