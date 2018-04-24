@@ -57,7 +57,7 @@ H~Irshad and Montaser-Kouhsari et. al.
 Christopher~H Lin, Mausam, and Daniel~S Weld.
 \newblock {Crowdsourcing control : Moving beyond multiple choice}.
 \newblock {\em AAAI Conference on Human Computation and Crowdsourcing (HCOMP)},
-  pages 491----500, 2012.
+  pages 491--500, 2012.
 
 \bibitem[\protect\citeauthoryear{Lin \bgroup \em et al.\egroup
   }{2014}]{Lin2014}
@@ -93,8 +93,8 @@ Jean~Y. Song, Raymond Fok, Alan Lundgard, Fang Yang, Juho Kim, and Walter~S.
   Lasecki.
 \newblock {Two Tools are Better Than One : Tool Diversity as a Means of
   Improving Aggregate Crowd Performance}.
-\newblock {\em IUI'18: Proceedings of the International Conference on
-  Intelligent User Interfaces}, 2018.
+\newblock {\em Proceedings of the International Conference on Intelligent User
+  Interfaces}, 2018.
 
 \bibitem[\protect\citeauthoryear{Sorokin and Forsyth}{2008}]{Sorokin2008}
 Alexander Sorokin and David Forsyth.
@@ -111,7 +111,7 @@ Antonio Torralba, Bryan~C. Russell, and Jenny Yuen.
 \bibitem[\protect\citeauthoryear{Vittayakorn and Hays}{2011}]{Vittayakorn2011}
 Sirion Vittayakorn and James Hays.
 \newblock {Quality Assessment for Crowdsourced Object Annotations}.
-\newblock {\em Procedings of the British Machine Vision Conference 2011}, pages
+\newblock {\em Procedings of the British Machine Vision Conference}, pages
   109.1--109.11, 2011.
 
 \bibitem[\protect\citeauthoryear{Welinder \bgroup \em et al.\egroup
