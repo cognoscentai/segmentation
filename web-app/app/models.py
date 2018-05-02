@@ -53,18 +53,18 @@ class BoundingBox(db.Model):
 
 	def __repr__(self):
 		return '<obj=%d,worker=%d,x=%s,y=%s>' % (self.object_id,self.worker_id,self.x_locs,self.y_locs)
-class QuadrantBoundingBox(db.Model):
-	'''
-	the x and y locations are a string that is formatted as [x1,x2,x3 ..etc]
-	'''
-	object_id = db.Column(db.Integer, db.ForeignKey('object.id'),primary_key = True)
-	worker_id = db.Column(db.Integer, db.ForeignKey('worker.id'),primary_key = True)
-	quad_id = db.Column(db.Integer, index=True)
-	x_locs = db.Column(db.String, index=True)
-	y_locs = db.Column(db.String, index=True)
-	x_quad = db.Column(db.Integer, index=True)
-	y_quad = db.Column(db.Integer, index=True)
+# class QuadrantBoundingBox(db.Model):
+# 	'''
+# 	the x and y locations are a string that is formatted as [x1,x2,x3 ..etc]
+# 	'''
+# 	object_id = db.Column(db.Integer, db.ForeignKey('object.id'),primary_key = True)
+# 	worker_id = db.Column(db.Integer, db.ForeignKey('worker.id'),primary_key = True)
+# 	quad_id = db.Column(db.Integer, index=True)
+# 	x_locs = db.Column(db.String, index=True)
+# 	y_locs = db.Column(db.String, index=True)
+# 	x_quad = db.Column(db.Integer, index=True)
+# 	y_quad = db.Column(db.Integer, index=True)
 
-	def __repr__(self):
-		return '<obj=%d,worker=%d, quad_id=%d at (x,y)=%d,%d ,x=%s,y=%s>' % (self.object_id,self.worker_id,self.quad_id,self.x_quad,self.y_quad,self.x_locs,self.y_locs)
+# 	def __repr__(self):
+# 		return '<obj=%d,worker=%d, quad_id=%d at (x,y)=%d,%d ,x=%s,y=%s>' % (self.object_id,self.worker_id,self.quad_id,self.x_quad,self.y_quad,self.x_locs,self.y_locs)
 

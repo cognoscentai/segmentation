@@ -17,7 +17,7 @@ ALTER USER segment WITH SUPERUSER;
 CREATE DATABASE segment;
 ```
 
-4. Run ``db_create.py``, which creates the necessary tables in the database. This creates the tables and schema and populate the table with information about the objects, object locations and images.
+4. Run ``db_create.py``, which creates the necessary tables in the database. This creates the tables and schema and populate the table with information about the objects, object locations and images. If things get messed up, delete the `segment` database and role by `drop database segment; drop user segment;`. If it says that the database is currently being used, then restart postgres and try dropping again.
 
 5. Run the webapp at ```python run.py```, and access it through the web browser with the url : 
 
