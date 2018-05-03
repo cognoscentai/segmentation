@@ -20,14 +20,15 @@ import pandas as pd
 from sqlalchemy import create_engine
 engine = create_engine("postgresql://segment@localhost:5432")
 # For object identification to populate object_location , you only need to drop and readd the image table
-engine.execute("DROP table image  CASCADE;") 
-for fname in ["image"]:#,"object","object_location"]:
-    df = pd.read_csv("../ADE20K_data_info/{}.csv".format(fname))
-    df.to_sql(name=fname, con=engine, if_exists = 'replace', index=False)
-# For actual segmentation task, Load and Drop image, object, object_location table to avoid foreign key constraints errors
-# engine.execute("DROP table image, object, object_location  CASCADE;")
-# for fname in ["image","object","object_location"]:
+# engine.execute("DROP table image  CASCADE;") 
+# for fname in ["image"]:#,"object","object_location"]:
 #     df = pd.read_csv("../ADE20K_data_info/{}.csv".format(fname))
 #     df.to_sql(name=fname, con=engine, if_exists = 'replace', index=False)
+
+#For actual segmentation task, Load and Drop image, object, object_location table to avoid foreign key constraints errors
+engine.execute("DROP table image, object, object_location  CASCADE;")
+for fname in ["image","object","object_location"]:
+    df = pd.read_csv("ADE20K_data_info/{}.csv".format(fname))
+    df.to_sql(name=fname, con=engine, if_exists = 'replace', index=False)
 
 
