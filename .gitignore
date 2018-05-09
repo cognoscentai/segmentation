@@ -11,4 +11,4 @@ analysis/pixel_em.zip
 analysis/objid_to_clustid.json
 analysis/vision-stuff/color-segmented-images/
 analysis/vision-stuff/pixel-vision-tiles/
-
+web-app/mturk/secret.py
