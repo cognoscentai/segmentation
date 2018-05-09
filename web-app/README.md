@@ -78,7 +78,20 @@ else:
 To push any changes onto heroku, commit the changes to the git repo. Since the Flask files need to be at the root node in order for Heroku to detect the webapp, push only the web/ folder subtree to Heroku: 
 
 ​	``git subtree push --prefix web-app heroku master``
-
+### Deploy on Heroku: 
+To initalize the heroku project:
+```
+	git init
+	git add .
+	git commit -m "initial commit"
+	heroku create appname
+```
+Whenever  there's a change, push it to : 
+	`git push heroku master`
+Check for any errors by: 
+	`heroku logs`
+To initalize the DB run: 
+	``heroku run python  db_create.py``
 ### Postgres Databases
 
 Since Heroku does not allow writing to local filesystem for commiting the transactions into a SQLite database, we use [Heroku's Postgres Service](https://www.heroku.com/postgres).  To pull the most updated DB to analysis run ``herokuDBupdate.sh``, and enter the password which can be read out in the format:  	
