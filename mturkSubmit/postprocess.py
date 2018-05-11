@@ -1,15 +1,19 @@
 import numpy as np
 import pandas as pd
-from analysis_toolbox import *
+from ADE20K_analysis_toolbox import load_ADE20K_info
 import ast
 from boto.mturk.connection import MTurkRequestError
 from boto.mturk.connection import MTurkConnection
 import datetime
+import os
 from secret import SECRET_KEY,ACCESS_KEY,AMAZON_HOST
 
-save_db_as_csv(connect=False)
-print "Run DB update separately"
-img_info,object_tbl,bb_info,hit_info = load_info()
+# save_db_as_csv(connect=False)
+# print "Run DB update separately"
+# img_info,object_tbl,bb_info,hit_info = load_info()
+img_info, object_tbl, BB_count_info = load_ADE20K_info()
+bb_info = pd.read_csv("bounding_box.csv")
+hit_info = pd.read_csv("hit.csv")
 print 'Updated DB info'
 
 #Start Configuration Variables
@@ -56,26 +60,29 @@ for hit in all_hits:
                     connection.approve_assignment(assignment.AssignmentId)
                     print 'approved ', assignment.AssignmentId
                 else:
+                    # print task.worker_id
                     #print 'Putting into pending reject list :', assignment.AssignmentId
+                    #reject_log.write('{0},{1}\n'.format(assignment.AssignmentId,numClicks))#,int(task.worker_id)))
+                    
                     print 'Reject ',assignment.AssignmentId, 'only :', numClicks
-                    bb = bb_info[(bb_info.worker_id==int(task.worker_id)) & (bb_info.object_id==int(task.object_id))]
-                    BB ='"'+ bb.x_locs.get_values()[0]+'"'
-                    reject_log.write('{0},{1},{2},{3},{4}\n'.format(assignment.AssignmentId,numClicks,BB,int(task.object_id),int(task.worker_id)))
-                    hit_info = hit_info.set_value(task.index[0],'status',"rejected")
+                    #bb = bb_info[(bb_info.worker_id==int(task.worker_id)) & (bb_info.object_id==int(task.object_id))]
+                    #BB ='"'+ bb.x_locs.get_values()[0]+'"'
+                    #reject_log.write('{0},{1},{2},{3},{4}\n'.format(assignment.AssignmentId,numClicks,BB,int(task.object_id),int(task.worker_id)))
+                    # hit_info = hit_info.set_value(task.index[0],'status',"rejected")
                     connection.reject_assignment(assignment.AssignmentId)
+
             except MTurkRequestError:
                 #Problably already approved or rejected this assignment previously
                #print "Previously rejected or approved : ", assignment.AssignmentId
                error_log.write(assignment.AssignmentId+'\n')
 reject_log.close()
 error_log.close()
-object_tbl.to_csv('../../data/approved_object_tbl.csv')
-hit_info.to_csv('../../data/hit_mturk.csv')
+# object_tbl.to_csv('../../data/approved_object_tbl.csv')
+# hit_info.to_csv('../../data/hit_mturk.csv')
 # Count the number of objects Annotated
-print 'Count the number of objects Annotated'
-import pandas as pd
-object_tbl['BB_count'] = pd.Series(np.zeros(len(object_tbl)), index=object_tbl.index)
-for hit in hit_info.iterrows():
-    objIdx = hit[1]['object_id']-1
-    object_tbl = object_tbl.set_value(objIdx,'BB_count', object_tbl._iloc[objIdx].BB_count+1)  
-object_tbl.to_csv("../../data/BB_count_tbl.csv")                  
+#print 'Count the number of objects Annotated'
+#object_tbl['BB_count'] = pd.Series(np.zeros(len(object_tbl)), index=object_tbl.index)
+#for hit in hit_info.iterrows():
+#    objIdx = hit[1]['object_id']-1
+#    object_tbl = object_tbl.set_value(objIdx,'BB_count', object_tbl._iloc[objIdx].BB_count+1)  
+#object_tbl.to_csv("BB_count_tbl.csv")                  

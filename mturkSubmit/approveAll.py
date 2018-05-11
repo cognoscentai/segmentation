@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from analysis_toolbox import *
+#from analysis_toolbox import *
 import ast
 from boto.mturk.connection import MTurkRequestError
 from boto.mturk.connection import MTurkConnection
@@ -16,7 +16,7 @@ connection = MTurkConnection(aws_access_key_id=AWS_ACCESS_KEY_ID,
                              host=AMAZON_HOST)
 print 'Connected to AMT'
 
-all_hits = [hit for hit in connection.get_reviewable_hits()]#connection.get_all_hits()] #connection.get_reviewable_hits
+all_hits = [hit for hit in connection.get_all_hits()]#connection.get_reviewable_hits()]#connection.get_all_hits()] #connection.get_reviewable_hits
 for hit in all_hits:
     assignments = connection.get_assignments(hit.HITId)
     print assignments

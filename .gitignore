@@ -1,6 +1,11 @@
+mturkSubmit/ActiveHITs
+mturkSubmit/herokuDBupdate.sh
 *.pyc
 *.out
+*.log
 analysis/pixel_em/*/
+*/.ipynb_checkpoints/
+mturkSubmit/ADE20K_bb_object/
 ipynb/.ipynb_checkpoints/
 *.txt
 analysis/sendmail.py
@@ -13,3 +18,4 @@ analysis/vision-stuff/color-segmented-images/
 analysis/vision-stuff/pixel-vision-tiles/
 mturkSubmit/secret.py
 mturkSubmit/rootkey.csv
+*.csv
