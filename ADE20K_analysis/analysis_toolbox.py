@@ -46,15 +46,15 @@ def load_info(eliminate_self_intersection_bb=True):
     object_info = pd.read_csv("object.csv")
     object_location = pd.read_csv("object_location.csv")
     object_tbl = object_info.merge(object_location,how="inner",left_on="id",right_on="object_id")
-    bb_info = pd.read_csv("bounding_box.csv")
+    bb_info = pd.read_csv("approved_bounding_box.csv")
     bb_info=bb_info[bb_info["worker_id"]>3]#do not include BB<=3 since they are drawn for testing and wid=3 is ground truth
-    if eliminate_self_intersection_bb:
-        for bb in bb_info.iterrows():
-            bb=bb[1]
-            xloc,yloc =  process_raw_locs([bb["x_locs"],bb["y_locs"]]) 
-            worker_BB_polygon=Polygon(zip(xloc,yloc))
-            if explain_validity(worker_BB_polygon).split("[")[0]=='Self-intersection':
-                bb_info.drop(bb.name, inplace=True)
+    #if eliminate_self_intersection_bb:
+    #    for bb in bb_info.iterrows():
+    #        bb=bb[1]
+    #        xloc,yloc =  process_raw_locs([bb["x_locs"],bb["y_locs"]]) 
+    #        worker_BB_polygon=Polygon(zip(xloc,yloc))
+    #        if explain_validity(worker_BB_polygon).split("[")[0]=='Self-intersection':
+    #            bb_info.drop(bb.name, inplace=True)
     hit_info = pd.read_csv("hit.csv",skipfooter=1)
     os.chdir(old_path)
     return [img_info,object_tbl,bb_info,hit_info]

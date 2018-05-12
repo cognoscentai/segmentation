@@ -1,18 +1,19 @@
 from PixelEM import *
 import pandas as pd
-object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,41,42, 43, 44, 45, 46, 47]
+object_lst = range(1,47) 
 small_object_lst = [1]  # , 2, 4, 10]
 from sample_worker_seeds import sample_specs
 from utils import clusters
-from withClustAnalysis import compute_best_worker_picking
+#from withClustAnalysis import compute_best_worker_picking
 sample_lst = sample_specs.keys()
-sample = sys.argv[1]
-df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
-noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
+#sample = sys.argv[1]
+#df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
+#noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
+
 # from qualityBaseline import *
 # print "generate baseline comparisons"
 # compute_self_BBvals(compute_metrics=['simple','area'])
-
+'''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
 if not os.path.exists("pixel_em"):
@@ -29,6 +30,7 @@ for sample in sample_lst:
     for objid in object_lst:
         print sample + ":" + str(objid)
 	create_mega_mask(objid, PLOT=False, sample_name=sample)
+'''
 print "Running spectral clustering to preprocess (takes 1~2min) "
 os.system("python2.7 preprocessing.py")
 '''

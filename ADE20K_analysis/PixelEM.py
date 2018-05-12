@@ -30,23 +30,21 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
     # where each of the worker BB is considered a mask and overlaid on top of each other
     img_name = img_info[img_info.id == int(object_tbl[object_tbl.id == objid]["image_id"])]["filename"].iloc[0]
     fname = ORIGINAL_IMG_DIR + img_name + ".png"
-    img = mpimg.imread(fname)
+    img = mpimg.imread(fname,0)
     width, height = get_size(fname)
 
     outdir = '{}obj{}/'.format(PIXEL_EM_DIR, objid)
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
 
-    obj_x_locs = [process_raw_locs([x, y])[0] for x, y in zip(bb_objects["x_locs"], bb_objects["y_locs"])]
-    obj_y_locs = [process_raw_locs([x, y])[1] for x, y in zip(bb_objects["x_locs"], bb_objects["y_locs"])]
+    obj_x_locs = [process_raw_locs([x[1:-1], y[1:-1]])[0] for x, y in zip(bb_objects["x_locs"], bb_objects["y_locs"])]
+    obj_y_locs = [process_raw_locs([x[1:-1], y[1:-1]])[1] for x, y in zip(bb_objects["x_locs"], bb_objects["y_locs"])]
     worker_ids = list(bb_objects["worker_id"])
-
     # for x_locs, y_locs in zip(obj_x_locs, obj_y_locs):
     for i in range(len(obj_x_locs)):
         x_locs = obj_x_locs[i]
         y_locs = obj_y_locs[i]
         wid = worker_ids[i]
-
         img = Image.new('L', (width, height), 0)
         ImageDraw.Draw(img).polygon(zip(x_locs, y_locs), outline=1, fill=1)
         mask = np.array(img) == 1
@@ -60,7 +58,7 @@ def create_all_gt_and_worker_masks(objid, PLOT=False, PRINT=False, EXCLUDE_BBG=T
             plt.colorbar()
             plt.show()
 
-    my_BB = pd.read_csv('{}/my_ground_truth.csv'.format(DATA_DIR))
+    my_BB = pd.read_csv('{}/ground_truth.csv'.format(DATA_DIR))
     bb_match = my_BB[my_BB.object_id == objid]
     x_locs, y_locs = process_raw_locs([bb_match['x_locs'].iloc[0], bb_match['y_locs'].iloc[0]])
     img = Image.new('L', (width, height), 0)
@@ -78,6 +76,9 @@ def create_mega_mask(objid, cluster_id="", PLOT=False, sample_name='5workers_ran
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
     else:
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
+    if (os.path.exists('{}voted_workers_mask.pkl'.format(outdir))):
+        print '{}voted_workers_mask.pkl'.format(outdir)+" already exist"
+        return
     if EXCLUDE_BBG:
         bb_objects = bb_objects[bb_objects.worker_id != 3]
     if not os.path.isdir(outdir):

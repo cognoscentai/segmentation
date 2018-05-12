@@ -19,3 +19,5 @@ analysis/vision-stuff/pixel-vision-tiles/
 mturkSubmit/secret.py
 mturkSubmit/rootkey.csv
 *.csv
+ADE20K_analysis/pixel_em/*/
+ADE20K_analysis/cluster_img/

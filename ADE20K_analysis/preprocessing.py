@@ -3,6 +3,7 @@ import pickle as pkl
 from analysis_toolbox import *
 import shapely
 from collections import Counter
+from utils import faster_compute_prj 
 # Task difficulty
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47]
 type_one_task_ambiguity = [15,20,22,27,31,40,41,42,47] #wrong object annotation
@@ -11,9 +12,14 @@ type_two_task_ambiguity = [1,4,7,8,9,10,18,20,21,25,28,29,30,31,32,33,34,35] #mi
 all_hard_tasks = list(set(np.concatenate((type_one_task_ambiguity,type_two_task_ambiguity))))
 easy_tasks = [objid  for objid in object_lst if objid not in all_hard_tasks]
 img_info,object_tbl,bb_info,hit_info=load_info()
+def worker_xy(bb_objects,worker_idx):
+    bb = bb_objects[bb_objects["worker_id"]==worker_idx]
+    xloc,yloc =  process_raw_locs([bb["x_locs"].iloc[0][1:-1],bb["y_locs"].iloc[0][1:-1]])   
+    return xloc,yloc
+    #return Polygon(zip(xloc,yloc))
 def worker_polygon(bb_objects,worker_idx):
     bb = bb_objects[bb_objects["worker_id"]==worker_idx]
-    xloc,yloc =  process_raw_locs([bb["x_locs"].iloc[0],bb["y_locs"].iloc[0]])    
+    xloc,yloc =  process_raw_locs([bb["x_locs"].iloc[0][1:-1],bb["y_locs"].iloc[0][1:-1]])
     return Polygon(zip(xloc,yloc))
 def compute_prjs(object_id,exclude_lst=[]):
     #PDF('../bb_object_pdfs/bb_object_{}.pdf'.format(object_id),size=(500,300))
@@ -26,9 +32,11 @@ def compute_prjs(object_id,exclude_lst=[]):
     #    prj_row =[]
         for jdx in worker_lst:
             if idx!=jdx :
-                worker_BB_polygon = worker_polygon(bb_objects,idx)
-                worker_BB_polygon2 = worker_polygon(bb_objects,jdx)
-                prj = BB_PRJ(worker_BB_polygon,worker_BB_polygon2)
+                wx,wy= worker_xy(bb_objects,idx)
+                w2x,w2y = worker_xy(bb_objects,jdx)
+                worker_BB= polycoords2pixels(wx,wy)
+                worker_BB2 = polycoords2pixels(wx,wy)
+                prj = BB_PRJ(worker_BB,worker_BB2)
          #       prj_row.append(prj)
                 worker_ijdxs.append([idx,jdx])
                 prj_matrix.append(prj)
@@ -73,22 +81,10 @@ def ground_truth_T(object_id,reverse_xy = False):
         x_locs,y_locs =  process_raw_locs([ground_truth_match["x_locs"].iloc[0],ground_truth_match["y_locs"].iloc[0]])
     T = Polygon(zip(x_locs,y_locs))
     return T
-def plot_coords(obj, color='red', reverse_xy=False, linestyle='-',lw=1, fill_color="red", hatch='', show=False, invert_y=False):
-    #Plot shapely polygon coord
-    if type(obj) != shapely.geometry.MultiPolygon and type(obj) != list:
-        obj = [obj]
-
-    for ob in obj:
-        if ob.exterior is None:
-            print 'Plotting bug: exterior is None (potentially a 0 area tile). Ignoring and continuing...'
-            continue
-        if reverse_xy:
-            x, y = ob.exterior.xy
-        else:
-            y, x = ob.exterior.xy
-        plt.plot(x, y, linestyle, linewidth=lw, color=color, zorder=1)
-        if fill_color != "":
-            plt.fill_between(x, y, facecolor=fill_color, hatch=hatch, linewidth=lw, alpha=0.5)
+def plot_coords(x,y, color='red', reverse_xy=False, linestyle='-',lw=1, fill_color="red", hatch='', show=False, invert_y=False):
+    plt.plot(x, y, linestyle, linewidth=lw, color=color, zorder=1)
+    if fill_color != "":
+        plt.fill_between(x, y, facecolor=fill_color, hatch=hatch, linewidth=lw, alpha=0.5)
     if invert_y:
         plt.gca().invert_yaxis()
 # if __name__=="__main__":
@@ -166,6 +162,14 @@ def plot_coords(obj, color='red', reverse_xy=False, linestyle='-',lw=1, fill_col
 #             print flag1,flag2
 #     df = pd.DataFrame(bad_worker_records,columns=["objid","bad worker id","error type"])
 #     df.to_csv("bad_worker_records.csv")
+
+from PIL import Image, ImageDraw
+def polycoords2pixels(x_locs,y_locs):
+    width, height = 2000,2000
+    img = Image.new('L', (width, height), 0)
+    ImageDraw.Draw(img).polygon(zip(x_locs, y_locs), outline=1, fill=1)
+    mask = np.array(img) == 1
+    return mask 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -182,9 +186,16 @@ def compute_jaccard_affinity_matrix(object_id,exclude_lst=[]):
         prj_row =[]
         for jdx in worker_lst:
             #if idx!=jdx :
-                worker_BB_polygon = worker_polygon(bb_objects,idx)
-                worker_BB_polygon2 = worker_polygon(bb_objects,jdx)
-                prj = BB_PRJ(worker_BB_polygon,worker_BB_polygon2)
+                #print bb_objects
+                #print idx
+                #worker_BB_polygon = worker_polygon(bb_objects,idx)
+                #worker_BB_polygon2 = worker_polygon(bb_objects,jdx)
+                #prj = BB_PRJ(worker_BB_polygon,worker_BB_polygon2)
+                wx,wy= worker_xy(bb_objects,idx)
+                w2x,w2y = worker_xy(bb_objects,jdx)
+                worker_BB= polycoords2pixels(wx,wy)
+                worker_BB2 = polycoords2pixels(wx,wy)
+                prj = faster_compute_prj(worker_BB,worker_BB2)
                 prj_row.append(prj[2])
         prj_matrix.append(prj_row)
     prj_matrix = np.array(prj_matrix)
@@ -209,8 +220,9 @@ def run_spectral_clustering(obj,N,PLOT=True):
             c = cmap(i / float(len(list(set(labels)))))
             workers_in_cluster = np.where(labels==ylabel)[0]
             for widx in workers_in_cluster:
-                plot_coords(worker_polygon(bb_objects,worker_lst[widx]),reverse_xy=True,color=c,fill_color="")
-        plot_coords(ground_truth_T(obj),color="black",fill_color="",reverse_xy=True,lw=3,linestyle='--',invert_y=True)
+                wx,wy = worker_xy(bb_objects,worker_lst[widx])
+                plot_coords(wx,wy,reverse_xy=True,color=c,fill_color="")
+        #plot_coords(ground_truth_T(obj),color="black",fill_color="",reverse_xy=True,lw=3,linestyle='--',invert_y=True)
         if not os.path.exists("cluster_img"):
             os.makedirs("cluster_img")
         plt.savefig("cluster_img/{}.png".format(obj))
