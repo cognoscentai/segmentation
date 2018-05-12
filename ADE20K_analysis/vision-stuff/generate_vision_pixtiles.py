@@ -51,7 +51,6 @@ def rescale_factor(original_img_path, new_img_path):
     new_width, new_height = get_size(new_img_path)
     return float(original_width) / float(new_width)
 
-
 def get_tiles_from_img(img):
     # NOTE: this just segments by color
     # disjointed same color pieces will be part of the same tile
@@ -61,6 +60,7 @@ def get_tiles_from_img(img):
     unique_vals = set()
     # for x, y in zip(range(shape(img)[0]), range(shape(img)[1])):
         # print x, y
+    #For ADE20K: This image contains information about the object class segmentation masks and also separates each class into instances. The channels R and G encode the objects class masks. The channel B encodes the instance object masks. The function loadAde20K.m extracts both masks.
     for x in range(shape(img)[0]):
         for y in range(shape(img)[1]):
             r, g, b = img[x, y, 0], img[x, y, 1], img[x, y, 2]
