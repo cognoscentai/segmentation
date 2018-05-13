@@ -23,7 +23,6 @@ print "2. Creating all worker and GT pixel masks (2-3 min)"
 for objid in object_lst:
     create_all_gt_and_worker_masks(objid)
 
-'''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
 for sample in sample_lst:
@@ -31,10 +30,11 @@ for sample in sample_lst:
         print sample + ":" + str(objid)
 	create_mega_mask(objid, PLOT=False, sample_name=sample)
 '''
+'''
 print "Running spectral clustering to preprocess (takes 1~2min) "
 os.system("python2.7 preprocessing.py")
 '''
-'''
+
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~1hrs)"
@@ -45,7 +45,7 @@ for sample in sample_lst:
             print sample + ":" + str(objid) + "; clust:" + str(cluster_id)
             create_mega_mask(objid,cluster_id=cluster_id, PLOT=False, sample_name=sample)
 '''
-'''
+
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals = []
 for batch in sample_lst:
@@ -64,8 +64,8 @@ for batch in sample_lst:
             mv_prj_vals.append([batch, objid, clust, p, r, j])
 mv_df = pd.DataFrame(mv_prj_vals, columns=["sample", "objid", "clust", "MV_precision", "MV_recall", "MV_jaccard"])
 mv_df.to_csv("pixel_em/MV_full_PRJ_table.csv")
-'''
-'''
+
+
 # pick the best MV performing cluster as the cluster to run
 # we store -1 for the rest of the unclustered objects
 compute_best_worker_picking()
@@ -77,7 +77,7 @@ from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
 
-sample = sys.argv[1]
+#sample = sys.argv[1]
 #for sample in tqdm(sample_lst):
 for objid in object_lst:
     if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)):
