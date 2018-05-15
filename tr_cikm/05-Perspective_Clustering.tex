@@ -1,5 +1,4 @@
 %!TEX root = main.tex
-\vspace{-10pt}
 \section{Perspective Resolution\label{perspective}}
 % \subsection{Worker Clustering}
 As discussed in Section~\ref{sec:error}, disagreements often arise in segmentation due to differing worker perspectives on large tile regions. We developed a clustering-based preprocessing approach to resolve this issue.
@@ -7,7 +6,7 @@ As discussed in Section~\ref{sec:error}, disagreements often arise in segmentati
 Based on the intuition that workers with similar perspectives will have segmentations that are close to each other, we compute the Jaccard similarity between each pair of segmentations and perform spectral clustering to separate the segmentations into clusters. Figure \ref{error_examples} (bottom) illustrates how spectral clustering divides the worker segmentations into clusters with meaningful semantic associations, reflecting the diversity of perspectives for the same task. Clustering results can be used as a preprocessing step for any quality evaluation algorithm by keeping only the segmentations that belong to the largest cluster, which is typically free of semantic errors.
     % \begin{figure}[h!]
     %   \centering
-    %   \includegraphics[width=\textwidth]{plots/20.png}
+    %   \includegraphics[width=\linewidth]{plots/20.png}
     %   \caption{Example image showing clustering performed on the same object from Figure \ref{error_examples}.}
     %   \label{cluster_example}
     % \end{figure}

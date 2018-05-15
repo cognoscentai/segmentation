@@ -14,19 +14,8 @@
 \usepackage{microtype}      % microtypography
 \usepackage{balance}
 \usepackage{amsmath}
-% \usepackage{subcaption}
 \usepackage[font=small,belowskip=-30pt,aboveskip=-20pt]{caption}
-% \usepackage{mathrsfs} 
-% \usepackage{cancel}
 \usepackage{amsfonts}
-% \usepackage[titletoc,title]{appendix}
-% \usepackage[table]{xcolor}
-% \usepackage{titlesec}
-% \titlespacing*{\section}{0pt}{0.5ex}{0.5ex}
-% \newcommand{\todo}[2][]{}
-% \usepackage{titling}
-% \setlength{\droptitle}{-10pt}
-
 \usepackage[]{algorithm2e}
 \usepackage{framed}
 \newcommand{\papertext}[1]{#1}
@@ -52,22 +41,6 @@
 % usage:   \ta{takeaway text}
 \newcommand{\stitle}[1]{\noindent \textbf{#1}}
 \newcommand{\takeawaywithqn}[2][]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{{\bf #1} #2}\vspace{-5pt}\end{framed}\vspace{-3pt}}
-% usage:    \ta[question]{takeaway}
-
-% \setlength{\pdfpagewidth}{8.5in}  %Required
-% \setlength{\pdfpageheight}{11in}  %Required
-%PDF Info Is Required:
-  % \pdfinfo{
-  %     /Title (2018 Formatting Instructions for Authors Using LaTeX)
-  %         /Author (AAAI Press Staff)}
-% \setlength{\intextsep}{-5pt}  % makes space after figure go away
-% \setlength{\belowcaptionskip}{-10pt}
-% \setlength{\abovecaptionskip}{-10pt}
-% \setlength{\textfloatsep}{{10pt plus 0.5pt minus 4.0pt}}
-% \setlength{\intextsep}{{10pt plus 0.5pt minus 4.0pt}}
-% \newskip\smallskipamount \smallskipamount=3pt plus 1pt minus 1pt
-% \newskip\medskipamount   \medskipamount=6pt plus 2pt minus 2pt
-% \newskip\bigskipamount   \bigskipamount=12pt plus 4pt minus 4pt
 
 % Copyright
 %\setcopyright{none}
@@ -116,14 +89,13 @@
         \author{Aditya Parameswaran}
         \affiliation{\institution{University of Illinois, Urbana-Champaign}}
         \email{adityagp@illinois.edu}      
-           \maketitle
-           \vspace{-8pt}
-           \begin{abstract}
+        \begin{abstract}
            \vspace{-7pt}
            Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation-based methods and retrieval-based methods from prior work. We characterize the different types of worker errors observed in crowdsourced segmentation, and present a clustering algorithm as a preprocessing step that is able to capture and eliminate errors arising due to workers having different semantic perspectives. We demonstrate that aggregation-based algorithms attain higher accuracies than existing retrieval-based approaches, while scaling better with increasing numbers of worker segmentations. 
            \vspace{-2pt}
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 
           \end{abstract}
+           \maketitle
           \input{01-Introduction}
           \input{02-RelatedWorks}
           \input{03-ErrorAnalysis}
