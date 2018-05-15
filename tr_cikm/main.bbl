@@ -1,131 +1,325 @@
-\begin{thebibliography}{}
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\bibitem[\protect\citeauthoryear{Bell \bgroup \em et al.\egroup
-  }{2014}]{bell14intrinsic}
-Sean Bell, Kavita Bala, and Noah Snavely.
-\newblock Intrinsic images in the wild.
-\newblock {\em ACM Trans. on Graphics (SIGGRAPH)}, 33(4), 2014.
+\begin{thebibliography}{18}
 
-\bibitem[\protect\citeauthoryear{Bell \bgroup \em et al.\egroup
-  }{2015}]{bell15minc}
-Sean Bell, Paul Upchurch, Noah Snavely, and Kavita Bala.
-\newblock Material recognition in the wild with the materials in context
-  database.
-\newblock {\em Computer Vision and Pattern Recognition (CVPR)}, 2015.
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
 
-\bibitem[\protect\citeauthoryear{Cabezas \bgroup \em et al.\egroup
-  }{2015}]{Cabezas2015}
-Ferran Cabezas, Axel Carlier, Vincent Charvillat, Amaia Salvador, and Xavier
-  Giro-I-Nieto.
-\newblock {Quality control in crowdsourced object segmentation}.
-\newblock {\em Proceedings of International Conference on Image Processing,
-  ICIP}, 2015-Decem:4243--4247, 2015.
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
 
-\bibitem[\protect\citeauthoryear{Everingham \bgroup \em et al.\egroup
-  }{2015}]{Everingham15}
-M.~Everingham, S.~M.~A. Eslami, L.~Van~Gool, C.~K.~I. Williams, J.~Winn, and
-  A.~Zisserman.
-\newblock The pascal visual object classes challenge: A retrospective.
-\newblock {\em International Journal of Computer Vision}, 111(1):98--136,
-  January 2015.
+\bibitem[\protect\citeauthoryear{Bell, Bala, and Snavely}{Bell
+  et~al\mbox{.}}{2014}]%
+        {bell14intrinsic}
+\bibfield{author}{\bibinfo{person}{Sean Bell}, \bibinfo{person}{Kavita Bala},
+  {and} \bibinfo{person}{Noah Snavely}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Intrinsic Images in the Wild}.
+\newblock \bibinfo{journal}{\emph{ACM Trans. on Graphics (SIGGRAPH)}}
+  \bibinfo{volume}{33}, \bibinfo{number}{4} (\bibinfo{year}{2014}).
+\newblock
 
-\bibitem[\protect\citeauthoryear{Gurari \bgroup \em et al.\egroup
-  }{2016}]{Gurari2016}
-Danna Gurari, Mehrnoosh Sameki, Zheng Wu, and Margrit Betke.
-\newblock {Mixing Crowd and Algorithm Efforts to Segment Objects in Biomedical
-  Images}.
-\newblock {\em Medical Image Computing and Computer Assisted Intervention
-  Interactive Medical Image Computation Workshop}, pages 1--8, 2016.
 
-\bibitem[\protect\citeauthoryear{Gurari \bgroup \em et al.\egroup
-  }{2018}]{Gurari2018}
-Danna Gurari, Kun He, Bo~Xiong, Jianming Zhang, Mehrnoosh Sameki, Suyog~Dutt
-  Jain, Stan Sclaroff, Margrit Betke, and Kristen Grauman.
-\newblock {Predicting Foreground Object Ambiguity and Efficiently Crowdsourcing
-  the Segmentation(s)}.
-\newblock {\em International Journal of Computer Vision (IJCV)}, 2018.
+\bibitem[\protect\citeauthoryear{Bell, Upchurch, Snavely, and Bala}{Bell
+  et~al\mbox{.}}{2015}]%
+        {bell15minc}
+\bibfield{author}{\bibinfo{person}{Sean Bell}, \bibinfo{person}{Paul Upchurch},
+  \bibinfo{person}{Noah Snavely}, {and} \bibinfo{person}{Kavita Bala}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{Material Recognition in the Wild with the Materials
+  in Context Database}.
+\newblock \bibinfo{journal}{\emph{Computer Vision and Pattern Recognition
+  (CVPR)}} (\bibinfo{year}{2015}).
+\newblock
 
-\bibitem[\protect\citeauthoryear{Irshad and et. al.}{2014}]{Irshad2014}
-H~Irshad and Montaser-Kouhsari et. al.
-\newblock {Crowdsourcing Image Annotation for Nucleus Detection and
-  Segmentation in Computational Pathology: Evaluating Experts, Automated
-  Methods, and the Crowd}.
-\newblock {\em Biocomputing 2015}, pages 294--305, 2014.
 
-\bibitem[\protect\citeauthoryear{Lin \bgroup \em et al.\egroup
-  }{2012}]{Lin2012}
-Christopher~H Lin, Mausam, and Daniel~S Weld.
-\newblock {Crowdsourcing control : Moving beyond multiple choice}.
-\newblock {\em AAAI Conference on Human Computation and Crowdsourcing (HCOMP)},
-  pages 491--500, 2012.
+\bibitem[\protect\citeauthoryear{Cabezas, Carlier, Charvillat, Salvador, and
+  Giro-I-Nieto}{Cabezas et~al\mbox{.}}{2015}]%
+        {Cabezas2015}
+\bibfield{author}{\bibinfo{person}{Ferran Cabezas}, \bibinfo{person}{Axel
+  Carlier}, \bibinfo{person}{Vincent Charvillat}, \bibinfo{person}{Amaia
+  Salvador}, {and} \bibinfo{person}{Xavier Giro-I-Nieto}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{{Quality control in crowdsourced object
+  segmentation}}.
+\newblock \bibinfo{journal}{\emph{Proceedings of International Conference on
+  Image Processing, ICIP}}  \bibinfo{volume}{2015-Decem}
+  (\bibinfo{year}{2015}), \bibinfo{pages}{4243--4247}.
+\newblock
+\showISBNx{9781479983391}
+\showISSN{15224880}
+\urldef\tempurl%
+\url{https://doi.org/10.1109/ICIP.2015.7351606}
+\showDOI{\tempurl}
+\showeprint[arxiv]{arXiv:1505.00145v1}
 
-\bibitem[\protect\citeauthoryear{Lin \bgroup \em et al.\egroup
-  }{2014}]{Lin2014}
-Tsung~Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva
-  Ramanan, Piotr Doll{\'{a}}r, and C.~Lawrence Zitnick.
-\newblock {Microsoft COCO: Common objects in context}.
-\newblock {\em European Conference on Computer Vision (ECCV)}, 8693 LNCS(PART
-  5):740--755, 2014.
 
-\bibitem[\protect\citeauthoryear{Natonek}{1998}]{Natonek1998}
-E.~Natonek.
-\newblock Fast range image segmentation for servicing robots.
-\newblock In {\em Proceedings. 1998 IEEE International Conference on Robotics
-  and Automation (Cat. No.98CH36146)}, volume~1, pages 406--411 vol.1, May
-  1998.
+\bibitem[\protect\citeauthoryear{Everingham, Eslami, Van~Gool, Williams, Winn,
+  and Zisserman}{Everingham et~al\mbox{.}}{2015}]%
+        {Everingham15}
+\bibfield{author}{\bibinfo{person}{M. Everingham}, \bibinfo{person}{S.~M.~A.
+  Eslami}, \bibinfo{person}{L. Van~Gool}, \bibinfo{person}{C.~K.~I. Williams},
+  \bibinfo{person}{J. Winn}, {and} \bibinfo{person}{A. Zisserman}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{The Pascal Visual Object Classes Challenge: A
+  Retrospective}.
+\newblock \bibinfo{journal}{\emph{International Journal of Computer Vision}}
+  \bibinfo{volume}{111}, \bibinfo{number}{1} (\bibinfo{date}{Jan.}
+  \bibinfo{year}{2015}), \bibinfo{pages}{98--136}.
+\newblock
 
-\bibitem[\protect\citeauthoryear{Russakovsky \bgroup \em et al.\egroup
-  }{2015}]{Russakovsky2015}
-Olga Russakovsky, Li-Jia Li, and Li~Fei-Fei.
-\newblock {Best of Both Worlds: Human-Machine Collaboration for Object
-  Annotation}.
-\newblock pages 2121--2131, 2015.
 
-\bibitem[\protect\citeauthoryear{Sameki \bgroup \em et al.\egroup
-  }{2015}]{Sameki2015}
-Mehrnoosh Sameki, Danna Gurari, and Margrit Betke.
-\newblock {Characterizing Image Segmentation Behavior of the Crowd}.
-\newblock pages 1--4, 2015.
+\bibitem[\protect\citeauthoryear{Gurari, He, Xiong, Zhang, Sameki, Jain,
+  Sclaroff, Betke, and Grauman}{Gurari et~al\mbox{.}}{2018}]%
+        {Gurari2018}
+\bibfield{author}{\bibinfo{person}{Danna Gurari}, \bibinfo{person}{Kun He},
+  \bibinfo{person}{Bo Xiong}, \bibinfo{person}{Jianming Zhang},
+  \bibinfo{person}{Mehrnoosh Sameki}, \bibinfo{person}{Suyog~Dutt Jain},
+  \bibinfo{person}{Stan Sclaroff}, \bibinfo{person}{Margrit Betke}, {and}
+  \bibinfo{person}{Kristen Grauman}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{{Predicting Foreground Object Ambiguity and
+  Efficiently Crowdsourcing the Segmentation(s)}}.
+\newblock \bibinfo{journal}{\emph{International Journal of Computer Vision
+  (IJCV)}} (\bibinfo{year}{2018}).
+\newblock
+\showISSN{15731405}
+\urldef\tempurl%
+\url{https://doi.org/10.1007/s11263-018-1065-7}
+\showDOI{\tempurl}
+\showeprint[arxiv]{1705.00366}
 
-\bibitem[\protect\citeauthoryear{Song \bgroup \em et al.\egroup
-  }{2018}]{Song2018}
-Jean~Y. Song, Raymond Fok, Alan Lundgard, Fang Yang, Juho Kim, and Walter~S.
-  Lasecki.
-\newblock {Two Tools are Better Than One : Tool Diversity as a Means of
-  Improving Aggregate Crowd Performance}.
-\newblock {\em Proceedings of the International Conference on Intelligent User
-  Interfaces}, 2018.
 
-\bibitem[\protect\citeauthoryear{Sorokin and Forsyth}{2008}]{Sorokin2008}
-Alexander Sorokin and David Forsyth.
-\newblock {Utility data annotaton with Amazon Mechanical Turk}.
-\newblock {\em Proceedings of the 1st IEEE Workshop on Internet Vision at CVPR
-  08}, (c):1--8, 2008.
+\bibitem[\protect\citeauthoryear{Gurari, Sameki, Wu, and Betke}{Gurari
+  et~al\mbox{.}}{2016}]%
+        {Gurari2016}
+\bibfield{author}{\bibinfo{person}{Danna Gurari}, \bibinfo{person}{Mehrnoosh
+  Sameki}, \bibinfo{person}{Zheng Wu}, {and} \bibinfo{person}{Margrit Betke}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{{Mixing Crowd and Algorithm Efforts to Segment
+  Objects in Biomedical Images}}.
+\newblock \bibinfo{journal}{\emph{Medical Image Computing and Computer Assisted
+  Intervention Interactive Medical Image Computation Workshop}}
+  (\bibinfo{year}{2016}), \bibinfo{pages}{1--8}.
+\newblock
 
-\bibitem[\protect\citeauthoryear{Torralba \bgroup \em et al.\egroup
-  }{2010}]{Torralba2010}
-Antonio Torralba, Bryan~C. Russell, and Jenny Yuen.
-\newblock {LabelMe: Online image annotation and applications}.
-\newblock {\em Proceedings of the IEEE}, 98(8):1467--1484, 2010.
 
-\bibitem[\protect\citeauthoryear{Vittayakorn and Hays}{2011}]{Vittayakorn2011}
-Sirion Vittayakorn and James Hays.
-\newblock {Quality Assessment for Crowdsourced Object Annotations}.
-\newblock {\em Procedings of the British Machine Vision Conference}, pages
-  109.1--109.11, 2011.
+\bibitem[\protect\citeauthoryear{Irshad and et. al.}{Irshad and et.
+  al.}{2014}]%
+        {Irshad2014}
+\bibfield{author}{\bibinfo{person}{H Irshad} {and}
+  \bibinfo{person}{Montaser-Kouhsari et. al.}} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{{Crowdsourcing Image Annotation for Nucleus
+  Detection and Segmentation in Computational Pathology: Evaluating Experts,
+  Automated Methods, and the Crowd}}.
+\newblock \bibinfo{journal}{\emph{Biocomputing 2015}} (\bibinfo{year}{2014}),
+  \bibinfo{pages}{294--305}.
+\newblock
+\showISBNx{978-981-4644-72-3}
+\urldef\tempurl%
+\url{https://doi.org/10.1142/9789814644730_0029}
+\showDOI{\tempurl}
 
-\bibitem[\protect\citeauthoryear{Welinder \bgroup \em et al.\egroup
-  }{2010}]{MDWWelinder2010}
-Peter Welinder, Steve Branson, Serge Belongie, and Pietro Perona.
-\newblock {The Multidimensional Wisdom of Crowds}.
-\newblock {\em NIPS (Conference on Neural Information Processing Systems)},
-  6:1--9, 2010.
 
-\bibitem[\protect\citeauthoryear{Yamaguchi}{2012}]{Yamaguchi2012}
-Kota Yamaguchi.
-\newblock Parsing clothing in fashion photographs.
-\newblock In {\em Proceedings of the 2012 IEEE Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, CVPR '12, pages 3570--3577, Washington, DC,
-  USA, 2012. IEEE Computer Society.
+\bibitem[\protect\citeauthoryear{Lin, Mausam, and Weld}{Lin
+  et~al\mbox{.}}{2012}]%
+        {Lin2012}
+\bibfield{author}{\bibinfo{person}{Christopher~H Lin},
+  \bibinfo{person}{Mausam}, {and} \bibinfo{person}{Daniel~S Weld}.}
+  \bibinfo{year}{2012}\natexlab{}.
+\newblock \showarticletitle{{Crowdsourcing control : Moving beyond multiple
+  choice}}.
+\newblock \bibinfo{journal}{\emph{AAAI Conference on Human Computation and
+  Crowdsourcing (HCOMP)}} (\bibinfo{year}{2012}), \bibinfo{pages}{491--500}.
+\newblock
+\showISBNx{9780974903989}
+\showeprint[arxiv]{arXiv preprint arXiv:1210.4870.}
+
+
+\bibitem[\protect\citeauthoryear{Lin, Maire, Belongie, Hays, Perona, Ramanan,
+  Doll{\'{a}}r, and Zitnick}{Lin et~al\mbox{.}}{2014}]%
+        {Lin2014}
+\bibfield{author}{\bibinfo{person}{Tsung~Yi Lin}, \bibinfo{person}{Michael
+  Maire}, \bibinfo{person}{Serge Belongie}, \bibinfo{person}{James Hays},
+  \bibinfo{person}{Pietro Perona}, \bibinfo{person}{Deva Ramanan},
+  \bibinfo{person}{Piotr Doll{\'{a}}r}, {and} \bibinfo{person}{C.~Lawrence
+  Zitnick}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{{Microsoft COCO: Common objects in context}}.
+\newblock \bibinfo{journal}{\emph{European Conference on Computer Vision
+  (ECCV)}} \bibinfo{volume}{8693 LNCS}, \bibinfo{number}{PART 5}
+  (\bibinfo{year}{2014}), \bibinfo{pages}{740--755}.
+\newblock
+\showISBNx{978-3-319-10601-4}
+\showISSN{16113349}
+\urldef\tempurl%
+\url{https://doi.org/10.1007/978-3-319-10602-1_48}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Natonek}{Natonek}{1998}]%
+        {Natonek1998}
+\bibfield{author}{\bibinfo{person}{E. Natonek}.}
+  \bibinfo{year}{1998}\natexlab{}.
+\newblock \showarticletitle{Fast range image segmentation for servicing
+  robots}. In \bibinfo{booktitle}{\emph{Proceedings. 1998 IEEE International
+  Conference on Robotics and Automation (Cat. No.98CH36146)}},
+  Vol.~\bibinfo{volume}{1}. \bibinfo{pages}{406--411 vol.1}.
+\newblock
+\showISSN{1050-4729}
+\urldef\tempurl%
+\url{https://doi.org/10.1109/ROBOT.1998.676445}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Russakovsky, Li, and Fei-Fei}{Russakovsky
+  et~al\mbox{.}}{2015}]%
+        {Russakovsky2015}
+\bibfield{author}{\bibinfo{person}{Olga Russakovsky}, \bibinfo{person}{Li-Jia
+  Li}, {and} \bibinfo{person}{Li Fei-Fei}.} \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{{Best of Both Worlds: Human-Machine Collaboration
+  for Object Annotation}}.
+\newblock  (\bibinfo{year}{2015}), \bibinfo{pages}{2121--2131}.
+\newblock
+\showISBNx{9781467369640}
+
+
+\bibitem[\protect\citeauthoryear{Sameki, Gurari, and Betke}{Sameki
+  et~al\mbox{.}}{2015}]%
+        {Sameki2015}
+\bibfield{author}{\bibinfo{person}{Mehrnoosh Sameki}, \bibinfo{person}{Danna
+  Gurari}, {and} \bibinfo{person}{Margrit Betke}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{{Characterizing Image Segmentation Behavior of the
+  Crowd}}.
+\newblock  (\bibinfo{year}{2015}), \bibinfo{pages}{1--4}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Song, Fok, Lundgard, Yang, Kim, and
+  Lasecki}{Song et~al\mbox{.}}{2018}]%
+        {Song2018}
+\bibfield{author}{\bibinfo{person}{Jean~Y. Song}, \bibinfo{person}{Raymond
+  Fok}, \bibinfo{person}{Alan Lundgard}, \bibinfo{person}{Fang Yang},
+  \bibinfo{person}{Juho Kim}, {and} \bibinfo{person}{Walter~S. Lasecki}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{{Two Tools are Better Than One : Tool Diversity as
+  a Means of Improving Aggregate Crowd Performance}}.
+\newblock \bibinfo{journal}{\emph{Proceedings of the International Conference
+  on Intelligent User Interfaces}} (\bibinfo{year}{2018}).
+\newblock
+\showISBNx{9781450349451}
+
+
+\bibitem[\protect\citeauthoryear{Sorokin and Forsyth}{Sorokin and
+  Forsyth}{2008}]%
+        {Sorokin2008}
+\bibfield{author}{\bibinfo{person}{Alexander Sorokin} {and}
+  \bibinfo{person}{David Forsyth}.} \bibinfo{year}{2008}\natexlab{}.
+\newblock \showarticletitle{{Utility data annotaton with Amazon Mechanical
+  Turk}}.
+\newblock \bibinfo{journal}{\emph{Proceedings of the 1st IEEE Workshop on
+  Internet Vision at CVPR 08}} \bibinfo{number}{c} (\bibinfo{year}{2008}),
+  \bibinfo{pages}{1--8}.
+\newblock
+\showISBNx{9781424423408}
+\showISSN{2160-7508}
+\urldef\tempurl%
+\url{https://doi.org/10.1109/CVPRW.2008.4562953}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Torralba, Russell, and Yuen}{Torralba
+  et~al\mbox{.}}{2010}]%
+        {Torralba2010}
+\bibfield{author}{\bibinfo{person}{Antonio Torralba}, \bibinfo{person}{Bryan~C.
+  Russell}, {and} \bibinfo{person}{Jenny Yuen}.}
+  \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{{LabelMe: Online image annotation and
+  applications}}.
+\newblock \bibinfo{journal}{\emph{Proc. IEEE}} \bibinfo{volume}{98},
+  \bibinfo{number}{8} (\bibinfo{year}{2010}), \bibinfo{pages}{1467--1484}.
+\newblock
+\showISSN{00189219}
+\urldef\tempurl%
+\url{https://doi.org/10.1109/JPROC.2010.2050290}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Vittayakorn and Hays}{Vittayakorn and
+  Hays}{2011}]%
+        {Vittayakorn2011}
+\bibfield{author}{\bibinfo{person}{Sirion Vittayakorn} {and}
+  \bibinfo{person}{James Hays}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{{Quality Assessment for Crowdsourced Object
+  Annotations}}.
+\newblock \bibinfo{journal}{\emph{Procedings of the British Machine Vision
+  Conference}} (\bibinfo{year}{2011}), \bibinfo{pages}{109.1--109.11}.
+\newblock
+\showISBNx{1-901725-43-X}
+\urldef\tempurl%
+\url{https://doi.org/10.5244/C.25.109}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Welinder, Branson, Belongie, and
+  Perona}{Welinder et~al\mbox{.}}{2010}]%
+        {MDWWelinder2010}
+\bibfield{author}{\bibinfo{person}{Peter Welinder}, \bibinfo{person}{Steve
+  Branson}, \bibinfo{person}{Serge Belongie}, {and} \bibinfo{person}{Pietro
+  Perona}.} \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{{The Multidimensional Wisdom of Crowds}}.
+\newblock \bibinfo{journal}{\emph{NIPS (Conference on Neural Information
+  Processing Systems)}}  \bibinfo{volume}{6} (\bibinfo{year}{2010}),
+  \bibinfo{pages}{1--9}.
+\newblock
+\showISBNx{9781617823800}
+\urldef\tempurl%
+\url{https://doi.org/10.1.1.231.1538}
+\showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Yamaguchi}{Yamaguchi}{2012}]%
+        {Yamaguchi2012}
+\bibfield{author}{\bibinfo{person}{Kota Yamaguchi}.}
+  \bibinfo{year}{2012}\natexlab{}.
+\newblock \showarticletitle{Parsing Clothing in Fashion Photographs}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2012 IEEE Conference on Computer
+  Vision and Pattern Recognition (CVPR)}} \emph{(\bibinfo{series}{CVPR '12})}.
+  \bibinfo{publisher}{IEEE Computer Society}, \bibinfo{address}{Washington, DC,
+  USA}, \bibinfo{pages}{3570--3577}.
+\newblock
+\showISBNx{978-1-4673-1226-4}
+\urldef\tempurl%
+\url{http://dl.acm.org/citation.cfm?id=2354409.2355126}
+\showURL{%
+\tempurl}
+
 
 \end{thebibliography}

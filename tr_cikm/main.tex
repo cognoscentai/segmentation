@@ -1,14 +1,9 @@
 \def\year{2018}\relax
-\documentclass[letterpaper]{article} %DO NOT CHANGE THIS
-\usepackage{aaai18}  %Required
+\documentclass[sigconf]{acmart}
 \usepackage{times}  %Required
-\usepackage{helvet}  %Required
-\usepackage{courier}  %Required
 \usepackage{url}  %Required
 \usepackage{graphicx}  %Required
 \usepackage{mwe} %minipage
-\usepackage{floatrow}
-\frenchspacing  %Required
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
 \usepackage{hyperref}       % hyperlinks
@@ -19,17 +14,15 @@
 \usepackage{microtype}      % microtypography
 \usepackage{balance}
 \usepackage{amsmath}
-\usepackage{subcaption}
+% \usepackage{subcaption}
 \usepackage[font=small,belowskip=-30pt,aboveskip=-20pt]{caption}
-\usepackage{mathrsfs} 
-\usepackage{cancel}
+% \usepackage{mathrsfs} 
+% \usepackage{cancel}
 \usepackage{amsfonts}
-\usepackage[titletoc,title]{appendix}
-\usepackage{floatrow}
-\usepackage[table]{xcolor}
-\usepackage[draft]{todonotes}   % notes showed
-\usepackage{titlesec}
-\titlespacing*{\section}{0pt}{0.5ex}{0.5ex}
+% \usepackage[titletoc,title]{appendix}
+% \usepackage[table]{xcolor}
+% \usepackage{titlesec}
+% \titlespacing*{\section}{0pt}{0.5ex}{0.5ex}
 % \newcommand{\todo}[2][]{}
 % \usepackage{titling}
 % \setlength{\droptitle}{-10pt}
@@ -61,50 +54,68 @@
 \newcommand{\takeawaywithqn}[2][]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{{\bf #1} #2}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 % usage:    \ta[question]{takeaway}
 
-\setlength{\pdfpagewidth}{8.5in}  %Required
-\setlength{\pdfpageheight}{11in}  %Required
+% \setlength{\pdfpagewidth}{8.5in}  %Required
+% \setlength{\pdfpageheight}{11in}  %Required
 %PDF Info Is Required:
-  \pdfinfo{
-      /Title (2018 Formatting Instructions for Authors Using LaTeX)
-          /Author (AAAI Press Staff)}
+  % \pdfinfo{
+  %     /Title (2018 Formatting Instructions for Authors Using LaTeX)
+  %         /Author (AAAI Press Staff)}
 % \setlength{\intextsep}{-5pt}  % makes space after figure go away
 % \setlength{\belowcaptionskip}{-10pt}
 % \setlength{\abovecaptionskip}{-10pt}
-\setlength{\textfloatsep}{{10pt plus 0.5pt minus 4.0pt}}
-\setlength{\intextsep}{{10pt plus 0.5pt minus 4.0pt}}
-\newskip\smallskipamount \smallskipamount=3pt plus 1pt minus 1pt
-\newskip\medskipamount   \medskipamount=6pt plus 2pt minus 2pt
-\newskip\bigskipamount   \bigskipamount=12pt plus 4pt minus 4pt
+% \setlength{\textfloatsep}{{10pt plus 0.5pt minus 4.0pt}}
+% \setlength{\intextsep}{{10pt plus 0.5pt minus 4.0pt}}
+% \newskip\smallskipamount \smallskipamount=3pt plus 1pt minus 1pt
+% \newskip\medskipamount   \medskipamount=6pt plus 2pt minus 2pt
+% \newskip\bigskipamount   \bigskipamount=12pt plus 4pt minus 4pt
 
-\title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
-\setlength\titlebox{1.5in}   %squish author title height 
-% The \author macro works with any number of authors. There are two
-% commands used to separate the names and addresses of multiple
-% authors: \And and \AND.
-%
-% Using \And between authors leaves it to LaTeX to determine where to
-% break the lines. Using \AND forces a line break at that point. So,
-% if LaTeX puts 3 of 4 authors names on the first line, and the last
-% on the second line, try using \AND instead of \And before the third
-% author name.
+% Copyright
+%\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+
+% DOI
+\acmDOI{10.475/123_4}
+
+% ISBN
+\acmISBN{123-4567-24-567/08/06}
+
+%Conference
+\acmConference[WOODSTOCK'97]{ACM Woodstock conference}{July 1997}{El
+  Paso, Texas USA}
+\acmYear{1997}
+\copyrightyear{2016}
+
+
+\acmArticle{4}
+\acmPrice{15.00}
+
+% These commands are optional
+%\acmBooktitle{Transactions of the ACM Woodstock conference}
+\editor{Jennifer B. Sartor}
+\editor{Theo D'Hondt}
+\editor{Wolfgang De Meuter}
+
+
 \begin{document}
            %\title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
-           \title{Aggregating Crowdsourced Image Segmentations}
-           %\author{Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran}
-           % \numberofauthors{3}
-            \author{%
-              Doris Jung-Lin Lee\\
-              University of Illinois, Urbana-Champaign\\
-              jlee782@illinois.edu\\
-            \And
-              Akash Das Sarma\\
-              Facebook, Inc.\\
-              akashds@fb.com\\
-            \And 
-              Aditya Parameswaran\\
-              University of Illinois, Urbana-Champaign\\
-              adityagp@illinois.edu\\
-            }
+           \title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
+          % \setlength\titlebox{1.5in}   %squish author title height 
+        \author{Doris Jung-Lin Lee}
+        \affiliation{\institution{University of Illinois, Urbana-Champaign}}
+        \email{jlee782@illinois.edu}
+        \author{Akash Das Sarma}
+        \affiliation{\institution{Facebook, Inc.}}
+        \email{akashds@fb.com}
+        \author{Aditya Parameswaran}
+        \affiliation{\institution{University of Illinois, Urbana-Champaign}}
+        \email{adityagp@illinois.edu}      
            \maketitle
            \vspace{-8pt}
            \begin{abstract}
@@ -120,7 +131,7 @@
           \input{05-Perspective_Clustering}
           \input{06-DatasetMetricEvaluation}
           \input{07-FutureWork}
-\balance  
-\bibliographystyle{named}
+% \balance  
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{reference}
 \end{document}
