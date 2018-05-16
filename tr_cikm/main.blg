@@ -1,10 +1,11 @@
-This is BibTeX, Version 0.99d (TeX Live 2014)
-Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: main.aux
 The style file: ACM-Reference-Format.bst
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Database file #1: reference.bib
+Warning--I didn't find a database entry for "Guari2018"
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
 Reallocated global_strs (elt_size=20001) to 20 items from 10.
@@ -13,6 +14,7 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Warning--page numbers missing in both pages and numpages fields in bell14intrinsic
 Warning--no number and no volume in bell15minc
 Warning--page numbers missing in both pages and numpages fields in bell15minc
+Warning--no journal in Dawid1979
 Warning--no number and no volume in Gurari2018
 Warning--page numbers missing in both pages and numpages fields in Gurari2018
 Warning--no number and no volume in Gurari2016
@@ -29,45 +31,45 @@ Warning--page numbers missing in both pages and numpages fields in Song2018
 Warning--unusual to have number, but no volume, for Sorokin2008
 Warning--no number and no volume in Vittayakorn2011
 Warning--numpages field, but no articleno or eid field, in Yamaguchi2012
-You've used 18 entries,
+You've used 19 entries,
             5732 wiz_defined-function locations,
-            1443 strings with 19055 characters,
-and the built_in function-call counts, 23533 in all, are:
-= -- 3304
-> -- 929
+            1452 strings with 19210 characters,
+and the built_in function-call counts, 24616 in all, are:
+= -- 3420
+> -- 967
 < -- 0
-+ -- 308
-- -- 308
-* -- 1780
-:= -- 2342
-add.period$ -- 90
-call.type$ -- 18
-change.case$ -- 144
-chr.to.int$ -- 18
-cite$ -- 37
-duplicate$ -- 1872
-empty$ -- 1336
-format.name$ -- 372
-if$ -- 5847
++ -- 321
+- -- 324
+* -- 1857
+:= -- 2462
+add.period$ -- 95
+call.type$ -- 19
+change.case$ -- 150
+chr.to.int$ -- 19
+cite$ -- 39
+duplicate$ -- 1972
+empty$ -- 1408
+format.name$ -- 392
+if$ -- 6090
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 74
-newline$ -- 232
-num.names$ -- 144
-pop$ -- 657
+missing$ -- 78
+newline$ -- 240
+num.names$ -- 152
+pop$ -- 692
 preamble$ -- 1
-purify$ -- 303
+purify$ -- 318
 quote$ -- 0
-skip$ -- 607
+skip$ -- 642
 stack$ -- 0
-substring$ -- 1748
-swap$ -- 198
+substring$ -- 1841
+swap$ -- 208
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 316
-warning$ -- 19
-while$ -- 133
+type$ -- 332
+warning$ -- 20
+while$ -- 144
 width$ -- 0
-write$ -- 393
-(There were 19 warnings)
+write$ -- 410
+(There were 21 warnings)

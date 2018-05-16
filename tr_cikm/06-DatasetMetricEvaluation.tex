@@ -18,9 +18,9 @@
    \includegraphics[trim={0 1pt 4pt 0},clip,width=0.8\linewidth]{plots/Retrieval_vs_Aggregation.pdf}
    \caption{Performance of the original algorithms that do not make use of ground truth information (Left) and ones that do (Right). MV and EM results are so close that they overlay on each other.} %\agp{Explain setup for this. How did you generate this?} \dor{not sure what aditya means?}}%Performance comparison between best-performing retrieval and aggregation-based methods. 
    \label{retrieval_vs_aggregation}   
-   \vspace{-12pt}
-   \setlength{\abovecaptionskip}{-30pt}
-   \setlength{\belowcaptionskip}{-23pt}
+   % \vspace{-12pt}
+   % \setlength{\abovecaptionskip}{-30pt}
+   % \setlength{\belowcaptionskip}{-23pt}
 \end{figure} 
 \npar In Figure~\ref{retrieval_vs_aggregation}, we vary the number of worker segmentations along the x-axis and plot the average Jaccard score on the y-axis across different worker samples of a given size across different algorithms. Figure~\ref{retrieval_vs_aggregation} (left) shows that the performance of aggregation-based algorithms (greedy, EM) exceeds the best-achievable through existing retrieval-based method (Retrieval). Then, in Figure \ref{retrieval_vs_aggregation} (right), we estimate the upper-bound performance of each algorithm by assuming that the `full information' based on ground truth was given to the algorithm. For greedy, the algorithm is aware of all the actual tile overlap and non-overlap areas against ground truth, and does not need to approximate these values. For EM, we consider the performance of the algorithm if the true worker quality parameter values (under our worker quality model) are known. For retrieval, the full information version directly picks the worker with the highest Jaccard similarity with respect to the ground truth segmentation. By making use of ground truth information (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer grained than any individual worker segmentation. 
 
@@ -32,13 +32,14 @@
 %\agp{Weird, this is experiment 2. Divide this up into two parts. (Right now it seems as if all findings are from Fig 4, so this comes as a surprise.)}\dor{should we divide table~\ref{statsTable} into two separate tables?}
 \begin{table}[h!]
    \small
-     \setlength\tabcolsep{1.5pt}
+     % \setlength\tabcolsep{1.5pt}
       \begin{tabular}{l|l|l|l|l|l|l}
          & \multicolumn{2}{c|}{Retrieval-based} & \multicolumn{4}{l}{Aggregation-based} \\ \hline
       Algorithm         & num pts         & worker*        & MV    & EM    & greedy  & greedy*  \\ \hline
       Worker Scaling    & -6.30           & 2.58               & 1.63  & 1.64  & 2.16    & 5.59         \\ \hline
       Clustering Effect & 5.92            & -0.02              & 2.05  & 1.38  & 5.55    & -0.06       
       \end{tabular}
+      \vspace{10pt}
       \caption{Percentage change due to worker scaling and clustering. Algorithms with * makes use of ground truth information.}
       \label{statsTable}
 \end{table}

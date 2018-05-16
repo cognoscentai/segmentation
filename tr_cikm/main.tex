@@ -14,7 +14,7 @@
 \usepackage{microtype}      % microtypography
 \usepackage{balance}
 \usepackage{amsmath}
-\usepackage[font=small,belowskip=-30pt,aboveskip=-20pt]{caption}
+\usepackage[font=small,belowskip=-10pt,aboveskip=0pt]{caption}
 \usepackage{amsfonts}
 \usepackage[]{algorithm2e}
 \usepackage{framed}
@@ -90,7 +90,7 @@
         \affiliation{\institution{University of Illinois, Urbana-Champaign}}
         \email{adityagp@illinois.edu}      
         \begin{abstract}
-           \vspace{-7pt}
+           \vspace{-3pt}
            Instance-level image segmentation provides rich information crucial for scene understanding in a variety of real-world applications. In this paper, we evaluate multiple crowdsourced algorithms for the image segmentation problem, including novel worker-aggregation-based methods and retrieval-based methods from prior work. We characterize the different types of worker errors observed in crowdsourced segmentation, and present a clustering algorithm as a preprocessing step that is able to capture and eliminate errors arising due to workers having different semantic perspectives. We demonstrate that aggregation-based algorithms attain higher accuracies than existing retrieval-based approaches, while scaling better with increasing numbers of worker segmentations. 
            \vspace{-2pt}
            % Most large-scale image segmentation efforts such as MSCOCO have relied on computing a Jaccard metric against ground truth and retrieving the segmentation provided by the best worker. 

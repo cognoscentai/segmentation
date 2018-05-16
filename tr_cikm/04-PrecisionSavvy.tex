@@ -1,5 +1,4 @@
 %!TEX root = main.tex
-\vspace{-12pt}
 \section{Fixing Boundary Imperfections\label{precision}}%: Aggregation v.s. Retrieval Comparison}
 % \subsection{Retrieval-based methods}
 % This class of algorithms tries to identify good and bad workers, and then chooses the best worker segmentation as the output segmentation. In this paper, we look at two different ways of ranking workers and choosing the best worker. First, we use the {\em number of control points}, i.e. number of vertices in a worker's segmentation polygon to rank workers. This is a ranking scheme that~\cite{Vittayakorn2011} showed performs well in practice. Intuitively, workers that have used a larger number of points are likely to have been more precise, and provided a more complex and accurate segmentation. Other heuristic ranking scheme is described in more detail in our technical report~\cite{segmentation-tr}.
@@ -15,6 +14,14 @@
 % , where we logically overlay all workers' segmentations on top of each other, as illustrated in Figure \ref{tile_demo} right, to create non-overlapping discrete tile units. 
 At the heart of our aggregation techniques is the \emph{tile data representation}. A tile is the smallest non-overlapping discrete unit created by overlaying all of the workers' segmentations on top of each other. %with a certain probability of being contained in the ground truth segmentation. 
 The tile representation allows us to aggregate segmentations from multiple workers, rather than being restricted to a single worker's segmentation---allowing us to fix one worker's errors with help from another. \changes{In Figure \ref{tile_demo} (right), we display three worker segmentations for a toy example with 6 resulting tiles. Any subset of these tiles can contribute towards the final segmentation.}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.85\linewidth]{plots/tile.pdf}
+\caption{Left: Toy example demonstrating tiles created by three workers' segmentations around a dumbell object delineated by the black dotted line. Right: Segmentation boundaries drawn by five workers shown in red. Overlaid segmentation creates a mask where the color indicates the number of workers who voted for the tile region.}
+\label{tile_demo}
+% \setlength{\abovecaptionskip}{-15pt}
+% \setlength{\belowcaptionskip}{-25pt}
+\end{figure}  
 %both worker 1 and 2's segmentation can contribute towards the final segmentation.
 \par This simple but powerful idea of tiles also allows us to reformulate our problem from one of ``generating a segmentation'' to a setting that is much more familiar to crowdsourcing researchers. Since tiles are the lowest granularity units created by overlaying all workers' segmentations on top of each other, each tile is either completely contained within or outside a given worker segmentation. Specifically, we can regard a worker segmentation as multiple boolean responses where they have voted `yes' or `no' to every tile independently. Intuitively, a worker votes `yes' for every tile that is contained in their segmentation, and `no' for every tile that is not. As shown in Figure \ref{tile_demo} (right), tile $t_2$ is voted `yes' by worker 1, 2, and 3; tile $t_3$ is voted `yes' by worker 2 and 3. The goal of our aggregation algorithms is to pick an appropriate set of tiles that effectively trades off precision versus recall.
 %\par Now, our problem of choosing a set of tiles to form a segmentation boils down to aggregating multiple boolean responses on every individual tile. Tiles with a final aggregated answer of ``yes'' are included in our output segmentation, while the remaining tiles are excluded. We should note that tiles need not necessarily be completely contained or completely outside the ground truth segmentation, therefore not every tile has a ground truth boolean answer. For tiles that are not completely contained or completely excluded in the ground truth, we gain recall but lose precision if we include them in our output segmentation, or lose recall and gain precision if we don't include them in our output segmentation. The goal of our aggregation algorithms, described below, is to pick a good set of tiles that effectively trade-off precision versus recall.
@@ -41,12 +48,3 @@ worker quality model additionally accounts for true- and false-positive rates of
 
 \stitle{Retrieval: Number of Control Points (num pts)}
 \par \noindent This algorithm picks the worker segmentation with the largest number of control points around the segmentation boundary (i.e., the most precise drawing) as the output segmentation \cite{Vittayakorn2011,Sorokin2008}.
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.85\linewidth]{plots/precision_issue_tile_example.png}
-\caption{Left: Example of boundary imprecision. Pink boundaries show worker segmentations and blue delineates the ground truth. Middle: Segmentation boundaries drawn by five workers shown in red. Overlaid segmentation creates a mask where the color indicates the number of workers who voted for the tile region. Right: Toy example demonstrating tiles created by three workers' segmentations around a dumbell object delineated by the black dotted line.}
-\label{tile_demo}
-\setlength{\abovecaptionskip}{-15pt}
-\setlength{\belowcaptionskip}{-25pt}
-\end{figure}  

@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{18}
+\begin{thebibliography}{19}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -80,6 +80,17 @@
 \url{https://doi.org/10.1109/ICIP.2015.7351606}
 \showDOI{\tempurl}
 \showeprint[arxiv]{arXiv:1505.00145v1}
+
+
+\bibitem[\protect\citeauthoryear{Dawid and Skene}{Dawid and Skene}{1979}]%
+        {Dawid1979}
+\bibfield{author}{\bibinfo{person}{A.~P. Dawid} {and} \bibinfo{person}{A.~M.
+  Skene}.} \bibinfo{year}{1979}\natexlab{}.
+\newblock \showarticletitle{{Maximum Likelihood Estimation of Observer
+  Error-Rates Using the EM Algorithm}}.
+\newblock  \bibinfo{volume}{28}, \bibinfo{number}{1} (\bibinfo{year}{1979}),
+  \bibinfo{pages}{20--28}.
+\newblock
 
 
 \bibitem[\protect\citeauthoryear{Everingham, Eslami, Van~Gool, Williams, Winn,
