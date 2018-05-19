@@ -10,6 +10,7 @@ import numpy as np
 import pickle
 import json
 import os
+import glob
 
 
 def compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=0.8, contract_thresh=0, objid=None, vision_only=False, DEBUG=False):
@@ -118,9 +119,28 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
         fp.write(json.dumps([p, r, j]))
 
 
-def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
+def create_and_store_vision_plus_all_workers_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
+    agg_vision_mask, _ = get_pixtiles(objid, k)
     outdir = vision_baseline_dir(objid, k, include_thresh)
-    outfile = '{}vision_only_metrics.json'.format(outdir)
+    for base_box_file in glob.glob('pixel_em/obj{}/mask*.pkl'.format(objid)):
+        worker_id = base_box_file.split('mask')[-1].split('.')[0]
+        print 'Computing vision baseline against worker {}...'.format(worker_id)
+        base_mask = pickle.load(open(base_box_file))
+        vision_only_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=include_thresh, contract_thresh=0, vision_only=True)
+        with open('{}/vision_with_{}_mask.pkl'.format(outdir, worker_id), 'w') as fp:
+            fp.write(pickle.dumps(vision_only_mask))
+
+        outfile = '{}/{}_vision_only_metrics.json'.format(outdir, worker_id)
+        p, r, j, fpr, fnr = all_metrics(vision_only_mask, base_mask)
+        with open(outfile, 'w') as fp:
+            fp.write(json.dumps([p, r, j, fpr, fnr]))
+        break
+
+
+def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
+    print 'Computing vision baseline against gt...'
+    outdir = vision_baseline_dir(objid, k, include_thresh)
+    outfile = '{}/gt_vision_only_metrics.json'.format(outdir)
     if not rerun_existing and os.path.exists(outfile):
         print "already ran "+outdir
         return
@@ -131,6 +151,7 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, r
     with open('{}/vision_with_gt_mask.pkl'.format(outdir), 'w') as fp:
         fp.write(pickle.dumps(vision_only_mask))
 
+    '''
     sum_mask = vision_only_mask.astype(int) * 1 + gt_mask.astype(int) * 2
 
     plt.figure()
@@ -138,6 +159,7 @@ def create_and_store_vision_plus_gt_baseline(objid, k=500, include_thresh=0.5, r
     plt.colorbar()
     plt.savefig('{}/vision_with_gt_viz.png'.format(outdir))
     plt.close()
+    '''
 
     p, r, j, fpr, fnr = all_metrics(vision_only_mask, gt_mask)
     with open(outfile, 'w') as fp:
@@ -190,21 +212,23 @@ def compile_vision_only_performance():
     import csv
     # compiles a PRJ table for all vision only masks
     # dir structure:
-    # pixel_em/batch_name/objid/hybrid/k/(expand_thresh,contract_thresh)/base_clust_hybrid_prj.json
+    # pixel_em/batch_name/objid/k/expand_thresh/base_mask_id_vision_only_performance.json
 
-    fname = 'pixel_em/vision_only_performance.csv'
+    fname = 'pixel_em/vision_only_performance_new.csv'
+    print 'Compiling all vision only performances into', fname
     with open(fname, 'w') as csvfile:
-        fieldnames = ['objid', 'k', 'thresh', 'p', 'r', 'j', 'fpr', 'fnr']
+        fieldnames = ['objid', 'worker_id', 'k', 'thresh', 'p', 'r', 'j', 'fpr', 'fnr']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        for path in glob.glob('pixel_em/*/vision-only/*/*vision_only_metrics.json'):
+        for path in glob.glob('pixel_em/*/vision-only/*/*/*_vision_only_metrics.json'):
             print path
             splits = path.split('/')
             # print splits
             objid = splits[1].split('j')[1]
             k = splits[3]
-            thresh = splits[4].split('v')[0]
+            thresh = splits[4]
+            base_mask_id = splits[5].split('_')[0]
 
             # print objid, k, thresh
 
@@ -213,6 +237,7 @@ def compile_vision_only_performance():
 
                 writer.writerow({
                     'objid': objid,
+                    'worker_id': base_mask_id,
                     'k': k,
                     'thresh': thresh,
                     'p': p,
@@ -230,15 +255,15 @@ if __name__ == '__main__':
     DEBUG = True
 
     # For Computing Vision Baseline
-    for k in [100]:
+    for k in [100, 500]:
         for objid in range(1, 48):  # range(1, 2):
             if objid == 35:
                 continue
             for include_thresh in [0.2, 0.5, 0.8]:
-                if DEBUG:
-                    print '*****************************************************************'
-                    print 'Compute vision baseline for obj{}, k={}, incl_thresh={}'.format(objid, k, include_thresh)
-                create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=True)
+                print '*****************************************************************'
+                print 'Compute vision baselines for obj{}, k={}, incl_thresh={}'.format(objid, k, include_thresh)
+                create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=False)
+                create_and_store_vision_plus_all_workers_baseline(objid, k, include_thresh, rerun_existing=False)
     compile_vision_only_performance()
 
     '''
