@@ -64,7 +64,7 @@ def sanity_check(algo):
     print 'num total in {}: {}'.format(algo, num_total)
 
 
-def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False):
+def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggFunc="mean"):
     all_data = read_algo_prj_table(algo)
     best_clust = read_best_clust()
     jacc_noclust = defaultdict(list)  # jacc[nworkers] = []
@@ -89,9 +89,15 @@ def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False):
         x.append(nworkers)
         # print jacc_noclust[nworkers]
         # print jacc_bestclust[nworkers]
-        y_noclust.append(np.mean(jacc_noclust[nworkers]))
-        y_bestclust.append(np.mean(jacc_bestclust[nworkers]))
-
+        if aggFunc == "mean":
+            y_noclust.append(np.mean(jacc_noclust[nworkers]))
+            y_bestclust.append(np.mean(jacc_bestclust[nworkers]))
+        elif aggFunc == "errorbar":
+            y_noclust.append(np.std(jacc_noclust[nworkers])/2.)
+            y_bestclust.append(np.std(jacc_bestclust[nworkers])/2.)
+        elif aggFunc == "median":
+            y_noclust.append(np.median(jacc_noclust[nworkers]))
+            y_bestclust.append(np.median(jacc_bestclust[nworkers]))
     assert set(x) == set([5, 10, 15, 20, 25, 30])
 
     if PLOT:
