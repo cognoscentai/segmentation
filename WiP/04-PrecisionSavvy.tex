@@ -1,5 +1,5 @@
 %!TEX root = main.tex
-\vspace{-12pt}
+\vspace{-15pt}
 \section{Fixing Boundary Imperfections\label{precision}}%: Aggregation v.s. Retrieval Comparison}
 % \subsection{Retrieval-based methods}
 % This class of algorithms tries to identify good and bad workers, and then chooses the best worker segmentation as the output segmentation. In this paper, we look at two different ways of ranking workers and choosing the best worker. First, we use the {\em number of control points}, i.e. number of vertices in a worker's segmentation polygon to rank workers. This is a ranking scheme that~\cite{Vittayakorn2011} showed performs well in practice. Intuitively, workers that have used a larger number of points are likely to have been more precise, and provided a more complex and accurate segmentation. Other heuristic ranking scheme is described in more detail in our technical report~\cite{segmentation-tr}.
@@ -45,7 +45,7 @@ worker quality model additionally accounts for true- and false-positive rates of
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.85\linewidth]{plots/tile.pdf}
-\caption{Left: Toy example demonstrating tiles created by three workers' segmentations around a dumbell object delineated by the black dotted line. Right: Segmentation boundaries drawn by five workers shown in red. Overlaid segmentation creates a mask where the color indicates the number of workers who voted for the tile region.}
+\caption{Left: Toy example demonstrating tiles created by three workers' segmentations around an object delineated by the black dotted line. Right: Segmentation boundaries drawn by five workers shown in red. Overlaid segmentation creates a mask where the color indicates the number of workers who voted for the tile region.}
 \label{tile_demo}
 \setlength{\abovecaptionskip}{-15pt}
 \setlength{\belowcaptionskip}{-25pt}
