@@ -1,5 +1,5 @@
 DEBUG = False
-SHAPELY_OFF = True
+SHAPELY_OFF = False
 
 import matplotlib
 import numpy as np
