@@ -34,7 +34,7 @@ for sample in sample_lst:
 print "Running spectral clustering to preprocess (takes 1~2min) "
 os.system("python2.7 preprocessing.py")
 '''
-
+'''
 df = pd.read_csv("spectral_clustering_all_hard_obj.csv")
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~1hrs)"
@@ -45,7 +45,7 @@ for sample in sample_lst:
             print sample + ":" + str(objid) + "; clust:" + str(cluster_id)
             create_mega_mask(objid,cluster_id=cluster_id, PLOT=False, sample_name=sample)
 '''
-
+'''
 print "4.Creating MV mask (should take 5 min)"
 mv_prj_vals = []
 for batch in sample_lst:
@@ -72,12 +72,12 @@ compute_best_worker_picking()
 obj_clusters = clusters()
 '''
 
-'''
+
 from areaMask import *
 print "5.Creating area mask for all sample-objects"
 print "This will also take a while (~5hrs)"
 
-#sample = sys.argv[1]
+sample = sys.argv[1]
 #for sample in tqdm(sample_lst):
 for objid in object_lst:
     if os.path.exists("pixel_em/{}/obj{}/tiles.pkl".format(sample, objid)):
@@ -94,7 +94,6 @@ for objid in object_lst:
         if len(worker_ids) != 1:
             print sample + ":" + str(objid)+"clust"+str(cluster_id)
             create_PixTiles(sample, objid, cluster_id, check_edges=True)
-'''
 
 from PixelEM_tile import create_MV_tiles, create_tile_area_map, \
     create_tile_to_worker_list_map_and_inverse, sanity_checks
