@@ -120,21 +120,21 @@ def create_and_store_hybrid_masks(sample_name, objid, clust="", base='MV', k=500
 
 
 def create_and_store_vision_plus_all_workers_baseline(objid, k=500, include_thresh=0.5, rerun_existing=False):
-    print "create_and_store_vision_plus_all_workers_baseline"
+    #print "create_and_store_vision_plus_all_workers_baseline"
     
     agg_vision_mask, _ = get_pixtiles(objid, k)
-    print glob.glob('pixel_em/obj{}/mask*.pkl'.format(objid))
+    #print glob.glob('pixel_em/obj{}/mask*.pkl'.format(objid))
     outdir = vision_baseline_dir(objid, k, include_thresh)
     for base_box_file in glob.glob('pixel_em/obj{}/mask*.pkl'.format(objid)):
-        print "base_box:", base_box_file
+        #print "base_box:", base_box_file
         worker_id = base_box_file.split('mask')[-1].split('.')[0]
         outfile = '{}/{}_vision_only_metrics.json'.format(outdir, worker_id)
-        print "worker:",worker_id
+        #print "worker:",worker_id
         if os.path.exists(outfile):
             print str(worker_id)+"Already exist"
             continue
         else: 
-            print 'Computing vision baseline against worker {}...'.format(worker_id)
+            #print 'Computing vision baseline against worker {}...'.format(worker_id)
             base_mask = pickle.load(open(base_box_file))
             vision_only_mask = compute_hybrid_mask(base_mask, agg_vision_mask, expand_thresh=include_thresh, contract_thresh=0, vision_only=True)
             with open('{}/vision_with_{}_mask.pkl'.format(outdir, worker_id), 'w') as fp:
@@ -260,10 +260,10 @@ if __name__ == '__main__':
     import sys
     from sample_worker_seeds import sample_specs
     DEBUG = True
-    '''
+    
     # For Computing Vision Baseline
-    for k in [500]:
-        for objid in range(1, 48):  # range(1, 2):
+    for k in [100]:
+        for objid in range(30, 48)[::-1]:#range(1, 48):  # range(1, 2):
             if objid == 35:
                 continue
             for include_thresh in [0.2, 0.5, 0.8]:
@@ -271,7 +271,7 @@ if __name__ == '__main__':
                 print 'Compute vision baselines for obj{}, k={}, incl_thresh={}'.format(objid, k, include_thresh)
                 create_and_store_vision_plus_gt_baseline(objid, k, include_thresh, rerun_existing=False)
                 create_and_store_vision_plus_all_workers_baseline(objid, k, include_thresh, rerun_existing=False)
-    '''
+    
     compile_vision_only_performance()
 
     '''

@@ -15,7 +15,7 @@
 \usepackage{balance}
 \usepackage{amsmath}
 \usepackage{colortbl}
-\usepackage[font=small,belowskip=-10pt,aboveskip=0pt]{caption}
+\usepackage[font=small,belowskip=0pt,aboveskip=0pt]{caption}
 \usepackage{amsfonts}
 \usepackage[]{algorithm2e}
 \usepackage{framed}
@@ -40,7 +40,7 @@
 \newcommand{\npar}{\par \noindent}
 \newcommand{\ta}[1]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{\underline{Takeaway:} #1}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 % usage:   \ta{takeaway text}
-\newcommand{\stitle}[1]{\noindent \textbf{#1}}
+\newcommand{\stitle}[1]{\par\noindent \textbf{#1}}
 \newcommand{\takeawaywithqn}[2][]{\vspace{-3pt}\begin{framed}\vspace{-5pt}\noindent\textit{{\bf #1} #2}\vspace{-5pt}\end{framed}\vspace{-3pt}}
 
 % Copyright
@@ -52,29 +52,31 @@
 %\setcopyright{usgovmixed}
 %\setcopyright{cagov}
 %\setcopyright{cagovmixed}
-
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\pagestyle{plain} % removes running headers
 
 % DOI
-\acmDOI{10.475/123_4}
+% \acmDOI{10.475/123_4}
 
-% ISBN
-\acmISBN{123-4567-24-567/08/06}
+% % ISBN
+% \acmISBN{123-4567-24-567/08/06}
 
-%Conference
-\acmConference[WOODSTOCK'97]{ACM Woodstock conference}{July 1997}{El
-  Paso, Texas USA}
+% %Conference
+% \acmConference[WOODSTOCK'97]{ACM Woodstock conference}{July 1997}{El Paso, Texas USA}
+\acmConference[ ]{}{}{}
 \acmYear{1997}
 \copyrightyear{2016}
 
 
-\acmArticle{4}
-\acmPrice{15.00}
+% \acmArticle{4}
+% \acmPrice{15.00}
 
-% These commands are optional
-%\acmBooktitle{Transactions of the ACM Woodstock conference}
-\editor{Jennifer B. Sartor}
-\editor{Theo D'Hondt}
-\editor{Wolfgang De Meuter}
+% % These commands are optional
+% %\acmBooktitle{Transactions of the ACM Woodstock conference}
+% \editor{Jennifer B. Sartor}
+% \editor{Theo D'Hondt}
+% \editor{Wolfgang De Meuter}
 
 
 \begin{document}
@@ -103,7 +105,8 @@
           \input{04-PrecisionSavvy}
           \input{05-Perspective_Clustering}
           \input{06-DatasetMetricEvaluation}
-          \input{07-FutureWork}
+          \input{07-Results}
+          \input{08-Conclusion}
 % \balance  
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{reference}
