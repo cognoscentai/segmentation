@@ -25,7 +25,6 @@
 We used the popular open source segmentation algorithm developed by Felzenszwalb and Huttenlocher~\cite{felzenszwalb2004efficient}. We fixed the smoothing and minimum component size parameters and varied the threshold determining the how refined the segmentation is. As shown in Figure~\ref{vision_example}, larger values for k result in larger components in the result. We overlay the given rough segmentation on top of the color tiles.
 
 \begin{figure}
-\vspace{-30pt}
 \centering
 \includegraphics[width=0.9\linewidth]{plots/vision_tiles.png}
 \caption{Example of the vision color tiling for different chosen granularities. Left: Raw image. Vision segmentation with $k=100$(Center) and $k=500$ (Right). Vision tiles with a significant overlap area with the worker segmentation (white boundaries) is selected.}

@@ -1,5 +1,5 @@
 \section{Experimental Results\label{sec:experiment}}
-\subsection{Aggregation-based methods perform significantly better than retrieval-based methods (no clustering)}
+\subsection*{Aggregation-based methods perform significantly better than retrieval-based methods.}
 \begin{figure}[h!]
    \centering
    \includegraphics[trim={0 1pt 4pt 0},clip,width=0.8\linewidth]{plots/Retrieval_vs_Aggregation.pdf}
@@ -8,25 +8,24 @@
 \end{figure} 
 \npar In Figure~\ref{retrieval_vs_aggregation}, we vary the number of worker segmentations along the x-axis and plot the average Jaccard score on the y-axis across different worker samples of a given size across different algorithms. Figure~\ref{retrieval_vs_aggregation} (left) shows that the performance of aggregation-based algorithms (greedy, EM) exceeds the best-achievable through existing retrieval-based method (Retrieval). Then, in Figure \ref{retrieval_vs_aggregation} (right), we estimate the upper-bound performance of each algorithm by assuming that the `full information' based on ground truth was given to the algorithm. For greedy, the algorithm is aware of all the actual tile overlap and non-overlap areas against ground truth, and does not need to approximate these values. For EM, we consider the performance of the algorithm if the true worker quality parameter values (under our worker quality model) are known. For retrieval, the full information version directly picks the worker with the highest Jaccard similarity with respect to the ground truth segmentation. By making use of ground truth information (Figure~\ref{retrieval_vs_aggregation} right), the best aggregation-based algorithm can achieve a close-to-perfect average Jaccard score of 0.98 as an upper bound, far exceeding the results achievable by any single `best' worker (J=0.91). This result demonstrates that aggregation-based methods are able to achieve better performance by performing inference at the tile granularity, which is guaranteed to be finer grained than any individual worker segmentation. 
 
-\subsection{The performance of aggregation-based methods scale well as more worker segmentations are added.}
+\subsection*{The performance of aggregation-based methods scale well as more worker segmentations are added.}
 \par \noindent Intuitively, larger numbers of worker segmentations result in finer granularity tiles for the aggregation-based methods. The first row in Table~\ref{statsTable} lists the average percentage change in Jaccard between 5-workers and 30-workers samples, demonstrating a monotonically increasing relationship between number of worker segmentations used and the performance. However, retrieval-based methods do not benefit from more segmentations.
-
-\subsection{Clustering as preprocessing improves algorithmic performance.}
-\par \noindent The average percentage change between the no clustering and clustering results is shown in Table~\ref{statsTable}. Clustering generally results in an accuracy increase. Since the `full information' variants are already free of semantic ambiguity and errors, clustering does not assist with further improvement. %In particular, we see a greater improvement with clustering preprocessing for algorithms that are not very robust in resolving semantic errors or ambiguity, such as for the \texttt{num pts} retrieval algorithm, than compared to the aggregation-based methods. 
 \begin{table}[h!]
      \small
      % \setlength\tabcolsep{1.5pt}
-     \scalebox{0.85}{
-      \begin{tabular}{l|l|l|l|l|l|l|l}
-      & \multicolumn{3}{c|}{Retrieval-based} & \multicolumn{4}{l}{Aggregation-based} \\ \hline
-      Algorithm       & num pts     & worker    & worker*    & MV     & EM     & greedy   & greedy*   \\ \hline
-      Worker Scaling    & -6.30       & -0.25     & 2.58       & 1.63   & 1.64   & 2.16     & 5.59      \\ \hline
-      Clustering Effect & 5.92        & 4.00      & -0.02      & 2.05   & 1.38   & 5.55     & -0.06    
+     \scalebox{0.9}{
+      \begin{tabular}{l|l|l|l|l|l|l}
+         & \multicolumn{2}{c|}{Retrieval-based} & \multicolumn{4}{l}{Aggregation-based} \\ \hline
+      Algorithm         & num pts         & worker*        & MV    & EM    & greedy  & greedy*  \\ \hline
+      Worker Scaling    & -6.30           & 2.58               & 2.12  & 1.78  & 2.07   & 5.38        \\ \hline
+      Clustering Effect & 5.92            & -0.02              & 2.05  & 0.03  & 5.73    & 0.283       
       \end{tabular}
       }
       \caption{Jaccard percentage change due to worker scaling and clustering. Algorithms with * makes use of ground truth information.}
       \label{statsTable} 
 \end{table}
+\subsection*{Clustering as preprocessing improves algorithmic performance.}
+\par \noindent The average percentage change between the no clustering and clustering results is shown in Table~\ref{statsTable}. Clustering generally results in an accuracy increase. Since the `full information' variants are already free of semantic ambiguity and errors, clustering does not assist with further improvement. %In particular, we see a greater improvement with clustering preprocessing for algorithms that are not very robust in resolving semantic errors or ambiguity, such as for the \texttt{num pts} retrieval algorithm, than compared to the aggregation-based methods. 
 \par The clustering preprocessing step can significantly improve performance of algorithms that are not very robust to segmentations with semantic errors or ambiguities, such as the heuristic-based number of points approach. When examining the gap of increase with and without clustering in Figure \ref{cluster_effect}, we find that aggregation-based methods performs better than retrieval-methods exhibits a smaller gap between the performances. This effect is due to aggregation-based method's higher performance in the no cluster case, indicating that it is able to capture some of the semantic ambiguities and errors in the dataset.
 \begin{figure}[ht!]
       \centering
@@ -34,7 +33,7 @@
       \caption{Performance comparisons between averaging over experiments with clustering as a preprocessing step (dotted) and the unclustered results (solid) for different algorithms.}
       \label{cluster_effect}
 \end{figure}
-\subsection{How well does the inferred worker qualities predict individual worker performance?}
+\subsection*{How well does the inferred worker qualities predict individual worker performance?}
     \stitle{Correlation of worker qualities against performance}
      To further investigate how the EM models are performing, we looked at whether the model-inferred worker qualities is indicative of the actual quality of a segmentation. We performed linear fitting independently for each sample-objects and computed the $R^2$ statistics to determine whether worker qualities can accurately predict precision, recall, and Jaccard scores. Visual inspection of the basic worker quality model fitting showed that for objects that suffered from type two errors (semantic ambiguity), the single-parameter worker quality was unable to capture the overbounding behavior, which lead to a low precision and Jaccard. The results are listed in Table \ref{correlation} to highlight how our advanced worker qualities were able to better capture these scenarios. The clustering preprocessing was not performed for the values in Table \ref{correlation} to demonstrate the sole effect of the EM algorithm. Nevertheless, our clustered results also show a similar trend, with an average of $R^2$=0.88 and 0.89 for the GT and GTLSA models across all objects respectively. We also find that in general the linear fit improves as the number of data points increases, which indicates consistency in the fitted model.
     \begin{table}[ht!]
