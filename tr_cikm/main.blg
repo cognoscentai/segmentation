@@ -5,7 +5,6 @@ The style file: ACM-Reference-Format.bst
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Database file #1: reference.bib
-Warning--I didn't find a database entry for "Guari2018"
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
 Reallocated global_strs (elt_size=20001) to 20 items from 10.
@@ -37,7 +36,7 @@ Warning--empty address in zhou2017scene
 Warning--page numbers missing in both pages and numpages fields in zhou2017scene
 You've used 23 entries,
             5732 wiz_defined-function locations,
-            1483 strings with 20215 characters,
+            1481 strings with 20197 characters,
 and the built_in function-call counts, 29783 in all, are:
 = -- 4155
 > -- 1158
@@ -76,4 +75,4 @@ warning$ -- 24
 while$ -- 177
 width$ -- 0
 write$ -- 481
-(There were 25 warnings)
+(There were 24 warnings)
