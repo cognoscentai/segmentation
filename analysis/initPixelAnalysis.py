@@ -325,7 +325,7 @@ for algo in algorithms:
 '''
 print "running ground truth experiments" 
 # sample = sys.argv[1]
-for objid in object_lst[28:]:
+for objid in object_lst[:28]:
     cluster_ids = df[(df["objid"] == objid)].cluster.unique()
     for cluster_id in ["-1"] + list(cluster_ids):
         #worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == int(cluster_id))].wid)

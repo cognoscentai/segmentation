@@ -88,10 +88,16 @@ def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggF
     for nworkers in all_data.keys():
         for sample_num in all_data[nworkers]:
             for objid in all_data[nworkers][sample_num]:
-                # print nworkers, sample_num, objid
-                best = best_clust[nworkers][sample_num][objid]
-                if filtered and (best == -1 or -1 not in all_data[nworkers][sample_num][objid].keys()):
-                    continue
+                #print nworkers, sample_num, objid
+                if  objid not in best_clust[int(nworkers)][sample_num].keys():
+                    best = -1
+                else:
+                    best = best_clust[int(nworkers)][sample_num][objid]
+                #print "test2:",best_clust[nworkers][sample_num][objid]
+                #print "test3:",best_clust[10][0][7]
+                #print best
+                #if filtered and (best == -1 or -1 not in all_data[nworkers][sample_num][objid].keys()):
+                #    continue
                 # TODO: handle metric==-1 or None?
                 noclust_MV = float(all_data[nworkers][sample_num][objid][-1][metric])
                 jacc_noclust[nworkers].append(noclust_MV)
@@ -102,6 +108,8 @@ def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggF
     x = []
     y_noclust = []
     y_bestclust = []
+    #print jacc_bestclust.keys()
+    #print jacc_noclust.keys()
     for nworkers in jacc_noclust.keys():
         x.append(nworkers)
         # print jacc_noclust[nworkers]
@@ -115,6 +123,7 @@ def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggF
         elif aggFunc == "median":
             y_noclust.append(np.median(jacc_noclust[nworkers]))
             y_bestclust.append(np.median(jacc_bestclust[nworkers]))
+    #print set(x)
     assert set(x) == set([5, 10, 15, 20, 25, 30])
 
     if PLOT:
