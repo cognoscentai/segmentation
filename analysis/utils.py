@@ -94,6 +94,7 @@ def num_workers(sample, objid, cluster_id=""):
 def get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=""):
     worker_masks = dict()  # key = worker_id, value = worker mask
     worker_ids = workers_in_sample(sample_name, objid, cluster_id=cluster_id)
+    print "workerids:",worker_ids
     for wid in worker_ids:
         worker_masks[wid] = get_worker_mask(objid, wid)
     return worker_masks

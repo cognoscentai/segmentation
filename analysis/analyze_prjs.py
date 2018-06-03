@@ -29,6 +29,19 @@ def read_algo_prj_table(algo):
             all_data[nworkers][sample_num][objid][clust] = row
     return all_data
 
+def read_ground_truth_algo_prj_table(algo="basic"):
+    all_data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    filename = 'pixel_em/{}_ground_truth_cwgt.csv'.format(algo)
+    with open(filename, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            nworkers = int(float(row['num_workers']))
+            sample_num = int(float(row['sample_num']))
+            objid = int(float(row['objid']))
+            clust = int(float(row['clust']))
+            # print nworkers, sample_num, objid, clust
+            all_data[nworkers][sample_num][objid][clust] = row
+    return all_data
 
 def read_best_clust():
     best_clust = defaultdict(lambda: defaultdict(dict))  # best_clust[nworkers][sample_num][objid] = clust
@@ -64,8 +77,11 @@ def sanity_check(algo):
     print 'num total in {}: {}'.format(algo, num_total)
 
 
-def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggFunc="mean"):
-    all_data = read_algo_prj_table(algo)
+def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggFunc="mean",ground_truth=False):
+    if ground_truth: 
+        all_data = read_ground_truth_algo_prj_table()
+    else:
+        all_data = read_algo_prj_table(algo)
     best_clust = read_best_clust()
     jacc_noclust = defaultdict(list)  # jacc[nworkers] = []
     jacc_bestclust = defaultdict(list)
@@ -79,6 +95,7 @@ def clust_vs_noclust(algo='MV',metric="jaccard", filtered=False, PLOT=False,aggF
                 # TODO: handle metric==-1 or None?
                 noclust_MV = float(all_data[nworkers][sample_num][objid][-1][metric])
                 jacc_noclust[nworkers].append(noclust_MV)
+                #print all_data[nworkers][sample_num][objid] 
                 bestclust_MV = float(all_data[nworkers][sample_num][objid][best][metric])
                 jacc_bestclust[nworkers].append(bestclust_MV)
 

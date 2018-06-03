@@ -1,3 +1,4 @@
+from time import time
 from PixelEM import *
 import pandas as pd
 object_lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,41,42, 43, 44, 45, 46, 47]
@@ -12,7 +13,7 @@ noClust_obj = [obj for obj in object_lst if obj not in df.objid.unique()]
 # from qualityBaseline import *
 # print "generate baseline comparisons"
 # compute_self_BBvals(compute_metrics=['simple','area'])
-
+'''
 print "1. if directory does not exist, create pixel_em/"
 import os.path
 if not os.path.exists("pixel_em"):
@@ -21,7 +22,7 @@ if not os.path.exists("pixel_em"):
 print "2. Creating all worker and GT pixel masks (2-3 min)"
 for objid in object_lst:
     create_all_gt_and_worker_masks(objid)
-
+'''
 '''
 print "3.Creating megamask (aggregated mask over all workers in that sample) for all sample-objects [mega_mask.pkl, voted_workers_mask.pkl]"
 print "This might take a while (~2hrs)"
@@ -322,3 +323,21 @@ for algo in algorithms:
     # compile_PR(mode=algo, ground_truth=False)
     compile_PR(mode=algo, ground_truth=True)
 '''
+print "running ground truth experiments" 
+# sample = sys.argv[1]
+for objid in object_lst[28:]:
+    cluster_ids = df[(df["objid"] == objid)].cluster.unique()
+    for cluster_id in ["-1"] + list(cluster_ids):
+        #worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == int(cluster_id))].wid)
+        worker_ids = workers_in_sample(sample, objid, cluster_id=cluster_id)
+        init = time.time()
+        if len(worker_ids) > 1 or cluster_id == "-1":
+            #worker_ids = np.array(df[(df["objid"] == objid) & (df["cluster"] == cluster_id)].wid)
+            #worker_ids = workers_in_sample(sample, objid, cluster_id=cluster_id)
+            print sample + ";" + str(objid)+"; clust"+str(cluster_id)
+            GroundTruth_doM_once(sample, objid, cluster_id=cluster_id, algo="basic", exclude_isovote=False, rerun_existing=False)
+            binarySearchDeriveGTinGroundTruthExperiments(sample, objid, "basic", cluster_id=cluster_id, exclude_isovote=False, rerun_existing=False)
+        else:
+            print "skipped"+sample + ";" + str(objid)+"; clust"+str(cluster_id)
+        end = time.time()
+        print "time elasped:",end-init

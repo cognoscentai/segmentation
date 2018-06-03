@@ -1,5 +1,5 @@
 DEBUG = False
-SHAPELY_OFF = False
+SHAPELY_OFF = True
 
 import matplotlib
 import numpy as np
@@ -280,6 +280,7 @@ def GTLSAworker_prob_correct(mega_mask, w_mask, gt_mask, Nworkers, area_mask, ti
 
 def mask_log_probabilities(worker_masks, worker_qualities):
     worker_ids = worker_qualities.keys()
+    #print "worker_masks:",worker_masks
     log_probability_in_mask = np.zeros((
         len(worker_masks[worker_ids[0]]), len(worker_masks[worker_ids[0]][0])
     ))
@@ -622,7 +623,7 @@ def do_GT_EM_for(sample_name, objid, cluster_id="", rerun_existing=False, exclud
 
 def GroundTruth_doM_once(sample_name, objid, algo, cluster_id="", num_iterations=5, load_p_in_mask=False, rerun_existing=False, compute_PR_every_iter=False, exclude_isovote=False):
     print "Doing GroundTruth_doM_once, algo={},exclude_isovote={}".format(algo, exclude_isovote)
-    if cluster_id != "":
+    if cluster_id != "" and cluster_id != "-1":
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -643,6 +644,7 @@ def GroundTruth_doM_once(sample_name, objid, algo, cluster_id="", num_iterations
     area_mask = tiles2AreaMask(tiles, mega_mask)
     gt_est_mask = get_gt_mask(objid)
     worker_masks = get_all_worker_mega_masks_for_sample(sample_name, objid, cluster_id=cluster_id)
+    #print "all worker masks:",worker_masks
     Nworkers = len(worker_masks)
     if algo == 'basic':
         q = dict()
@@ -737,7 +739,7 @@ def deriveGTinGroundTruthExperiments(sample_name, objid, algo, thresh_lst, clust
 
 
 def onlineDeriveGTinGroundTruthExperiments(sample_name, objid, algo, thresh, cluster_id="", exclude_isovote=False, SAVE_GT_MASK=False, rerun_existing=False, compareWith="gt"):
-    if cluster_id != "" and cluster_id != -1:
+    if cluster_id != "" and cluster_id != -1 and cluster_id != "-1":
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample_name, objid, cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample_name, objid)
@@ -878,6 +880,7 @@ def compile_PR(mode="", ground_truth=False):
     import glob
     import csv
     from utils import tiles_to_mask
+    
     if ground_truth:
         fname = '{}{}_ground_truth_full_PRJ_table.csv'.format(PIXEL_EM_DIR, mode)
     else:
@@ -964,12 +967,68 @@ def compile_PR(mode="", ground_truth=False):
                             'FNR%': fnr
                         })
     print 'Compiled PR to :' + fname
-
-
+def compile_ground_truth_cwgt(mode="basic"):
+    import glob
+    import csv
+    from utils import tiles_to_mask
+    fname = '{}{}_ground_truth_cwgt.csv'.format(PIXEL_EM_DIR, mode)
+    with open(fname, 'w') as csvfile:
+        fieldnames = ['num_workers', 'actualNworkers','sample_num', 'objid', 'clust', 'precision', 'recall', 'jaccard', 'FPR%', 'FNR%']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for sample_path in glob.glob('{}*_rand*/'.format(PIXEL_EM_DIR)):
+            sample_name = sample_path.split('/')[-2]
+            print "Working on ", sample_path
+            num_workers = int(sample_name.split('w')[0])
+            sample_num = int(sample_name.split('d')[-1])
+            for obj_path in glob.glob('{}obj*/'.format(sample_path)):
+                objid = int(obj_path.split('/')[-2].split('j')[1])
+                for clust_path in glob.glob("{}/clust*/".format(obj_path))+[obj_path]:
+                    # clust_path includes both original obj_path and the paths with clust*/ on it
+                    if clust_path == obj_path:
+                        cluster_id = -1  # unclustered flag
+                    else:
+                        cluster_id = int(clust_path.split("/clust")[-1][:-1])
+                    worker_ids = json.load(open("{}/worker_ids.json".format(clust_path)))
+                    actualNworkers=len(worker_ids)
+                    p = None
+                    r = None
+                    j = None
+                    fpr = -1 
+                    fnr = -1 
+                    pr_file = '{}{}_ground_truth_cwgt_EM_prj_best_thresh.json'.format(clust_path, mode)
+                    #fpnr_file = '{}{}_ground_truth_cwgt_EM_fpnr_best_thresh.json'.format(clust_path, mode)
+                    if os.path.isfile(pr_file):
+                        [p, r, j] = json.load(open(pr_file))
+                        #gt_fname = "{}{}_gt_est_tiles_best_thresh.pkl".format(clust_path,mode)
+                        #tiles = "{}/tiles.pkl".format(clust_path)
+                        #if os.path.isfile(gt_fname):
+                        #    gt = get_gt_mask(objid)
+                        #    gt_est_tiles =pickle.load(open(gt_fname))
+                        #    tiles = pickle.load(open(tiles))
+                        #    result = tiles_to_mask(gt_est_tiles, tiles, gt)   
+                            #[fpr, fnr] = TFPNR(result, gt)
+                            #with open(fpnr_file, 'w') as fp:
+                            #    fp.write(json.dumps([fpr, fnr]))
+                            #print fpr, fnr
+                    if any([prj is not None for prj in [p, r, j]]):
+                        writer.writerow({
+                            'num_workers': num_workers,
+                            'actualNworkers':actualNworkers,
+                            'sample_num': sample_num,
+                            'objid': objid,
+                            'clust': cluster_id,
+                            'precision': p,
+                            'recall': r,
+                            'jaccard': j,
+                            'FPR%': fpr,
+                            'FNR%': fnr
+                        })
+    print 'Compiled PR to :' + fname
 def binarySearchDeriveGTinGroundTruthExperiments(sample, objid, algo, cluster_id="", exclude_isovote=False, rerun_existing=False, compareWith="gt"):
     thresh_min = -200
     thresh_max = 200
-    if cluster_id != "" and cluster_id != -1:
+    if cluster_id != "" and cluster_id != -1 and cluster_id != "-1":
         outdir = '{}{}/obj{}/clust{}/'.format(PIXEL_EM_DIR, sample, objid, cluster_id)
     else:
         outdir = '{}{}/obj{}/'.format(PIXEL_EM_DIR, sample, objid)
