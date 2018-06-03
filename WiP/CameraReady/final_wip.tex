@@ -49,12 +49,11 @@
 \setlength{\pdfpageheight}{11in}  %Required
 %PDF Info Is Required:
 \pdfinfo{
-/Title (Quality Evaluation Methods for Crowdsourced Image Segmentation)
+/Title (Aggregating Crowdsourced Image Segmentations)
 /Author (Doris Jung-Lin Lee, Akash Das Sarma, Aditya Parameswaran)
 /Keywords (Crowdsourcing, Human Computation, Image segmentation, Computer Vision)
 }
 
-\title{Quality Evaluation Methods for Crowdsourced Image Segmentation}
 \setlength\titlebox{1.5in}   %squish author title height 
 % The \author macro works with any number of authors. There are two
 % commands used to separate the names and addresses of multiple
@@ -163,7 +162,7 @@ In Section~\ref{sec:experiment} we evaluate an EM variant which assumes that eac
 \techreport{Another model variant accounts for tile areas based on the intuition that workers should be penalized more if they make a mistake on a large tile (e.g. yellow tile in Figure \ref{tile_demo} middle) than on a small tile (e.g. orange tiles near the boundary in Figure \ref{tile_demo} middle). Our advanced %4-parameter Bernoulli 
 worker quality model additionally accounts for true- and false-positive rates of the worker's tile votes.}
 % Details of the formal derivation and other more fine-grained worker quality models can be found in our technical report.
-Details of this, and more fine-grained variants can be found in our technical report.
+Details of this, and more fine-grained variants can be found in our technical report~\cite{segmentation-tr}.
 %\agp{if we don't evaluate all of these we should drop these description. Also, cite the algo we are adopting in Sec 6.}
 
 \stitle{Aggregation: Greedy Tile Picking (greedy)} 
